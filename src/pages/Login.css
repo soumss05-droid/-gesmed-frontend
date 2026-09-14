@@ -1,0 +1,232 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  --ink: #1b2422;
+  --panel: #12333a;
+  --panel-line: #2c5a5d;
+  --sage: #4c7a73;
+  --sand: #c08a3e;
+  --paper: #f0f2ed;
+  --paper-line: #d9ddd4;
+  --error: #b23a2e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* --- Panneau gauche : identité + circuit --- */
+
+.login-panel {
+  background: var(--panel);
+  color: #f0f2ed;
+  padding: 3rem 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-panel__mark {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.login-panel__tagline {
+  margin-top: 0.9rem;
+  max-width: 30ch;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #cdd8d1;
+}
+
+.login-panel__circuit {
+  width: 100%;
+  height: auto;
+  flex: 1;
+  margin-top: 1.5rem;
+}
+
+.circuit-line {
+  stroke: var(--panel-line);
+  stroke-width: 2;
+}
+
+.circuit-line--branch {
+  stroke: var(--sage);
+}
+
+.circuit-node circle {
+  fill: var(--sand);
+}
+
+.circuit-node--end circle {
+  fill: #f0f2ed;
+}
+
+.circuit-node text {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  fill: #dfe7e2;
+}
+
+/* --- Panneau droit : formulaire --- */
+
+.login-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 360px;
+}
+
+.login-form h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.login-form__subtitle {
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+  color: #55625d;
+  line-height: 1.5;
+}
+
+.login-field {
+  display: block;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.login-field span {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #3a4642;
+}
+
+.login-field input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--paper-line);
+  border-radius: 4px;
+  outline-offset: 2px;
+}
+
+.login-field input:focus-visible,
+.login-field select:focus-visible {
+  outline: 2px solid var(--sage);
+}
+
+.login-field select {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--paper-line);
+  border-radius: 4px;
+  outline-offset: 2px;
+}
+
+.login-field__password {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-field__password input {
+  flex: 1;
+  padding-right: 5rem;
+}
+
+.login-field__toggle {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--sage);
+  cursor: pointer;
+  padding: 0.3rem;
+}
+
+.login-field__toggle:hover {
+  text-decoration: underline;
+}
+
+.login-error {
+  margin: 0 0 1.1rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--error);
+  background: #fbeae8;
+  border: 1px solid #f0c7c2;
+  border-radius: 4px;
+}
+
+.login-submit {
+  width: 100%;
+  padding: 0.75rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--panel);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: var(--sage);
+}
+
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* --- Mobile --- */
+
+@media (max-width: 760px) {
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .login-panel {
+    padding: 2rem 1.75rem;
+  }
+
+  .login-panel__circuit {
+    display: none;
+  }
+
+  .login-main {
+    padding: 2.5rem 1.75rem;
+  }
+}

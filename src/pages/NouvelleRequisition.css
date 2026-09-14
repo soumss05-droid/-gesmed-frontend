@@ -1,0 +1,22 @@
+.requisition-page { max-width: 640px; margin: 0 auto; padding: 24px; }
+.requisition-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.requisition-retour { background: none; border: none; cursor: pointer; font-size: 1rem; }
+.requisition-form { display: flex; flex-direction: column; gap: 16px; }
+.requisition-ligne { display: flex; gap: 8px; align-items: center; }
+.requisition-ligne select { flex: 2; padding: 8px; }
+.requisition-ligne input { flex: 1; padding: 8px; }
+.requisition-supprimer { background: none; border: none; cursor: pointer; color: #b00; }
+.requisition-ajouter { align-self: flex-start; background: none; border: 1px dashed #999; padding: 8px 12px; cursor: pointer; }
+.requisition-label { display: flex; flex-direction: column; gap: 4px; }
+.requisition-erreur { color: #b00020; background: #fde8e8; padding: 12px; border-radius: 6px; }
+.requisition-bouton { background: #0f2e2e; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
+.requisition-confirmation { text-align: center; padding: 48px 24px; }.dashboard-bouton-action {
+  margin-top: 24px;
+  background: #0f2e2e;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}

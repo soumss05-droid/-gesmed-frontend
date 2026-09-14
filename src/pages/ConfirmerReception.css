@@ -1,0 +1,14 @@
+.reception-page { max-width: 720px; margin: 0 auto; padding: 24px; }
+.reception-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.reception-header h1 { font-size: 1.5rem; margin: 0; }
+.reception-retour { background: none; border: none; cursor: pointer; font-size: 1rem; white-space: nowrap; }
+.reception-vide { color: #666; font-style: italic; }
+.reception-erreur { color: #b00020; background: #fde8e8; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+.reception-message { color: #0f2e2e; background: #e6f4ea; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+.reception-carte { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+.reception-carte__entete { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.reception-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.reception-table th, .reception-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; }
+.reception-table input { width: 80px; padding: 4px; }
+.reception-actions { display: flex; justify-content: flex-end; }
+.reception-bouton { background: #0f2e2e; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }

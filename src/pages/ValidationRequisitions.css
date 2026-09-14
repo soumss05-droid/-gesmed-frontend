@@ -1,0 +1,18 @@
+.validation-page { max-width: 720px; margin: 0 auto; padding: 24px; }
+.validation-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.validation-retour { background: none; border: none; cursor: pointer; font-size: 1rem; }
+.validation-vide { color: #666; }
+.validation-erreur { color: #b00020; background: #fde8e8; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+.validation-carte { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+.validation-carte__entete { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.validation-justification { font-style: italic; color: #555; margin-bottom: 12px; }
+.validation-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.validation-table th, .validation-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; }
+.validation-table input { width: 80px; padding: 4px; }
+.validation-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.validation-bouton { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; }
+.validation-bouton--rejeter { background: #fde8e8; color: #b00020; }
+.validation-bouton--modifier { background: #eee; color: #333; }
+.validation-bouton--valider { background: #0f2e2e; color: white; }.validation-message { color: #0f2e2e; background: #e6f4ea; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+.validation-dispo-ok { color: #1a7a3c; font-weight: 600; }
+.validation-dispo-partiel { color: #b00020; font-weight: 600; }
