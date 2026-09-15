@@ -3,7 +3,6 @@ import "./Dashboard.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-// Libellés lisibles pour chaque rôle technique stocké en base.
 const LIBELLES_ROLE = {
   ADMIN: "Administrateur",
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
@@ -15,12 +14,8 @@ const LIBELLES_ROLE = {
   AUDITEUR: "Auditeur",
 };
 
-// Rôles pour lesquels l'établissement a un vrai stock physique en base
-// (donc pour lesquels GET /stocks renvoie quelque chose de pertinent).
 const ROLES_AVEC_STOCK = ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"];
 
-// Contenu par défaut (chiffres à zéro) pour ce qui n'est pas encore branché
-// à de vraies données (réquisitions, écarts, BL — fonctionnalités à venir).
 const SECTIONS_PAR_ROLE = {
   ADMIN: [
     { titre: "Établissements", valeur: "—", description: "Vue globale sur tous les niveaux" },
@@ -61,9 +56,6 @@ const SECTIONS_PAR_ROLE = {
   ],
 };
 
-// À partir de la réponse de GET /stocks, calcule les valeurs réelles
-// pour remplacer les tirets des cartes "Produits suivis", "Alertes de
-// rupture" et "Prochaine péremption".
 function calculerValeursStock(stocks) {
   const nombreProduits = stocks.length;
   const nombreAlertes = stocks.filter((s) => s.statut === "RUPTURE" || s.statut === "SOUS_SEUIL").length;
@@ -99,6 +91,7 @@ export default function Dashboard({
   onReception,
   onRentreeCamec,
   onInventairePhysique,
+  onReapprovisionnement,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -120,7 +113,6 @@ export default function Dashboard({
         const { nombreProduits, nombreAlertes, prochaineLotLabel, prochaineValeur } = calculerValeursStock(stocks);
         const base = SECTIONS_PAR_ROLE[utilisateur.role].map((s) => ({ ...s }));
 
-        // La première carte de chaque rôle avec stock est "Produits suivis".
         base[0].valeur = String(nombreProduits);
 
         if (utilisateur.role === "FORMATION_SANITAIRE") {
@@ -207,6 +199,12 @@ export default function Dashboard({
         {["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"].includes(utilisateur.role) && (
           <button className="dashboard-bouton-action" onClick={onInventairePhysique}>
             Inventaire physique
+          </button>
+        )}
+
+        {["GAS_MOUGHATAA", "GESTIONNAIRE_DRS"].includes(utilisateur.role) && (
+          <button className="dashboard-bouton-action" onClick={onReapprovisionnement}>
+            Commander un réapprovisionnement
           </button>
         )}
 

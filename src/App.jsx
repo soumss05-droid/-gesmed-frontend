@@ -8,6 +8,7 @@ import EnregistrerDispensation from "./pages/EnregistrerDispensation";
 import ConfirmerReception from "./pages/ConfirmerReception";
 import EnregistrerRentreeCamec from "./pages/EnregistrerRentreeCamec";
 import InventairePhysique from "./pages/InventairePhysique";
+import CommanderReapprovisionnement from "./pages/CommanderReapprovisionnement";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -34,6 +35,7 @@ function App() {
   if (vue === "reception") return <ConfirmerReception onRetour={() => setVue("dashboard")} />;
   if (vue === "rentree-camec") return <EnregistrerRentreeCamec onRetour={() => setVue("dashboard")} />;
   if (vue === "inventaire-physique") return <InventairePhysique onRetour={() => setVue("dashboard")} />;
+  if (vue === "reapprovisionnement") return <CommanderReapprovisionnement onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -46,6 +48,7 @@ function App() {
       onReception={() => setVue("reception")}
       onRentreeCamec={() => setVue("rentree-camec")}
       onInventairePhysique={() => setVue("inventaire-physique")}
+      onReapprovisionnement={() => setVue("reapprovisionnement")}
     />
   );
 }
