@@ -92,6 +92,7 @@ export default function Dashboard({
   onRentreeCamec,
   onInventairePhysique,
   onReapprovisionnement,
+  onNotifications,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -172,6 +173,10 @@ export default function Dashboard({
             ))}
           </div>
         )}
+
+        <button className="dashboard-bouton-action" onClick={onNotifications}>
+          Notifications
+        </button>
 
         {utilisateur.role === "FORMATION_SANITAIRE" && (
           <button className="dashboard-bouton-action" onClick={onNouvelleRequisition}>
