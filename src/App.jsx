@@ -10,6 +10,7 @@ import EnregistrerRentreeCamec from "./pages/EnregistrerRentreeCamec";
 import InventairePhysique from "./pages/InventairePhysique";
 import CommanderReapprovisionnement from "./pages/CommanderReapprovisionnement";
 import Notifications from "./pages/Notifications";
+import SuiviRequisitions from "./pages/SuiviRequisitions";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -38,6 +39,7 @@ function App() {
   if (vue === "inventaire-physique") return <InventairePhysique onRetour={() => setVue("dashboard")} />;
   if (vue === "reapprovisionnement") return <CommanderReapprovisionnement onRetour={() => setVue("dashboard")} />;
   if (vue === "notifications") return <Notifications onRetour={() => setVue("dashboard")} />;
+  if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -52,6 +54,7 @@ function App() {
       onInventairePhysique={() => setVue("inventaire-physique")}
       onReapprovisionnement={() => setVue("reapprovisionnement")}
       onNotifications={() => setVue("notifications")}
+      onSuiviRequisitions={() => setVue("suivi-requisitions")}
     />
   );
 }

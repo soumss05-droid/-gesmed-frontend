@@ -93,6 +93,7 @@ export default function Dashboard({
   onInventairePhysique,
   onReapprovisionnement,
   onNotifications,
+  onSuiviRequisitions,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -136,6 +137,10 @@ export default function Dashboard({
     chargerStocks();
   }, [utilisateur.role]);
 
+  const peutSuivreRequisitions = ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"].includes(
+    utilisateur.role
+  );
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -177,6 +182,12 @@ export default function Dashboard({
         <button className="dashboard-bouton-action" onClick={onNotifications}>
           Notifications
         </button>
+
+        {peutSuivreRequisitions && (
+          <button className="dashboard-bouton-action" onClick={onSuiviRequisitions}>
+            Suivi de mes réquisitions
+          </button>
+        )}
 
         {utilisateur.role === "FORMATION_SANITAIRE" && (
           <button className="dashboard-bouton-action" onClick={onNouvelleRequisition}>

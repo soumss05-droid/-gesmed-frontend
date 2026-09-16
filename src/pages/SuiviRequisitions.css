@@ -1,0 +1,78 @@
+.suivi-page {
+  color-scheme: light;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  background: #eef0e7;
+  color: #1c2b28;
+}
+
+.suivi-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.suivi-retour {
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #12302c;
+}
+
+.suivi-header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #1c2b28;
+}
+
+.suivi-sous-titre {
+  color: #6b7873;
+  margin-bottom: 24px;
+}
+
+.suivi-erreur {
+  background: #fdecea;
+  color: #b3492f;
+  border: 1px solid #f2c2b8;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.suivi-vide {
+  color: #6b7873;
+}
+
+.suivi-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.suivi-carte {
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.suivi-carte-fille {
+  margin-top: 10px;
+  background: #fbf9f4;
+  border-style: dashed;
+}
+
+.suivi-carte-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.suivi-badge {
+  display:
