@@ -100,6 +100,9 @@ export default function Notifications({ onRetour }) {
                 </span>
               </div>
               <p className="notif-message">{n.message}</p>
+              {n.etablissementAuteur && (
+                <p className="notif-auteur">Par : {n.etablissementAuteur.nom}</p>
+              )}
               {!n.lue && <span className="notif-point"></span>}
             </div>
           ))}

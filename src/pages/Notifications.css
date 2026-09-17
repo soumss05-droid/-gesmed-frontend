@@ -114,6 +114,12 @@
   color: #1c2b28;
 }
 
+.notif-auteur {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #9aa39e;
+}
+
 .notif-point {
   position: absolute;
   top: 14px;

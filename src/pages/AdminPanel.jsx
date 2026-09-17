@@ -21,6 +21,14 @@ const LIBELLES_ROLE = {
   AUDITEUR: "Auditeur",
 };
 
+const LIBELLES_TYPE_NOTIF = {
+  VALIDEE: "Validée",
+  MODIFIEE: "Modifiée",
+  SCINDEE: "Scindée",
+  REJETEE_POUR_CORRECTION: "Rejetée — à corriger",
+  RUPTURE_STOCK: "Rupture de stock",
+};
+
 async function appelApi(chemin, options, token) {
   const res = await fetch(`${API_URL}${chemin}`, {
     ...options,
@@ -49,6 +57,12 @@ export default function AdminPanel({ onRetour }) {
   const [roles, setRoles] = useState([]);
   const [etablissements, setEtablissements] = useState([]);
   const [utilisateurs, setUtilisateurs] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+
+  const [filtreEtablissement, setFiltreEtablissement] = useState("");
+  const [filtreType, setFiltreType] = useState("");
+  const [filtreDateDebut, setFiltreDateDebut] = useState("");
+  const [filtreDateFin, setFiltreDateFin] = useState("");
 
   const [formEtab, setFormEtab] = useState({
     nom: "",
@@ -74,18 +88,20 @@ export default function AdminPanel({ onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const [d, p, r, e, u] = await Promise.all([
+      const [d, p, r, e, u, n] = await Promise.all([
         appelApi("/admin/drs", { method: "GET" }, token),
         appelApi("/admin/programmes", { method: "GET" }, token),
         appelApi("/admin/roles", { method: "GET" }, token),
         appelApi("/admin/etablissements", { method: "GET" }, token),
         appelApi("/admin/utilisateurs", { method: "GET" }, token),
+        appelApi("/admin/notifications", { method: "GET" }, token),
       ]);
       setDrsListe(d);
       setProgrammes(p);
       setRoles(r);
       setEtablissements(e);
       setUtilisateurs(u);
+      setNotifications(n);
     } catch (err) {
       setErreur(err.message);
     } finally {
@@ -214,6 +230,12 @@ export default function AdminPanel({ onRetour }) {
         >
           Utilisateurs
         </button>
+        <button
+          className={onglet === "notifications" ? "admin-onglet-actif" : "admin-onglet"}
+          onClick={() => setOnglet("notifications")}
+        >
+          Notifications
+        </button>
       </div>
 
       {chargement ? (
@@ -316,7 +338,7 @@ export default function AdminPanel({ onRetour }) {
             </tbody>
           </table>
         </>
-      ) : (
+      ) : onglet === "utilisateurs" ? (
         <>
           <form className="admin-formulaire" onSubmit={creerUtilisateur}>
             <h2>Créer un compte</h2>
@@ -433,6 +455,73 @@ export default function AdminPanel({ onRetour }) {
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <>
+          <div className="admin-filtres">
+            <div className="admin-champ">
+              <label>Établissement (destinataire)</label>
+              <select value={filtreEtablissement} onChange={(e) => setFiltreEtablissement(e.target.value)}>
+                <option value="">Tous</option>
+                {etablissements.map((e) => (
+                  <option key={e.id} value={e.nom}>{e.nom}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Type</label>
+              <select value={filtreType} onChange={(e) => setFiltreType(e.target.value)}>
+                <option value="">Tous</option>
+                {Object.entries(LIBELLES_TYPE_NOTIF).map(([val, lib]) => (
+                  <option key={val} value={val}>{lib}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Du</label>
+              <input type="date" value={filtreDateDebut} onChange={(e) => setFiltreDateDebut(e.target.value)} />
+            </div>
+            <div className="admin-champ">
+              <label>Au</label>
+              <input type="date" value={filtreDateFin} onChange={(e) => setFiltreDateFin(e.target.value)} />
+            </div>
+          </div>
+
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Message</th>
+                <th>Destinataire</th>
+                <th>Auteur</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {notifications
+                .filter((n) => !filtreEtablissement || n.etablissement?.nom === filtreEtablissement)
+                .filter((n) => !filtreType || n.type === filtreType)
+                .filter((n) => !filtreDateDebut || new Date(n.createdAt) >= new Date(filtreDateDebut))
+                .filter((n) => !filtreDateFin || new Date(n.createdAt) <= new Date(filtreDateFin + "T23:59:59"))
+                .map((n) => (
+                  <tr key={n.id}>
+                    <td>{LIBELLES_TYPE_NOTIF[n.type] || n.type}</td>
+                    <td>{n.message}</td>
+                    <td>{n.etablissement?.nom || "—"}</td>
+                    <td>{n.etablissementAuteur?.nom || "—"}</td>
+                    <td>
+                      {new Date(n.createdAt).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </>

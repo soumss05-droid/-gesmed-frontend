@@ -175,3 +175,18 @@
   background: #ffffff;
   color: #1c2b28;
 }
+
+.admin-filtres {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.admin-filtres .admin-champ {
+  min-width: 160px;
+}

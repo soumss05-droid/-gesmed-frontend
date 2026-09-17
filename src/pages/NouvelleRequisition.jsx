@@ -9,6 +9,7 @@ function ligneVide() {
 
 export default function NouvelleRequisition({ onRetour }) {
   const [produits, setProduits] = useState([]);
+  const [suggestions, setSuggestions] = useState({}); // { produitId: { cmm, stockDisponible, quantiteSuggeree } }
   const [lignes, setLignes] = useState([ligneVide()]);
   const [justification, setJustification] = useState("");
   const [chargementProduits, setChargementProduits] = useState(true);
@@ -17,25 +18,50 @@ export default function NouvelleRequisition({ onRetour }) {
   const [succes, setSucces] = useState(false);
 
   useEffect(() => {
-    async function chargerProduits() {
+    async function chargerDonnees() {
       try {
         const token = localStorage.getItem("gesmed_token");
-        const res = await fetch(`${API_URL}/produits`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Impossible de charger le catalogue produits.");
-        setProduits(await res.json());
+        const [resProduits, resSuggestions] = await Promise.all([
+          fetch(`${API_URL}/produits`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/stocks/commande-suggeree`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (!resProduits.ok) throw new Error("Impossible de charger le catalogue produits.");
+        setProduits(await resProduits.json());
+
+        // La quantité suggérée est un plus pour guider la commande — si
+        // elle échoue, on continue sans bloquer la création de réquisition.
+        if (resSuggestions.ok) {
+          const donneesSuggestions = await resSuggestions.json();
+          const parProduit = {};
+          for (const s of donneesSuggestions) parProduit[s.produitId] = s;
+          setSuggestions(parProduit);
+        }
       } catch (err) {
         setErreur(err.message || "Connexion instable, réessayez.");
       } finally {
         setChargementProduits(false);
       }
     }
-    chargerProduits();
+    chargerDonnees();
   }, []);
 
   function modifierLigne(index, champ, valeur) {
-    setLignes((prev) => prev.map((l, i) => (i === index ? { ...l, [champ]: valeur } : l)));
+    setLignes((prev) =>
+      prev.map((l, i) => {
+        if (i !== index) return l;
+        const miseAJour = { ...l, [champ]: valeur };
+        // Quand on choisit un produit, on pré-remplit avec la quantité
+        // suggérée (CMM × 1 mois − stock disponible), sans écraser une
+        // quantité déjà saisie manuellement.
+        if (champ === "produitId" && !l.quantiteDemandee) {
+          const suggestion = suggestions[valeur];
+          if (suggestion && suggestion.quantiteSuggeree > 0) {
+            miseAJour.quantiteDemandee = String(suggestion.quantiteSuggeree);
+          }
+        }
+        return miseAJour;
+      })
+    );
   }
 
   function ajouterLigne() {
@@ -105,28 +131,40 @@ export default function NouvelleRequisition({ onRetour }) {
 
       {!chargementProduits && (
         <form className="requisition-form" onSubmit={envoyerRequisition}>
-          {lignes.map((ligne, index) => (
-            <div className="requisition-ligne" key={index}>
-              <select value={ligne.produitId} onChange={(e) => modifierLigne(index, "produitId", e.target.value)}>
-                <option value="">Choisir un produit…</option>
-                {produits.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nom}</option>
-                ))}
-              </select>
+          {lignes.map((ligne, index) => {
+            const suggestion = suggestions[ligne.produitId];
+            return (
+              <div className="requisition-ligne-bloc" key={index}>
+                <div className="requisition-ligne">
+                  <select value={ligne.produitId} onChange={(e) => modifierLigne(index, "produitId", e.target.value)}>
+                    <option value="">Choisir un produit…</option>
+                    {produits.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nom}</option>
+                    ))}
+                  </select>
 
-              <input
-                type="number"
-                min="1"
-                placeholder="Quantité"
-                value={ligne.quantiteDemandee}
-                onChange={(e) => modifierLigne(index, "quantiteDemandee", e.target.value)}
-              />
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Quantité"
+                    value={ligne.quantiteDemandee}
+                    onChange={(e) => modifierLigne(index, "quantiteDemandee", e.target.value)}
+                  />
 
-              {lignes.length > 1 && (
-                <button type="button" className="requisition-supprimer" onClick={() => supprimerLigne(index)} aria-label="Supprimer cette ligne">✕</button>
-              )}
-            </div>
-          ))}
+                  {lignes.length > 1 && (
+                    <button type="button" className="requisition-supprimer" onClick={() => supprimerLigne(index)} aria-label="Supprimer cette ligne">✕</button>
+                  )}
+                </div>
+
+                {ligne.produitId && suggestion && (
+                  <p className="requisition-suggestion">
+                    Consommation moyenne mensuelle : {suggestion.cmm} — Stock disponible : {suggestion.stockDisponible}
+                    {suggestion.quantiteSuggeree > 0 && ` — Suggéré : ${suggestion.quantiteSuggeree}`}
+                  </p>
+                )}
+              </div>
+            );
+          })}
 
           <button type="button" className="requisition-ajouter" onClick={ajouterLigne}>+ Ajouter un produit</button>
 

@@ -39,7 +39,7 @@ function App() {
   if (vue === "rentree-camec") return <EnregistrerRentreeCamec onRetour={() => setVue("dashboard")} />;
   if (vue === "inventaire-physique") return <InventairePhysique onRetour={() => setVue("dashboard")} />;
   if (vue === "reapprovisionnement") return <CommanderReapprovisionnement onRetour={() => setVue("dashboard")} />;
-  if (vue === "notifications") return <Notifications onRetour={() => setVue("dashboard")} />;
+  if (vue === "notifications") return <Notifications session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={() => setVue("dashboard")} />;
   if (vue === "admin") return <AdminPanel onRetour={() => setVue("dashboard")} />;
 

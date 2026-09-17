@@ -95,7 +95,7 @@ export default function CommanderReapprovisionnement({ onRetour }) {
       </header>
 
       <p className="reappro-sous-titre">
-        Quantités suggérées automatiquement à partir de ta consommation moyenne (CMM) et du stock
+        Quantités suggérées automatiquement à partir de ta distribution moyenne mensuelle (DMM) et du stock
         disponible sur tout ton territoire. Ajuste librement avant d'envoyer.
       </p>
 
@@ -110,7 +110,7 @@ export default function CommanderReapprovisionnement({ onRetour }) {
             <thead>
               <tr>
                 <th>Produit</th>
-                <th>CMM</th>
+                <th>DMM</th>
                 <th>Stock disponible</th>
                 <th>Suggéré</th>
                 <th>Quantité à commander</th>
