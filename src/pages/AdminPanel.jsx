@@ -53,6 +53,7 @@ export default function AdminPanel({ onRetour }) {
   const [message, setMessage] = useState(null);
 
   const [drsListe, setDrsListe] = useState([]);
+  const [moughataas, setMoughataas] = useState([]);
   const [programmes, setProgrammes] = useState([]);
   const [roles, setRoles] = useState([]);
   const [etablissements, setEtablissements] = useState([]);
@@ -88,8 +89,9 @@ export default function AdminPanel({ onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const [d, p, r, e, u, n] = await Promise.all([
+      const [d, m, p, r, e, u, n] = await Promise.all([
         appelApi("/admin/drs", { method: "GET" }, token),
+        appelApi("/admin/moughataa", { method: "GET" }, token),
         appelApi("/admin/programmes", { method: "GET" }, token),
         appelApi("/admin/roles", { method: "GET" }, token),
         appelApi("/admin/etablissements", { method: "GET" }, token),
@@ -97,6 +99,7 @@ export default function AdminPanel({ onRetour }) {
         appelApi("/admin/notifications", { method: "GET" }, token),
       ]);
       setDrsListe(d);
+      setMoughataas(m);
       setProgrammes(p);
       setRoles(r);
       setEtablissements(e);
@@ -258,37 +261,63 @@ export default function AdminPanel({ onRetour }) {
                 <label>Type</label>
                 <select
                   value={formEtab.type}
-                  onChange={(e) => setFormEtab((f) => ({ ...f, type: e.target.value }))}
+                  onChange={(e) =>
+                    setFormEtab((f) => ({
+                      ...f,
+                      type: e.target.value,
+                      drsId: "",
+                      moughataaId: "",
+                      programmeId: "",
+                    }))
+                  }
                 >
                   {Object.entries(LIBELLES_TYPE_ETAB).map(([val, lib]) => (
                     <option key={val} value={val}>{lib}</option>
                   ))}
                 </select>
               </div>
-              <div className="admin-champ">
-                <label>DRS (si applicable)</label>
-                <select
-                  value={formEtab.drsId}
-                  onChange={(e) => setFormEtab((f) => ({ ...f, drsId: e.target.value }))}
-                >
-                  <option value="">—</option>
-                  {drsListe.map((d) => (
-                    <option key={d.id} value={d.id}>{d.nom}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="admin-champ">
-                <label>Programme (GAS Programme national uniquement)</label>
-                <select
-                  value={formEtab.programmeId}
-                  onChange={(e) => setFormEtab((f) => ({ ...f, programmeId: e.target.value }))}
-                >
-                  <option value="">—</option>
-                  {programmes.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nom}</option>
-                  ))}
-                </select>
-              </div>
+              {formEtab.type === "GAS_DRS" && (
+                <div className="admin-champ">
+                  <label>DRS</label>
+                  <select
+                    value={formEtab.drsId}
+                    onChange={(e) => setFormEtab((f) => ({ ...f, drsId: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    {drsListe.map((d) => (
+                      <option key={d.id} value={d.id}>{d.nom}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {(formEtab.type === "GAS_MOUGHATAA" || formEtab.type === "FORMATION_SANITAIRE") && (
+                <div className="admin-champ">
+                  <label>Moughataa</label>
+                  <select
+                    value={formEtab.moughataaId}
+                    onChange={(e) => setFormEtab((f) => ({ ...f, moughataaId: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    {moughataas.map((m) => (
+                      <option key={m.id} value={m.id}>{m.nom} ({m.drs?.nom})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {formEtab.type === "GAS_PROGRAMME_NATIONAL" && (
+                <div className="admin-champ">
+                  <label>Programme</label>
+                  <select
+                    value={formEtab.programmeId}
+                    onChange={(e) => setFormEtab((f) => ({ ...f, programmeId: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    {programmes.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nom}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="admin-champ">
                 <label>A un stock physique ?</label>
                 <select
