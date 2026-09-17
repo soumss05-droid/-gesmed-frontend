@@ -11,6 +11,7 @@ import InventairePhysique from "./pages/InventairePhysique";
 import CommanderReapprovisionnement from "./pages/CommanderReapprovisionnement";
 import Notifications from "./pages/Notifications";
 import SuiviRequisitions from "./pages/SuiviRequisitions";
+import AdminPanel from "./pages/AdminPanel";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -40,6 +41,7 @@ function App() {
   if (vue === "reapprovisionnement") return <CommanderReapprovisionnement onRetour={() => setVue("dashboard")} />;
   if (vue === "notifications") return <Notifications onRetour={() => setVue("dashboard")} />;
   if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={() => setVue("dashboard")} />;
+  if (vue === "admin") return <AdminPanel onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -55,6 +57,7 @@ function App() {
       onReapprovisionnement={() => setVue("reapprovisionnement")}
       onNotifications={() => setVue("notifications")}
       onSuiviRequisitions={() => setVue("suivi-requisitions")}
+      onAdmin={() => setVue("admin")}
     />
   );
 }
