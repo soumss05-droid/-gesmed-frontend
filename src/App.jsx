@@ -12,6 +12,7 @@ import CommanderReapprovisionnement from "./pages/CommanderReapprovisionnement";
 import Notifications from "./pages/Notifications";
 import SuiviRequisitions from "./pages/SuiviRequisitions";
 import AdminPanel from "./pages/AdminPanel";
+import Rapports from "./pages/Rapports";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -42,6 +43,7 @@ function App() {
   if (vue === "notifications") return <Notifications session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={() => setVue("dashboard")} />;
   if (vue === "admin") return <AdminPanel onRetour={() => setVue("dashboard")} />;
+  if (vue === "rapports") return <Rapports onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -58,6 +60,7 @@ function App() {
       onNotifications={() => setVue("notifications")}
       onSuiviRequisitions={() => setVue("suivi-requisitions")}
       onAdmin={() => setVue("admin")}
+      onRapports={() => setVue("rapports")}
     />
   );
 }

@@ -95,6 +95,7 @@ export default function Dashboard({
   onNotifications,
   onSuiviRequisitions,
   onAdmin,
+  onRapports,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -192,6 +193,10 @@ export default function Dashboard({
           </button>
         )}
 
+        <button className="dashboard-bouton-action" onClick={onRapports}>
+          Rapports
+        </button>
+
         {peutSuivreRequisitions && (
           <button className="dashboard-bouton-action" onClick={onSuiviRequisitions}>
             Suivi de mes réquisitions
@@ -209,7 +214,7 @@ export default function Dashboard({
             Voir les réquisitions à valider
           </button>
         )}
-        {["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA"].includes(utilisateur.role) && (
+        {["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS"].includes(utilisateur.role) && (
           <button className="dashboard-bouton-action" onClick={onStockReseau}>
             Voir le stock du réseau
           </button>
