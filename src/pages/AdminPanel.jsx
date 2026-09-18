@@ -59,11 +59,23 @@ export default function AdminPanel({ onRetour }) {
   const [etablissements, setEtablissements] = useState([]);
   const [utilisateurs, setUtilisateurs] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [lots, setLots] = useState([]);
+  const [produits, setProduits] = useState([]);
+
+  const [filtreLotProduit, setFiltreLotProduit] = useState("");
+  const [filtreLotNiveau, setFiltreLotNiveau] = useState("");
+  const [filtreLotDateDebut, setFiltreLotDateDebut] = useState("");
+  const [filtreLotDateFin, setFiltreLotDateFin] = useState("");
 
   const [filtreEtablissement, setFiltreEtablissement] = useState("");
   const [filtreType, setFiltreType] = useState("");
   const [filtreDateDebut, setFiltreDateDebut] = useState("");
   const [filtreDateFin, setFiltreDateFin] = useState("");
+
+  const [filtreEtabType, setFiltreEtabType] = useState("");
+  const [filtreEtabDrs, setFiltreEtabDrs] = useState("");
+  const [filtreEtabMoughataa, setFiltreEtabMoughataa] = useState("");
+  const [filtreEtabStatut, setFiltreEtabStatut] = useState("");
 
   const [formEtab, setFormEtab] = useState({
     nom: "",
@@ -89,7 +101,7 @@ export default function AdminPanel({ onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const [d, m, p, r, e, u, n] = await Promise.all([
+      const [d, m, p, r, e, u, n, l, prod] = await Promise.all([
         appelApi("/admin/drs", { method: "GET" }, token),
         appelApi("/admin/moughataa", { method: "GET" }, token),
         appelApi("/admin/programmes", { method: "GET" }, token),
@@ -97,6 +109,8 @@ export default function AdminPanel({ onRetour }) {
         appelApi("/admin/etablissements", { method: "GET" }, token),
         appelApi("/admin/utilisateurs", { method: "GET" }, token),
         appelApi("/admin/notifications", { method: "GET" }, token),
+        appelApi("/admin/stocks", { method: "GET" }, token),
+        appelApi("/produits", { method: "GET" }, token),
       ]);
       setDrsListe(d);
       setMoughataas(m);
@@ -105,6 +119,8 @@ export default function AdminPanel({ onRetour }) {
       setEtablissements(e);
       setUtilisateurs(u);
       setNotifications(n);
+      setLots(l);
+      setProduits(prod);
     } catch (err) {
       setErreur(err.message);
     } finally {
@@ -239,6 +255,12 @@ export default function AdminPanel({ onRetour }) {
         >
           Notifications
         </button>
+        <button
+          className={onglet === "stocks" ? "admin-onglet-actif" : "admin-onglet"}
+          onClick={() => setOnglet("stocks")}
+        >
+          Stocks
+        </button>
       </div>
 
       {chargement ? (
@@ -340,6 +362,44 @@ export default function AdminPanel({ onRetour }) {
             <button type="submit" className="admin-bouton">Créer l'établissement</button>
           </form>
 
+          <div className="admin-filtres">
+            <div className="admin-champ">
+              <label>Type</label>
+              <select value={filtreEtabType} onChange={(e) => setFiltreEtabType(e.target.value)}>
+                <option value="">Tous</option>
+                {Object.entries(LIBELLES_TYPE_ETAB).map(([val, lib]) => (
+                  <option key={val} value={val}>{lib}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>DRS</label>
+              <select value={filtreEtabDrs} onChange={(e) => setFiltreEtabDrs(e.target.value)}>
+                <option value="">Toutes</option>
+                {drsListe.map((d) => (
+                  <option key={d.id} value={d.nom}>{d.nom}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Moughataa</label>
+              <select value={filtreEtabMoughataa} onChange={(e) => setFiltreEtabMoughataa(e.target.value)}>
+                <option value="">Toutes</option>
+                {moughataas.map((m) => (
+                  <option key={m.id} value={m.nom}>{m.nom}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Statut</label>
+              <select value={filtreEtabStatut} onChange={(e) => setFiltreEtabStatut(e.target.value)}>
+                <option value="">Tous</option>
+                <option value="actif">Actif</option>
+                <option value="inactif">Désactivé</option>
+              </select>
+            </div>
+          </div>
+
           <table className="admin-table">
             <thead>
               <tr>
@@ -351,7 +411,12 @@ export default function AdminPanel({ onRetour }) {
               </tr>
             </thead>
             <tbody>
-              {etablissements.map((e) => (
+              {etablissements
+                .filter((e) => !filtreEtabType || e.type === filtreEtabType)
+                .filter((e) => !filtreEtabDrs || e.drs?.nom === filtreEtabDrs)
+                .filter((e) => !filtreEtabMoughataa || e.moughataa?.nom === filtreEtabMoughataa)
+                .filter((e) => !filtreEtabStatut || (filtreEtabStatut === "actif" ? e.actif : !e.actif))
+                .map((e) => (
                 <tr key={e.id} className={!e.actif ? "admin-ligne-inactive" : ""}>
                   <td>{e.nom}</td>
                   <td>{LIBELLES_TYPE_ETAB[e.type] || e.type}</td>
@@ -487,7 +552,7 @@ export default function AdminPanel({ onRetour }) {
             </tbody>
           </table>
         </>
-      ) : (
+      ) : onglet === "notifications" ? (
         <>
           <div className="admin-filtres">
             <div className="admin-champ">
@@ -549,6 +614,73 @@ export default function AdminPanel({ onRetour }) {
                         minute: "2-digit",
                       })}
                     </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <>
+          <div className="admin-filtres">
+            <div className="admin-champ">
+              <label>Produit</label>
+              <select value={filtreLotProduit} onChange={(e) => setFiltreLotProduit(e.target.value)}>
+                <option value="">Tous</option>
+                {produits.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nom}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Niveau</label>
+              <select value={filtreLotNiveau} onChange={(e) => setFiltreLotNiveau(e.target.value)}>
+                <option value="">Tous</option>
+                {Object.entries(LIBELLES_TYPE_ETAB).map(([val, lib]) => (
+                  <option key={val} value={val}>{lib}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Péremption du</label>
+              <input type="date" value={filtreLotDateDebut} onChange={(e) => setFiltreLotDateDebut(e.target.value)} />
+            </div>
+            <div className="admin-champ">
+              <label>Péremption au</label>
+              <input type="date" value={filtreLotDateFin} onChange={(e) => setFiltreLotDateFin(e.target.value)} />
+            </div>
+          </div>
+
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Établissement</th>
+                <th>Niveau</th>
+                <th>Numéro de lot</th>
+                <th>Péremption</th>
+                <th>Quantité</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lots
+                .filter((l) => !filtreLotProduit || l.produitId === filtreLotProduit)
+                .filter((l) => !filtreLotNiveau || l.etablissement?.type === filtreLotNiveau)
+                .filter((l) => !filtreLotDateDebut || new Date(l.datePeremption) >= new Date(filtreLotDateDebut))
+                .filter((l) => !filtreLotDateFin || new Date(l.datePeremption) <= new Date(filtreLotDateFin + "T23:59:59"))
+                .map((l) => (
+                  <tr key={l.id}>
+                    <td>{l.produit?.nom || "—"}</td>
+                    <td>{l.etablissement?.nom || "—"}</td>
+                    <td>{LIBELLES_TYPE_ETAB[l.etablissement?.type] || l.etablissement?.type || "—"}</td>
+                    <td>{l.numeroLot}</td>
+                    <td>
+                      {new Date(l.datePeremption).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td>{l.quantite}</td>
                   </tr>
                 ))}
             </tbody>
