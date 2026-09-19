@@ -158,8 +158,7 @@ export default function NouvelleRequisition({ onRetour }) {
 
                 {ligne.produitId && suggestion && (
                   <p className="requisition-suggestion">
-                    Consommation moyenne mensuelle : {suggestion.cmm} — Stock disponible : {suggestion.stockDisponible}
-                    {suggestion.quantiteSuggeree > 0 && ` — Suggéré : ${suggestion.quantiteSuggeree}`}
+                    Consommation moyenne mensuelle : {suggestion.cmm} — Stock disponible : {suggestion.stockDisponible} — Suggéré : {suggestion.quantiteSuggeree}
                   </p>
                 )}
               </div>

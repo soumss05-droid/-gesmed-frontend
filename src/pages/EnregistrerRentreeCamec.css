@@ -1,7 +1,10 @@
 .rentree-page {
+  color-scheme: light;
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 20px 60px;
+  background: #eef0e7;
+  color: #1c2b28;
 }
 
 .rentree-header {
@@ -12,8 +15,10 @@
 }
 
 .rentree-retour {
-  background: none;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  padding: 6px 12px;
   cursor: pointer;
   font-size: 0.95rem;
   color: #12302c;
@@ -22,6 +27,7 @@
 .rentree-header h1 {
   font-size: 1.5rem;
   margin: 0;
+  color: #1c2b28;
 }
 
 .rentree-sous-titre {
@@ -40,6 +46,7 @@
 
 .rentree-message {
   background: #fbf4e6;
+  color: #1c2b28;
   border: 1px solid #c99a4b;
   border-radius: 6px;
   padding: 10px 14px;
@@ -47,7 +54,7 @@
 }
 
 .rentree-formulaire {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #dedcd0;
   border-radius: 10px;
   padding: 24px;
@@ -68,6 +75,7 @@
   font-weight: 500;
   margin-bottom: 6px;
   font-size: 0.9rem;
+  color: #1c2b28;
 }
 
 .rentree-obligatoire {
@@ -83,6 +91,13 @@
   border-radius: 6px;
   font-size: 0.95rem;
   box-sizing: border-box;
+  background: #ffffff;
+  color: #1c2b28;
+}
+
+.rentree-champ input::placeholder,
+.rentree-champ textarea::placeholder {
+  color: #9aa39e;
 }
 
 .rentree-champ textarea {
@@ -122,7 +137,7 @@
 }
 
 .rentree-bouton-secondaire {
-  background: none;
+  background: #ffffff;
   border: 1px solid #dedcd0;
   border-radius: 6px;
   padding: 10px 20px;
@@ -135,4 +150,29 @@
   .rentree-grille {
     grid-template-columns: 1fr;
   }
+}
+
+.rentree-lien-nouveau-produit {
+  background: none;
+  border: none;
+  color: #12302c;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 6px 0 0;
+  display: block;
+}
+
+.rentree-panneau-nouveau-produit {
+  background: #fbf9f4;
+  border: 1px dashed #c99a4b;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.rentree-panneau-nouveau-produit h2 {
+  font-size: 0.95rem;
+  margin: 0 0 10px;
+  color: #1c2b28;
 }

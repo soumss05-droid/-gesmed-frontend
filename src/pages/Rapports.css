@@ -126,3 +126,148 @@
   border-bottom: 1px solid #f0efe8;
   color: #1c2b28;
 }
+
+.rapports-onglets {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.rapports-onglet, .rapports-onglet-actif {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #dedcd0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #6b7873;
+}
+
+.rapports-onglet-actif {
+  background: #12302c;
+  color: #f4f2ea;
+  border-color: #12302c;
+}
+
+.rapports-sous-section {
+  font-size: 1rem;
+  margin: 24px 0 12px;
+  color: #1c2b28;
+}
+
+.rapports-svg-scroll {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.rapports-svg {
+  display: block;
+}
+
+.rapports-legende {
+  display: flex;
+  gap: 18px;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: #6b7873;
+}
+
+.rapports-legende-puce {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.rapports-kanban {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.rapports-kanban-colonne {
+  flex: 0 0 220px;
+  background: #f5f4ee;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.rapports-kanban-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1c2b28;
+  margin-bottom: 8px;
+}
+
+.rapports-kanban-compte {
+  background: #dedcd0;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  color: #1c2b28;
+}
+
+.rapports-kanban-cartes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.rapports-kanban-carte {
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.rapports-kanban-carte strong {
+  color: #1c2b28;
+  font-size: 0.82rem;
+}
+
+.rapports-kanban-date {
+  color: #9aa39e;
+  font-size: 0.72rem;
+}
+
+.rapports-kanban-vide {
+  color: #9aa39e;
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 0;
+}
+
+.rapports-carte--cliquable {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 10px;
+  width: 100%;
+  font-family: inherit;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.rapports-carte--cliquable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(18, 48, 44, 0.1);
+}

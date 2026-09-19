@@ -14,8 +14,18 @@ const champVide = {
   note: "",
 };
 
+const nouveauProduitVide = {
+  nom: "",
+  forme: "",
+  unite: "",
+  seuilMinDefaut: "",
+  seuilMaxDefaut: "",
+  programmeId: "",
+};
+
 export default function EnregistrerRentreeCamec({ onRetour }) {
   const [produits, setProduits] = useState([]);
+  const [programmes, setProgrammes] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [message, setMessage] = useState(null);
@@ -23,17 +33,24 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
   const [form, setForm] = useState(champVide);
   const [erreursChamps, setErreursChamps] = useState({});
 
-  async function chargerProduits() {
+  const [afficherNouveauProduit, setAfficherNouveauProduit] = useState(false);
+  const [nouveauProduit, setNouveauProduit] = useState(nouveauProduitVide);
+  const [erreurNouveauProduit, setErreurNouveauProduit] = useState(null);
+  const [creationEnCours, setCreationEnCours] = useState(false);
+
+  async function chargerDonnees() {
     setChargement(true);
     setErreur(null);
     try {
       const token = localStorage.getItem("gesmed_token");
-      const res = await fetch(`${API_URL}/produits`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.erreur || "Impossible de charger les produits.");
-      setProduits(data);
+      const [resProduits, resProgrammes] = await Promise.all([
+        fetch(`${API_URL}/produits`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/produits/programmes`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      const dataProduits = await resProduits.json();
+      if (!resProduits.ok) throw new Error(dataProduits.erreur || "Impossible de charger les produits.");
+      setProduits(dataProduits);
+      if (resProgrammes.ok) setProgrammes(await resProgrammes.json());
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
     } finally {
@@ -42,7 +59,7 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
   }
 
   useEffect(() => {
-    chargerProduits();
+    chargerDonnees();
   }, []);
 
   function majChamp(cle, valeur) {
@@ -100,6 +117,50 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
     }
   }
 
+  function majNouveauProduit(cle, valeur) {
+    setNouveauProduit((f) => ({ ...f, [cle]: valeur }));
+  }
+
+  async function creerNouveauProduit(ev) {
+    ev.preventDefault();
+    setErreurNouveauProduit(null);
+
+    if (!nouveauProduit.nom.trim() || !nouveauProduit.programmeId || !nouveauProduit.seuilMinDefaut || !nouveauProduit.seuilMaxDefaut) {
+      setErreurNouveauProduit("Nom, programme, seuil min et seuil max sont requis.");
+      return;
+    }
+
+    setCreationEnCours(true);
+    try {
+      const token = localStorage.getItem("gesmed_token");
+      const res = await fetch(`${API_URL}/produits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nom: nouveauProduit.nom.trim(),
+          forme: nouveauProduit.forme || undefined,
+          unite: nouveauProduit.unite || undefined,
+          seuilMinDefaut: Number(nouveauProduit.seuilMinDefaut),
+          seuilMaxDefaut: Number(nouveauProduit.seuilMaxDefaut),
+          programmeId: nouveauProduit.programmeId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erreur || "La création du produit a échoué.");
+
+      // Rafraîchit la liste et sélectionne directement le produit qui
+      // vient d'être créé, pour enchaîner sur la rentrée sans re-chercher.
+      await chargerDonnees();
+      majChamp("produitId", data.id);
+      setNouveauProduit(nouveauProduitVide);
+      setAfficherNouveauProduit(false);
+    } catch (err) {
+      setErreurNouveauProduit(err.message || "Connexion instable, réessayez.");
+    } finally {
+      setCreationEnCours(false);
+    }
+  }
+
   return (
     <div className="rentree-page">
       <header className="rentree-header">
@@ -136,7 +197,89 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
               ))}
             </select>
             {erreursChamps.produitId && <p className="rentree-erreur-champ">{erreursChamps.produitId}</p>}
+
+            <button
+              type="button"
+              className="rentree-lien-nouveau-produit"
+              onClick={() => setAfficherNouveauProduit((v) => !v)}
+            >
+              {afficherNouveauProduit ? "Annuler la création" : "Produit introuvable ? + Créer un nouveau produit"}
+            </button>
           </div>
+
+          {afficherNouveauProduit && (
+            <div className="rentree-panneau-nouveau-produit">
+              <h2>Nouveau produit</h2>
+              {erreurNouveauProduit && <p className="rentree-erreur-champ">{erreurNouveauProduit}</p>}
+              <div className="rentree-grille">
+                <div className="rentree-champ">
+                  <label>Nom *</label>
+                  <input
+                    type="text"
+                    value={nouveauProduit.nom}
+                    onChange={(e) => majNouveauProduit("nom", e.target.value)}
+                    placeholder="ex. Doliprane 500mg"
+                  />
+                </div>
+                <div className="rentree-champ">
+                  <label>Forme</label>
+                  <input
+                    type="text"
+                    value={nouveauProduit.forme}
+                    onChange={(e) => majNouveauProduit("forme", e.target.value)}
+                    placeholder="ex. Comprimé, Sirop..."
+                  />
+                </div>
+                <div className="rentree-champ">
+                  <label>Unité</label>
+                  <input
+                    type="text"
+                    value={nouveauProduit.unite}
+                    onChange={(e) => majNouveauProduit("unite", e.target.value)}
+                    placeholder="ex. boîte, flacon..."
+                  />
+                </div>
+                <div className="rentree-champ">
+                  <label>Programme *</label>
+                  <select
+                    value={nouveauProduit.programmeId}
+                    onChange={(e) => majNouveauProduit("programmeId", e.target.value)}
+                  >
+                    <option value="">Sélectionner…</option>
+                    {programmes.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nom}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="rentree-champ">
+                  <label>Seuil minimum *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={nouveauProduit.seuilMinDefaut}
+                    onChange={(e) => majNouveauProduit("seuilMinDefaut", e.target.value)}
+                  />
+                </div>
+                <div className="rentree-champ">
+                  <label>Seuil maximum *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={nouveauProduit.seuilMaxDefaut}
+                    onChange={(e) => majNouveauProduit("seuilMaxDefaut", e.target.value)}
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="rentree-bouton"
+                disabled={creationEnCours}
+                onClick={creerNouveauProduit}
+              >
+                {creationEnCours ? "..." : "Créer ce produit"}
+              </button>
+            </div>
+          )}
 
           <div className="rentree-grille">
             <div className="rentree-champ">
