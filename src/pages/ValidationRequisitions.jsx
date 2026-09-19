@@ -87,11 +87,19 @@ export default function ValidationRequisitions({ session, onRetour }) {
 
       if (decision === "valider") {
         if (data.partiel) {
-          setMessage("Une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur.");
+          setMessage(
+            session?.utilisateur?.role === "GAS_MOUGHATAA"
+              ? "Livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant."
+              : "Une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur."
+          );
         } else if (data.livreeDirectement) {
           setMessage("Livrée entièrement depuis votre stock — bordereau de livraison généré.");
         } else {
-          setMessage("Réquisition transmise au niveau supérieur.");
+          setMessage(
+            session?.utilisateur?.role === "GAS_MOUGHATAA"
+              ? "Réquisition clôturée : aucun stock disponible pour l'instant."
+              : "Réquisition transmise au niveau supérieur."
+          );
         }
       }
 
