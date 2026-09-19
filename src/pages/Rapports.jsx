@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./Rapports.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -34,10 +34,45 @@ const ORDRE_COLONNES_KANBAN = [
 ];
 
 // ---------------------------------------------------------------------------
-// Petits graphiques SVG faits main — pas de dépendance externe à installer.
+// Convertit un élément <svg> en image PNG téléchargeable — entièrement côté
+// navigateur, sans dépendance externe (SVG → Blob → Image → Canvas → PNG).
 // ---------------------------------------------------------------------------
+function telechargerSvgEnPng(svgElement, nomFichier) {
+  if (!svgElement) return;
+  const serializer = new XMLSerializer();
+  let source = serializer.serializeToString(svgElement);
+  if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+    source = source.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+  const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = () => {
+    const largeur = svgElement.width.baseVal.value || svgElement.getBoundingClientRect().width;
+    const hauteur = svgElement.height.baseVal.value || svgElement.getBoundingClientRect().height;
+    const echelle = 2; // Image plus nette au téléchargement.
+    const canvas = document.createElement("canvas");
+    canvas.width = largeur * echelle;
+    canvas.height = hauteur * echelle;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(echelle, echelle);
+    ctx.drawImage(img, 0, 0, largeur, hauteur);
+    URL.revokeObjectURL(url);
+    canvas.toBlob((blob) => {
+      const lienUrl = URL.createObjectURL(blob);
+      const lien = document.createElement("a");
+      lien.href = lienUrl;
+      lien.download = nomFichier;
+      lien.click();
+      URL.revokeObjectURL(lienUrl);
+    }, "image/png");
+  };
+  img.src = url;
+}
 
-function DiagrammeStocks({ stocks }) {
+function DiagrammeStocks({ stocks, svgRef }) {
   if (stocks.length === 0) return <p className="rapports-vide">Aucun stock à afficher.</p>;
 
   const largeurBarre = 42;
@@ -48,7 +83,7 @@ function DiagrammeStocks({ stocks }) {
 
   return (
     <div className="rapports-svg-scroll">
-      <svg width={largeurTotale} height={hauteurMax + 70} className="rapports-svg">
+      <svg ref={svgRef} width={largeurTotale} height={hauteurMax + 70} className="rapports-svg">
         {stocks.map((s, i) => {
           const hauteur = Math.max(2, (s.quantiteTotale / max) * hauteurMax);
           const x = espace + i * (largeurBarre + espace);
@@ -84,7 +119,7 @@ function DiagrammeStocks({ stocks }) {
   );
 }
 
-function CourbeMouvements({ data }) {
+function CourbeMouvements({ data, svgRef }) {
   if (data.length === 0) return <p className="rapports-vide">Aucun mouvement sur les 30 derniers jours.</p>;
 
   const largeur = 640;
@@ -104,7 +139,7 @@ function CourbeMouvements({ data }) {
 
   return (
     <div>
-      <svg width={largeur} height={hauteur} className="rapports-svg">
+      <svg ref={svgRef} width={largeur} height={hauteur} className="rapports-svg">
         <line x1={marge} y1={hauteur - marge} x2={largeur - marge} y2={hauteur - marge} stroke="#dedcd0" />
         <polyline points={pointsPour("entrees")} fill="none" stroke="#2f7a4f" strokeWidth="2" />
         <polyline points={pointsPour("sorties")} fill="none" stroke="#b3492f" strokeWidth="2" />
@@ -123,6 +158,9 @@ function CourbeMouvements({ data }) {
 
 export default function Rapports({ onRetour }) {
   const [onglet, setOnglet] = useState("apercu");
+
+  const refDiagramme = useRef(null);
+  const refCourbe = useRef(null);
 
   const [kpis, setKpis] = useState(null);
   const [produitsRupture, setProduitsRupture] = useState([]);
@@ -273,11 +311,27 @@ export default function Rapports({ onRetour }) {
         </>
       ) : onglet === "graphiques" ? (
         <>
-          <h2 className="rapports-sous-section">Stock par produit</h2>
-          <DiagrammeStocks stocks={stocks} />
+          <div className="rapports-section-entete">
+            <h2 className="rapports-sous-section">Stock par produit</h2>
+            <button
+              className="rapports-bouton-export"
+              onClick={() => telechargerSvgEnPng(refDiagramme.current, "stock-par-produit.png")}
+            >
+              Télécharger en image
+            </button>
+          </div>
+          <DiagrammeStocks stocks={stocks} svgRef={refDiagramme} />
 
-          <h2 className="rapports-sous-section">Mouvements des 30 derniers jours</h2>
-          <CourbeMouvements data={evolution} />
+          <div className="rapports-section-entete">
+            <h2 className="rapports-sous-section">Mouvements des 30 derniers jours</h2>
+            <button
+              className="rapports-bouton-export"
+              onClick={() => telechargerSvgEnPng(refCourbe.current, "mouvements-30-jours.png")}
+            >
+              Télécharger en image
+            </button>
+          </div>
+          <CourbeMouvements data={evolution} svgRef={refCourbe} />
         </>
       ) : (
         <div className="rapports-kanban">
