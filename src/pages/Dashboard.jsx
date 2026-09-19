@@ -10,6 +10,7 @@ const LIBELLES_ROLE = {
   GESTIONNAIRE_DRS: "Gestionnaire DRS",
   DIRECTEUR_DRS: "Directeur DRS",
   GAS_MOUGHATAA: "Agent GAS Moughataa",
+  MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",
   FORMATION_SANITAIRE: "Agent formation sanitaire",
   AUDITEUR: "Auditeur",
 };
@@ -39,6 +40,9 @@ const SECTIONS_PAR_ROLE = {
   ],
   DIRECTEUR_DRS: [
     { titre: "Vue régionale", valeur: "—", description: "Consultation, sans validation" },
+  ],
+  MEDECIN_CHEF_MOUGHATAA: [
+    { titre: "Vue de la Moughataa", valeur: "—", description: "Consultation, sans validation" },
   ],
   GAS_MOUGHATAA: [
     { titre: "Produits suivis", valeur: "—", description: "Niveau de stock actuel" },
@@ -155,6 +159,16 @@ export default function Dashboard({
         if (utilisateur.role === "GESTIONNAIRE_DRS") {
           base[2].valeur = String(nombreAlertes);
         }
+        if (utilisateur.role === "GESTIONNAIRE_CAMEC") {
+          try {
+            const resAValider = await fetch(`${API_URL}/requisitions/a-valider`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (resAValider.ok) base[1].valeur = String((await resAValider.json()).length);
+          } catch {
+            // Reste à "—" si l'appel échoue — pas bloquant pour le reste de l'écran.
+          }
+        }
         setSections(base);
       } catch (erreur) {
         console.error(erreur);
@@ -230,6 +244,7 @@ export default function Dashboard({
     GAS_PROGRAMME_NATIONAL: [onValidationRequisitions, onStockReseau, onEcarts],
     GESTIONNAIRE_DRS: [onStockReseau, onValidationRequisitions, onStockReseau],
     DIRECTEUR_DRS: [onStockReseau],
+    MEDECIN_CHEF_MOUGHATAA: [onStockReseau],
     GAS_MOUGHATAA: [onStockReseau, onValidationRequisitions, onReception],
     FORMATION_SANITAIRE: [onInventairePhysique, onInventairePhysique, onInventairePhysique],
     AUDITEUR: [onRapports, onEcarts],
@@ -254,7 +269,7 @@ export default function Dashboard({
     {
       titre: "Stock",
       actions: [
-        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
+        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS", "MEDECIN_CHEF_MOUGHATAA"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
         { roles: ["GESTIONNAIRE_CAMEC", "ADMIN"], icone: "camion", libelle: "Rentrée des produits", onClick: onRentreeCamec },
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
         { roles: ["FORMATION_SANITAIRE"], icone: "boite", libelle: "Enregistrer une dispensation", onClick: onDispensation },
