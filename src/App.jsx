@@ -44,7 +44,7 @@ function App() {
   if (vue === "notifications") return <Notifications session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={() => setVue("dashboard")} />;
   if (vue === "admin") return <AdminPanel onRetour={() => setVue("dashboard")} />;
-  if (vue === "rapports") return <Rapports onRetour={() => setVue("dashboard")} />;
+  if (vue === "rapports") return <Rapports session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "ecarts") return <Ecarts onRetour={() => setVue("dashboard")} />;
 
   return (

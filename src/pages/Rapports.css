@@ -251,19 +251,19 @@
   margin: 0;
 }
 
+.rapports-boutons-export {
+  display: flex;
+  gap: 8px;
+}
+
 .rapports-carte--cliquable {
-  all: unset;
-  box-sizing: border-box;
   cursor: pointer;
+  text-align: left;
+  font-family: inherit;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #dedcd0;
-  border-radius: 10px;
+  align-items: flex-start;
   width: 100%;
-  font-family: inherit;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 

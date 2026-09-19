@@ -156,11 +156,88 @@ function CourbeMouvements({ data, svgRef }) {
   );
 }
 
-export default function Rapports({ onRetour }) {
-  const [onglet, setOnglet] = useState("apercu");
+// ---------------------------------------------------------------------------
+// Graphique générique pour le croisement (DRS, Moughataa ou formation
+// sanitaire, toute zone confondue) — un simple diagramme en barres, réutilisé
+// quel que soit le regroupement choisi.
+// ---------------------------------------------------------------------------
+function GraphiqueCroisement({ lignes, svgRef }) {
+  if (lignes.length === 0) return <p className="rapports-vide">Aucune donnée pour ce produit.</p>;
 
-  const refDiagramme = useRef(null);
+  const largeurBarre = 42;
+  const espace = 18;
+  const hauteurMax = 160;
+  const max = Math.max(1, ...lignes.map((l) => l.quantite));
+  const largeurTotale = lignes.length * (largeurBarre + espace) + espace;
+
+  return (
+    <div className="rapports-svg-scroll">
+      <svg ref={svgRef} width={largeurTotale} height={hauteurMax + 70} className="rapports-svg">
+        {lignes.map((l, i) => {
+          const hauteur = Math.max(2, (l.quantite / max) * hauteurMax);
+          const x = espace + i * (largeurBarre + espace);
+          const y = hauteurMax - hauteur + 20;
+          return (
+            <g key={l.nom}>
+              <rect x={x} y={y} width={largeurBarre} height={hauteur} fill="#12302c" rx="3" />
+              <text x={x + largeurBarre / 2} y={y - 6} textAnchor="middle" fontSize="11" fill="#1c2b28">
+                {l.quantite}
+              </text>
+              <text
+                x={x + largeurBarre / 2}
+                y={hauteurMax + 36}
+                textAnchor="end"
+                fontSize="10"
+                fill="#6b7873"
+                transform={`rotate(-40 ${x + largeurBarre / 2} ${hauteurMax + 36})`}
+              >
+                {l.nom.length > 16 ? l.nom.slice(0, 16) + "…" : l.nom}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+export default function Rapports({ session, onRetour }) {
+  const [onglet, setOnglet] = useState("apercu");
+  const estAdmin = session?.utilisateur?.role === "ADMIN";
+
   const refCourbe = useRef(null);
+  const refCroisement = useRef(null);
+  const refDiagrammePropre = useRef(null);
+
+  const [produitsListe, setProduitsListe] = useState([]);
+  const [produitCroise, setProduitCroise] = useState("");
+
+  const peutCroiserRegion = ["GESTIONNAIRE_DRS", "DIRECTEUR_DRS"].includes(session?.utilisateur?.role);
+  const peutCroiserMoughataa = ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA"].includes(session?.utilisateur?.role);
+  const peutCroiserProgramme = session?.utilisateur?.role === "GAS_PROGRAMME_NATIONAL";
+  const peutCroiser = estAdmin || peutCroiserRegion || peutCroiserMoughataa || peutCroiserProgramme;
+
+  const regroupementsDisponibles = estAdmin
+    ? [
+        { valeur: "drs", libelle: "Par DRS" },
+        { valeur: "moughataa", libelle: "Par Moughataa" },
+        { valeur: "formationsanitaire", libelle: "Par formation sanitaire" },
+      ]
+    : peutCroiserProgramme
+    ? [
+        { valeur: "drs", libelle: "Par DRS" },
+        { valeur: "moughataa", libelle: "Par Moughataa" },
+      ]
+    : peutCroiserRegion
+    ? [
+        { valeur: "moughataa", libelle: "Par Moughataa" },
+        { valeur: "formationsanitaire", libelle: "Par formation sanitaire" },
+      ]
+    : [{ valeur: "formationsanitaire", libelle: "Par formation sanitaire" }];
+
+  const [regroupementNiveau, setRegroupementNiveau] = useState(regroupementsDisponibles[0]?.valeur || "moughataa");
+  const [croisementNiveau, setCroisementNiveau] = useState(null);
+  const [chargementCroisement, setChargementCroisement] = useState(false);
 
   const [kpis, setKpis] = useState(null);
   const [produitsRupture, setProduitsRupture] = useState([]);
@@ -191,6 +268,11 @@ export default function Rapports({ onRetour }) {
       if (resStocks.ok) setStocks(await resStocks.json());
       if (resEvolution.ok) setEvolution(await resEvolution.json());
       if (resKanban.ok) setKanban(await resKanban.json());
+
+      if (peutCroiser) {
+        const resProduits = await fetch(`${API_URL}/produits`, { headers: entetes });
+        if (resProduits.ok) setProduitsListe(await resProduits.json());
+      }
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
     } finally {
@@ -216,6 +298,116 @@ export default function Rapports({ onRetour }) {
     lien.click();
     URL.revokeObjectURL(url);
   }
+
+  // ---------------------------------------------------------------------------
+  // Export Excel : un tableau HTML enregistré avec le type MIME Excel — Excel
+  // l'ouvre nativement comme un vrai classeur, sans aucune bibliothèque à
+  // installer.
+  // ---------------------------------------------------------------------------
+  function exporterExcel() {
+    const ligneKpi = (label, valeur) => `<tr><td>${label}</td><td>${valeur}</td></tr>`;
+    const contenuHtml = `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>Rapport GesMed — ${new Date().toLocaleDateString("fr-FR")}</h2>
+          <table border="1">
+            <tr><th colspan="2">Indicateurs</th></tr>
+            ${ligneKpi("Références en stock", kpis.referencesEnStock)}
+            ${ligneKpi("En rupture", kpis.ruptures)}
+            ${ligneKpi("Sous le seuil", kpis.sousSeuil)}
+            ${ligneKpi("Lots périmant sous 3 mois", kpis.lotsBientotPerimes)}
+            ${ligneKpi("Réquisitions en attente", kpis.requisitionsEnAttente)}
+          </table>
+          <br />
+          <table border="1">
+            <tr><th>Produit</th><th>Structures touchées</th></tr>
+            ${produitsRupture.map((p) => `<tr><td>${p.produit}</td><td>${p.structuresTouchees}</td></tr>`).join("")}
+          </table>
+        </body>
+      </html>
+    `;
+    const blob = new Blob([contenuHtml], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+    lien.href = url;
+    lien.download = `rapport-gesmed-${new Date().toISOString().slice(0, 10)}.xls`;
+    lien.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Export PDF : ouvre une vue imprimable dans un nouvel onglet et déclenche
+  // l'impression — l'utilisateur choisit "Enregistrer au format PDF" dans la
+  // boîte de dialogue native du navigateur. Aucune bibliothèque nécessaire.
+  // ---------------------------------------------------------------------------
+  function exporterPdf() {
+    const fenetre = window.open("", "_blank");
+    const ligneKpi = (label, valeur) => `<tr><td>${label}</td><td>${valeur}</td></tr>`;
+    fenetre.document.write(`
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Rapport GesMed</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #1c2b28; }
+            h1 { font-size: 1.3rem; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; font-size: 0.9rem; }
+            th { background: #f0f0f0; }
+          </style>
+        </head>
+        <body>
+          <h1>Rapport GesMed — ${new Date().toLocaleDateString("fr-FR")}</h1>
+          <table>
+            <tr><th colspan="2">Indicateurs</th></tr>
+            ${ligneKpi("Références en stock", kpis.referencesEnStock)}
+            ${ligneKpi("En rupture", kpis.ruptures)}
+            ${ligneKpi("Sous le seuil", kpis.sousSeuil)}
+            ${ligneKpi("Lots périmant sous 3 mois", kpis.lotsBientotPerimes)}
+            ${ligneKpi("Réquisitions en attente", kpis.requisitionsEnAttente)}
+          </table>
+          <table>
+            <tr><th>Produit</th><th>Structures touchées</th></tr>
+            ${produitsRupture.map((p) => `<tr><td>${p.produit}</td><td>${p.structuresTouchees}</td></tr>`).join("")}
+          </table>
+        </body>
+      </html>
+    `);
+    fenetre.document.close();
+    fenetre.focus();
+    setTimeout(() => fenetre.print(), 300);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Croisement : pour un produit choisi, calcule le total et la répartition
+  // via le backend, selon le regroupement disponible pour le rôle connecté.
+  // ---------------------------------------------------------------------------
+  async function chargerCroisementNiveau(produitId, regroupement) {
+    if (!produitId) {
+      setCroisementNiveau(null);
+      return;
+    }
+    setChargementCroisement(true);
+    try {
+      const token = localStorage.getItem("gesmed_token");
+      const res = await fetch(
+        `${API_URL}/stocks/croisement?produitId=${produitId}&regroupement=${regroupement}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.ok) setCroisementNiveau(await res.json());
+    } catch {
+      // Reste à l'état précédent si l'appel échoue.
+    } finally {
+      setChargementCroisement(false);
+    }
+  }
+
+  useEffect(() => {
+    if (peutCroiser && produitCroise) {
+      chargerCroisementNiveau(produitCroise, regroupementNiveau);
+    }
+  }, [produitCroise, regroupementNiveau]);
 
   const colonnesKanban = ORDRE_COLONNES_KANBAN.map((statut) => ({
     statut,
@@ -281,11 +473,11 @@ export default function Rapports({ onRetour }) {
 
           <div className="rapports-section-entete">
             <h2>Produits les plus souvent en rupture</h2>
-            {produitsRupture.length > 0 && (
-              <button className="rapports-bouton-export" onClick={exporterCsv}>
-                Exporter en CSV
-              </button>
-            )}
+            <div className="rapports-boutons-export">
+              <button className="rapports-bouton-export" onClick={exporterCsv}>CSV</button>
+              <button className="rapports-bouton-export" onClick={exporterExcel}>Excel</button>
+              <button className="rapports-bouton-export" onClick={exporterPdf}>PDF</button>
+            </div>
           </div>
 
           {produitsRupture.length === 0 ? (
@@ -313,14 +505,74 @@ export default function Rapports({ onRetour }) {
         <>
           <div className="rapports-section-entete">
             <h2 className="rapports-sous-section">Stock par produit</h2>
-            <button
-              className="rapports-bouton-export"
-              onClick={() => telechargerSvgEnPng(refDiagramme.current, "stock-par-produit.png")}
-            >
-              Télécharger en image
-            </button>
+            {peutCroiser && croisementNiveau && (
+              <button
+                className="rapports-bouton-export"
+                onClick={() => telechargerSvgEnPng(refCroisement.current, "stock-par-produit.png")}
+              >
+                Télécharger en image
+              </button>
+            )}
           </div>
-          <DiagrammeStocks stocks={stocks} svgRef={refDiagramme} />
+
+          {peutCroiser ? (
+            <>
+              <div className="rapports-filtres-croisement">
+                <select value={produitCroise} onChange={(e) => setProduitCroise(e.target.value)}>
+                  <option value="">Choisir un produit…</option>
+                  {produitsListe.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nom}</option>
+                  ))}
+                </select>
+                {regroupementsDisponibles.length > 1 && (
+                  <select value={regroupementNiveau} onChange={(e) => setRegroupementNiveau(e.target.value)}>
+                    {regroupementsDisponibles.map((r) => (
+                      <option key={r.valeur} value={r.valeur}>{r.libelle}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {!produitCroise ? (
+                <p className="rapports-vide">Choisis un produit pour voir sa répartition — toute zone confondue.</p>
+              ) : chargementCroisement ? (
+                <p>Chargement...</p>
+              ) : !croisementNiveau ? (
+                <p className="rapports-vide">Aucune donnée pour ce produit.</p>
+              ) : (
+                <>
+                  <p className="rapports-total-croisement">
+                    Stock total : <strong>{croisementNiveau.total}</strong>
+                  </p>
+                  <GraphiqueCroisement lignes={croisementNiveau.lignes} svgRef={refCroisement} />
+                  <table className="rapports-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          {croisementNiveau.regroupement === "drs"
+                            ? "DRS"
+                            : croisementNiveau.regroupement === "moughataa"
+                            ? "Moughataa"
+                            : "Établissement"}
+                        </th>
+                        <th>Quantité</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {croisementNiveau.lignes.map((l) => (
+                        <tr key={l.nom}>
+                          <td>{l.nom}</td>
+                          <td>{l.quantite}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </>
+          ) : (
+            <DiagrammeStocks stocks={stocks} svgRef={refDiagrammePropre} />
+          )}
 
           <div className="rapports-section-entete">
             <h2 className="rapports-sous-section">Mouvements des 30 derniers jours</h2>
