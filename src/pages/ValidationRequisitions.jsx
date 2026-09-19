@@ -88,7 +88,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
       if (decision === "valider") {
         if (data.partiel) {
           setMessage(
-            session?.utilisateur?.role === "GAS_MOUGHATAA"
+            data.escalade === false
               ? "Livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant."
               : "Une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur."
           );
@@ -96,7 +96,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
           setMessage("Livrée entièrement depuis votre stock — bordereau de livraison généré.");
         } else {
           setMessage(
-            session?.utilisateur?.role === "GAS_MOUGHATAA"
+            data.escalade === false
               ? "Réquisition clôturée : aucun stock disponible pour l'instant."
               : "Réquisition transmise au niveau supérieur."
           );
