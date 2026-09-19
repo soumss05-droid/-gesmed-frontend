@@ -13,6 +13,7 @@ import Notifications from "./pages/Notifications";
 import SuiviRequisitions from "./pages/SuiviRequisitions";
 import AdminPanel from "./pages/AdminPanel";
 import Rapports from "./pages/Rapports";
+import Ecarts from "./pages/Ecarts";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -33,7 +34,7 @@ function App() {
   }
 
   if (vue === "nouvelle-requisition") return <NouvelleRequisition onRetour={() => setVue("dashboard")} />;
-  if (vue === "validation-requisitions") return <ValidationRequisitions onRetour={() => setVue("dashboard")} />;
+  if (vue === "validation-requisitions") return <ValidationRequisitions session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "stock-reseau") return <StockReseau onRetour={() => setVue("dashboard")} />;
   if (vue === "dispensation") return <EnregistrerDispensation onRetour={() => setVue("dashboard")} />;
   if (vue === "reception") return <ConfirmerReception onRetour={() => setVue("dashboard")} />;
@@ -44,6 +45,7 @@ function App() {
   if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={() => setVue("dashboard")} />;
   if (vue === "admin") return <AdminPanel onRetour={() => setVue("dashboard")} />;
   if (vue === "rapports") return <Rapports onRetour={() => setVue("dashboard")} />;
+  if (vue === "ecarts") return <Ecarts onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -61,6 +63,7 @@ function App() {
       onSuiviRequisitions={() => setVue("suivi-requisitions")}
       onAdmin={() => setVue("admin")}
       onRapports={() => setVue("rapports")}
+      onEcarts={() => setVue("ecarts")}
     />
   );
 }

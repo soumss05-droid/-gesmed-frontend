@@ -95,6 +95,7 @@ const tracesIcones = {
   document: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M9 13h6M9 17h6",
   personnes: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
   chariot: "M9 22a1 1 0 100-2 1 1 0 000 2zM20 22a1 1 0 100-2 1 1 0 000 2zM1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6",
+  balance: "M12 3v18M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0zM5 7h14M12 3l-4 4h8z",
 };
 
 function Icone({ nom }) {
@@ -122,12 +123,15 @@ export default function Dashboard({
   onSuiviRequisitions,
   onAdmin,
   onRapports,
+  onEcarts,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
   const [sections, setSections] = useState(SECTIONS_PAR_ROLE[utilisateur.role] || []);
   const [chargement, setChargement] = useState(
-    ROLES_AVEC_STOCK.includes(utilisateur.role) || utilisateur.role === "ADMIN"
+    ROLES_AVEC_STOCK.includes(utilisateur.role) ||
+      utilisateur.role === "ADMIN" ||
+      utilisateur.role === "GAS_PROGRAMME_NATIONAL"
   );
 
   useEffect(() => {
@@ -183,8 +187,33 @@ export default function Dashboard({
       }
     }
 
+    async function chargerKpisGasProgramme() {
+      try {
+        const [resAValider, resReseau, resEcartsBl, resEcartsInv] = await Promise.all([
+          fetch(`${API_URL}/requisitions/a-valider`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/stocks/reseau`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/ecarts/en-attente`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/inventaires/ecarts-en-attente`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        const base = SECTIONS_PAR_ROLE.GAS_PROGRAMME_NATIONAL.map((s) => ({ ...s }));
+        if (resAValider.ok) base[0].valeur = String((await resAValider.json()).length);
+        if (resReseau.ok) base[1].valeur = String((await resReseau.json()).length);
+        if (resEcartsBl.ok && resEcartsInv.ok) {
+          const totalEcarts = (await resEcartsBl.json()).length + (await resEcartsInv.json()).length;
+          base[2].valeur = String(totalEcarts);
+        }
+        setSections(base);
+      } catch (erreur) {
+        console.error(erreur);
+      } finally {
+        setChargement(false);
+      }
+    }
+
     if (ROLES_AVEC_STOCK.includes(utilisateur.role)) chargerStocks();
     else if (utilisateur.role === "ADMIN") chargerKpisAdmin();
+    else if (utilisateur.role === "GAS_PROGRAMME_NATIONAL") chargerKpisGasProgramme();
+    else setChargement(false);
   }, [utilisateur.role]);
 
   const peutSuivreRequisitions = ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"].includes(utilisateur.role);
@@ -198,12 +227,12 @@ export default function Dashboard({
   const ciblesCartes = {
     ADMIN: [onAdmin, onRapports, onRapports],
     GESTIONNAIRE_CAMEC: [onStockReseau, onValidationRequisitions, null],
-    GAS_PROGRAMME_NATIONAL: [onValidationRequisitions, null, null],
+    GAS_PROGRAMME_NATIONAL: [onValidationRequisitions, onStockReseau, onEcarts],
     GESTIONNAIRE_DRS: [onStockReseau, onValidationRequisitions, onStockReseau],
     DIRECTEUR_DRS: [onStockReseau],
     GAS_MOUGHATAA: [onStockReseau, onValidationRequisitions, onReception],
     FORMATION_SANITAIRE: [onInventairePhysique, onInventairePhysique, onInventairePhysique],
-    AUDITEUR: [onRapports, null],
+    AUDITEUR: [onRapports, onEcarts],
   };
   const ciblesRole = ciblesCartes[utilisateur.role] || [];
 
@@ -216,7 +245,8 @@ export default function Dashboard({
       titre: "Réquisitions",
       actions: [
         { roles: ["FORMATION_SANITAIRE"], icone: "plus", libelle: "Nouvelle réquisition", onClick: onNouvelleRequisition },
-        { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_CAMEC"], icone: "liste", libelle: "Réquisitions à valider", onClick: onValidationRequisitions },
+        { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "liste", libelle: "Réquisitions à valider", onClick: onValidationRequisitions },
+        { roles: ["GESTIONNAIRE_CAMEC"], icone: "liste", libelle: "Réquisitions à livrer", onClick: onValidationRequisitions },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "chariot", libelle: "Commander un réapprovisionnement", onClick: onReapprovisionnement },
         { roles: peutSuivreRequisitions ? [utilisateur.role] : [], icone: "document", libelle: "Suivi de mes réquisitions", onClick: onSuiviRequisitions },
       ],
@@ -229,6 +259,7 @@ export default function Dashboard({
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
         { roles: ["FORMATION_SANITAIRE"], icone: "boite", libelle: "Enregistrer une dispensation", onClick: onDispensation },
         { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
+        { roles: ["GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "balance", libelle: "Écarts en attente", onClick: onEcarts },
       ],
     },
     {

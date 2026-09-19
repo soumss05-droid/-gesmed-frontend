@@ -3,13 +3,16 @@ import "./ValidationRequisitions.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-export default function ValidationRequisitions({ onRetour }) {
+export default function ValidationRequisitions({ session, onRetour }) {
   const [requisitions, setRequisitions] = useState([]);
   const [stocksParProduit, setStocksParProduit] = useState({});
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [message, setMessage] = useState(null);
   const [enCours, setEnCours] = useState(null);
+
+  const estCamec = session?.utilisateur?.role === "GESTIONNAIRE_CAMEC";
+  const peutRejeter = session?.utilisateur?.role === "GAS_PROGRAMME_NATIONAL";
 
   async function chargerDonnees() {
     setChargement(true);
@@ -104,7 +107,7 @@ export default function ValidationRequisitions({ onRetour }) {
     <div className="validation-page">
       <header className="validation-header">
         <button className="validation-retour" onClick={onRetour}>← Retour</button>
-        <h1>Réquisitions à valider</h1>
+        <h1>{estCamec ? "Réquisitions à livrer" : "Réquisitions à valider"}</h1>
       </header>
 
       {erreur && <p className="validation-erreur" role="alert">{erreur}</p>}
@@ -160,19 +163,21 @@ export default function ValidationRequisitions({ onRetour }) {
             </table>
 
             <div className="validation-actions">
-              <button
-                className="validation-bouton validation-bouton--rejeter"
-                disabled={enCours === r.id}
-                onClick={() => envoyerDecision(r, "rejeter")}
-              >
-                Rejeter
-              </button>
+              {peutRejeter && (
+                <button
+                  className="validation-bouton validation-bouton--rejeter"
+                  disabled={enCours === r.id}
+                  onClick={() => envoyerDecision(r, "rejeter")}
+                >
+                  Rejeter
+                </button>
+              )}
               <button
                 className="validation-bouton validation-bouton--valider"
                 disabled={enCours === r.id}
                 onClick={() => envoyerDecision(r, "valider")}
               >
-                {enCours === r.id ? "..." : "Valider"}
+                {enCours === r.id ? "..." : estCamec ? "Livrer" : "Valider"}
               </button>
             </div>
           </div>

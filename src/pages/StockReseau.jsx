@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./StockReseau.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -15,6 +15,9 @@ export default function StockReseau({ onRetour }) {
   const [cmm, setCmm] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
+  const [recherche, setRecherche] = useState("");
+  const [seulementRuptures, setSeulementRuptures] = useState(false);
+  const [etablissementsOuverts, setEtablissementsOuverts] = useState({});
 
   useEffect(() => {
     async function charger() {
@@ -27,6 +30,10 @@ export default function StockReseau({ onRetour }) {
         const dataReseau = await resReseau.json();
         if (!resReseau.ok) throw new Error(dataReseau.erreur || "Impossible de charger le stock du réseau.");
         setDonnees(dataReseau);
+        // Tous les établissements démarrent ouverts par défaut.
+        const ouverts = {};
+        for (const e of dataReseau) ouverts[e.etablissementId] = true;
+        setEtablissementsOuverts(ouverts);
 
         if (resCmm.ok) setCmm(await resCmm.json());
       } catch (err) {
@@ -38,6 +45,40 @@ export default function StockReseau({ onRetour }) {
     charger();
   }, []);
 
+  function basculerEtablissement(id) {
+    setEtablissementsOuverts((o) => ({ ...o, [id]: !o[id] }));
+  }
+
+  // -------------------------------------------------------------------------
+  // Résumé global et filtrage — calculés à partir des données déjà chargées,
+  // sans appel serveur supplémentaire.
+  // -------------------------------------------------------------------------
+  const resume = useMemo(() => {
+    let totalRuptures = 0;
+    let totalSousSeuil = 0;
+    let totalPerimes = 0;
+    for (const etab of donnees) {
+      totalRuptures += etab.stocks.filter((s) => s.statut === "RUPTURE").length;
+      totalSousSeuil += etab.stocks.filter((s) => s.statut === "SOUS_SEUIL").length;
+      totalPerimes += etab.lotsPerimes?.length || 0;
+    }
+    return { totalRuptures, totalSousSeuil, totalPerimes, totalEtablissements: donnees.length };
+  }, [donnees]);
+
+  const donneesFiltrees = useMemo(() => {
+    const rechercheMin = recherche.trim().toLowerCase();
+    return donnees
+      .map((etab) => ({
+        ...etab,
+        stocks: etab.stocks.filter((s) => {
+          const correspondNom = !rechercheMin || s.produit.toLowerCase().includes(rechercheMin);
+          const correspondStatut = !seulementRuptures || s.statut === "RUPTURE" || s.statut === "SOUS_SEUIL";
+          return correspondNom && correspondStatut;
+        }),
+      }))
+      .filter((etab) => etab.stocks.length > 0 || (!rechercheMin && !seulementRuptures));
+  }, [donnees, recherche, seulementRuptures]);
+
   return (
     <div className="reseau-page">
       <header className="reseau-header">
@@ -46,86 +87,148 @@ export default function StockReseau({ onRetour }) {
       </header>
 
       {erreur && <p className="reseau-erreur" role="alert">{erreur}</p>}
-      {chargement && <p>Chargement...</p>}
 
-      {!chargement && cmm.length > 0 && (
-        <div className="reseau-carte">
-          <h2>CMM — 6 derniers mois (consommation réelle du réseau)</h2>
-          <table className="reseau-table">
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>CMM (unités/mois)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cmm.map((c) => (
-                <tr key={c.produit}>
-                  <td>{c.produit}</td>
-                  <td>{c.cmm}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {chargement ? (
+        <p>Chargement...</p>
+      ) : (
+        <>
+          <div className="reseau-resume">
+            <div className="reseau-resume-carte">
+              <span className="reseau-resume-valeur">{resume.totalEtablissements}</span>
+              <span className="reseau-resume-titre">Établissements</span>
+            </div>
+            <div className="reseau-resume-carte reseau-resume-carte--rouge">
+              <span className="reseau-resume-valeur">{resume.totalRuptures}</span>
+              <span className="reseau-resume-titre">En rupture</span>
+            </div>
+            <div className="reseau-resume-carte reseau-resume-carte--dore">
+              <span className="reseau-resume-valeur">{resume.totalSousSeuil}</span>
+              <span className="reseau-resume-titre">Sous le seuil</span>
+            </div>
+            <div className="reseau-resume-carte reseau-resume-carte--dore">
+              <span className="reseau-resume-valeur">{resume.totalPerimes}</span>
+              <span className="reseau-resume-titre">Lots périmés</span>
+            </div>
+          </div>
 
-      {!chargement &&
-        donnees.map((etab) => (
-          <div className="reseau-carte" key={etab.etablissementId}>
-            <h2>{etab.etablissementNom}</h2>
-            {etab.stocks.length === 0 ? (
-              <p className="reseau-vide">Aucun produit suivi à ce niveau.</p>
-            ) : (
+          <div className="reseau-filtres">
+            <input
+              type="text"
+              className="reseau-recherche"
+              placeholder="Rechercher un produit..."
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+            />
+            <label className="reseau-case">
+              <input
+                type="checkbox"
+                checked={seulementRuptures}
+                onChange={(e) => setSeulementRuptures(e.target.checked)}
+              />
+              Alertes seulement (rupture / sous seuil)
+            </label>
+          </div>
+
+          {cmm.length > 0 && (
+            <details className="reseau-carte reseau-cmm">
+              <summary>CMM — 6 derniers mois (consommation réelle du réseau)</summary>
               <table className="reseau-table">
                 <thead>
                   <tr>
                     <th>Produit</th>
-                    <th>Quantité</th>
-                    <th>Statut</th>
+                    <th>CMM (unités/mois)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {etab.stocks.map((s) => (
-                    <tr key={s.produitId}>
-                      <td>{s.produit}</td>
-                      <td>{s.quantiteTotale}</td>
-                      <td className={`reseau-statut reseau-statut--${s.statut.toLowerCase()}`}>
-                        {LIBELLE_STATUT[s.statut] || s.statut}
-                      </td>
+                  {cmm.map((c) => (
+                    <tr key={c.produit}>
+                      <td>{c.produit}</td>
+                      <td>{c.cmm}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
+            </details>
+          )}
 
-            {etab.lotsPerimes && etab.lotsPerimes.length > 0 && (
-              <div className="reseau-perimes">
-                <h3>⚠ Lots périmés</h3>
-                <table className="reseau-table">
-                  <thead>
-                    <tr>
-                      <th>Produit</th>
-                      <th>N° de lot</th>
-                      <th>Périmé le</th>
-                      <th>Quantité restante</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {etab.lotsPerimes.map((l, i) => (
-                      <tr key={i}>
-                        <td>{l.produit}</td>
-                        <td>{l.numeroLot}</td>
-                        <td>{new Date(l.datePeremption).toLocaleDateString("fr-FR")}</td>
-                        <td>{l.quantite}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ))}
+          {donneesFiltrees.length === 0 ? (
+            <p className="reseau-vide">Aucun résultat pour cette recherche.</p>
+          ) : (
+            donneesFiltrees.map((etab) => {
+              const ouvert = etablissementsOuverts[etab.etablissementId];
+              const nbAlertes = etab.stocks.filter((s) => s.statut === "RUPTURE" || s.statut === "SOUS_SEUIL").length;
+              return (
+                <div className="reseau-carte" key={etab.etablissementId}>
+                  <button className="reseau-carte-entete" onClick={() => basculerEtablissement(etab.etablissementId)}>
+                    <span className="reseau-carte-titre">
+                      {etab.etablissementNom}
+                      {nbAlertes > 0 && <span className="reseau-badge-alerte">{nbAlertes}</span>}
+                    </span>
+                    <span className={`reseau-chevron ${ouvert ? "reseau-chevron--ouvert" : ""}`}>▾</span>
+                  </button>
+
+                  {ouvert && (
+                    <>
+                      {etab.stocks.length === 0 ? (
+                        <p className="reseau-vide">Aucun produit suivi à ce niveau.</p>
+                      ) : (
+                        <table className="reseau-table">
+                          <thead>
+                            <tr>
+                              <th>Produit</th>
+                              <th>Stock théorique</th>
+                              <th>Statut</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {etab.stocks.map((s) => (
+                              <tr key={s.produitId}>
+                                <td>{s.produit}</td>
+                                <td>{s.quantiteTotale}</td>
+                                <td>
+                                  <span className={`reseau-badge-statut reseau-badge-statut--${s.statut.toLowerCase()}`}>
+                                    {LIBELLE_STATUT[s.statut] || s.statut}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+
+                      {etab.lotsPerimes && etab.lotsPerimes.length > 0 && (
+                        <div className="reseau-perimes">
+                          <h3>⚠ Lots périmés</h3>
+                          <table className="reseau-table">
+                            <thead>
+                              <tr>
+                                <th>Produit</th>
+                                <th>N° de lot</th>
+                                <th>Périmé le</th>
+                                <th>Quantité restante</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {etab.lotsPerimes.map((l, i) => (
+                                <tr key={i}>
+                                  <td>{l.produit}</td>
+                                  <td>{l.numeroLot}</td>
+                                  <td>{new Date(l.datePeremption).toLocaleDateString("fr-FR")}</td>
+                                  <td>{l.quantite}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </>
+      )}
     </div>
   );
 }
