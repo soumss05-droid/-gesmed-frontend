@@ -256,6 +256,43 @@
   gap: 8px;
 }
 
+.rapports-filtres-croisement {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.rapports-filtres-croisement select {
+  padding: 7px 10px;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  background: #ffffff;
+  color: #1c2b28;
+}
+
+.rapports-sous-titre-info {
+  color: #6b7873;
+  font-size: 0.88rem;
+  margin: 0 0 16px;
+}
+
+.rapports-ecart-negatif {
+  color: #b3492f;
+  font-weight: 600;
+}
+
+.rapports-ecart-positif {
+  color: #2f7a4f;
+  font-weight: 600;
+}
+
+.rapports-total-croisement {
+  font-size: 0.95rem;
+  color: #1c2b28;
+  margin-bottom: 10px;
+}
+
 .rapports-carte--cliquable {
   cursor: pointer;
   text-align: left;

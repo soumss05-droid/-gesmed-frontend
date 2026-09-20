@@ -239,6 +239,11 @@ export default function Rapports({ session, onRetour }) {
   const [croisementNiveau, setCroisementNiveau] = useState(null);
   const [chargementCroisement, setChargementCroisement] = useState(false);
 
+  const peutVoirPerformance = estAdmin || peutCroiserRegion;
+  const [produitPerformance, setProduitPerformance] = useState("");
+  const [performance, setPerformance] = useState(null);
+  const [chargementPerformance, setChargementPerformance] = useState(false);
+
   const [kpis, setKpis] = useState(null);
   const [produitsRupture, setProduitsRupture] = useState([]);
   const [stocks, setStocks] = useState([]);
@@ -409,6 +414,36 @@ export default function Rapports({ session, onRetour }) {
     }
   }, [produitCroise, regroupementNiveau]);
 
+  // ---------------------------------------------------------------------------
+  // Performance : compare le DMM de chaque Moughataa à la somme des CMM de
+  // ses formations sanitaires — un écart persistant signale un problème de
+  // distribution ou de dimensionnement.
+  // ---------------------------------------------------------------------------
+  async function chargerPerformance(produitId) {
+    if (!produitId) {
+      setPerformance(null);
+      return;
+    }
+    setChargementPerformance(true);
+    try {
+      const token = localStorage.getItem("gesmed_token");
+      const res = await fetch(`${API_URL}/stocks/performance-moughataa?produitId=${produitId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setPerformance(await res.json());
+    } catch {
+      // Reste à l'état précédent si l'appel échoue.
+    } finally {
+      setChargementPerformance(false);
+    }
+  }
+
+  useEffect(() => {
+    if (peutVoirPerformance && produitPerformance) {
+      chargerPerformance(produitPerformance);
+    }
+  }, [produitPerformance]);
+
   const colonnesKanban = ORDRE_COLONNES_KANBAN.map((statut) => ({
     statut,
     items: kanban.filter((r) => r.statut === statut),
@@ -433,10 +468,19 @@ export default function Rapports({ session, onRetour }) {
         <button className={onglet === "kanban" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("kanban")}>
           Kanban
         </button>
+        {peutVoirPerformance && (
+          <button className={onglet === "performance" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("performance")}>
+            Performance
+          </button>
+        )}
       </div>
 
       {chargement ? (
         <p>Chargement...</p>
+      ) : !kpis ? (
+        <p className="rapports-erreur" role="alert">
+          Impossible de charger les données du rapport pour l'instant. Réessaie dans quelques secondes.
+        </p>
       ) : onglet === "apercu" ? (
         <>
           <div className="rapports-grid">
@@ -584,6 +628,52 @@ export default function Rapports({ session, onRetour }) {
             </button>
           </div>
           <CourbeMouvements data={evolution} svgRef={refCourbe} />
+        </>
+      ) : onglet === "performance" ? (
+        <>
+          <p className="rapports-sous-titre-info">
+            Compare ce que chaque Moughataa a distribué (son DMM) à ce que ses formations sanitaires ont
+            réellement consommé (somme de leurs CMM). Un grand écart signale un problème de distribution.
+          </p>
+          <div className="rapports-filtres-croisement">
+            <select value={produitPerformance} onChange={(e) => setProduitPerformance(e.target.value)}>
+              <option value="">Choisir un produit…</option>
+              {produitsListe.map((p) => (
+                <option key={p.id} value={p.id}>{p.nom}</option>
+              ))}
+            </select>
+          </div>
+
+          {!produitPerformance ? (
+            <p className="rapports-vide">Choisis un produit pour comparer les Moughataa.</p>
+          ) : chargementPerformance ? (
+            <p>Chargement...</p>
+          ) : !performance || performance.length === 0 ? (
+            <p className="rapports-vide">Aucune donnée pour ce produit.</p>
+          ) : (
+            <table className="rapports-table">
+              <thead>
+                <tr>
+                  <th>Moughataa</th>
+                  <th>DMM (distribué)</th>
+                  <th>Σ CMM des FS (consommé)</th>
+                  <th>Écart</th>
+                </tr>
+              </thead>
+              <tbody>
+                {performance.map((p) => (
+                  <tr key={p.nom}>
+                    <td>{p.nom}</td>
+                    <td>{p.dmm}</td>
+                    <td>{p.sommeCmmFs}</td>
+                    <td className={p.ecart < 0 ? "rapports-ecart-negatif" : "rapports-ecart-positif"}>
+                      {p.ecart > 0 ? `+${p.ecart}` : p.ecart}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </>
       ) : (
         <div className="rapports-kanban">
