@@ -85,20 +85,21 @@ export default function ValidationRequisitions({ session, onRetour }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.erreur || "La décision n'a pas pu être enregistrée.");
 
+      const prefixe = `Réquisition N°${requisition.numero} —`;
       if (decision === "valider") {
         if (data.partiel) {
           setMessage(
             data.escalade === false
-              ? "Livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant."
-              : "Une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur."
+              ? `${prefixe} livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant.`
+              : `${prefixe} une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur.`
           );
         } else if (data.livreeDirectement) {
-          setMessage("Livrée entièrement depuis votre stock — bordereau de livraison généré.");
+          setMessage(`${prefixe} livrée entièrement depuis votre stock — bordereau de livraison généré.`);
         } else {
           setMessage(
             data.escalade === false
-              ? "Réquisition clôturée : aucun stock disponible pour l'instant."
-              : "Réquisition transmise au niveau supérieur."
+              ? `${prefixe} clôturée : aucun stock disponible pour l'instant.`
+              : `${prefixe} transmise au niveau supérieur.`
           );
         }
       }
@@ -131,7 +132,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
         requisitions.map((r) => (
           <div className="validation-carte" key={r.id}>
             <div className="validation-carte__entete">
-              <strong>{r.etablissementDemandeur?.nom}</strong>
+              <strong>N°{r.numero} — {r.etablissementDemandeur?.nom}</strong>
               <span>{new Date(r.dateCreation).toLocaleDateString("fr-FR")}</span>
             </div>
 

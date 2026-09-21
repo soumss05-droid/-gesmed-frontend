@@ -15,6 +15,18 @@ const LIBELLES_ROLE = {
   AUDITEUR: "Auditeur",
 };
 
+const TOUS_LES_ROLES = [
+  "ADMIN",
+  "GESTIONNAIRE_CAMEC",
+  "GAS_PROGRAMME_NATIONAL",
+  "GESTIONNAIRE_DRS",
+  "DIRECTEUR_DRS",
+  "GAS_MOUGHATAA",
+  "MEDECIN_CHEF_MOUGHATAA",
+  "FORMATION_SANITAIRE",
+  "AUDITEUR",
+];
+
 const ROLES_AVEC_STOCK = ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"];
 
 const SECTIONS_PAR_ROLE = {
@@ -100,6 +112,7 @@ const tracesIcones = {
   personnes: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
   chariot: "M9 22a1 1 0 100-2 1 1 0 000 2zM20 22a1 1 0 100-2 1 1 0 000 2zM1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6",
   balance: "M12 3v18M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0zM5 7h14M12 3l-4 4h8z",
+  loupe: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35",
 };
 
 function Icone({ nom }) {
@@ -128,6 +141,7 @@ export default function Dashboard({
   onAdmin,
   onRapports,
   onEcarts,
+  onRechercheDossier,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -264,6 +278,7 @@ export default function Dashboard({
         { roles: ["GESTIONNAIRE_CAMEC"], icone: "liste", libelle: "Réquisitions à livrer", onClick: onValidationRequisitions },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "chariot", libelle: "Commander un réapprovisionnement", onClick: onReapprovisionnement },
         { roles: peutSuivreRequisitions ? [utilisateur.role] : [], icone: "document", libelle: "Suivi de mes réquisitions", onClick: onSuiviRequisitions },
+        { roles: TOUS_LES_ROLES, icone: "loupe", libelle: "Rechercher un dossier", onClick: onRechercheDossier },
       ],
     },
     {

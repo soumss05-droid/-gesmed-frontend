@@ -76,8 +76,8 @@ export default function ConfirmerReception({ onRetour }) {
       );
       setMessage(
         auMoinsUnEcart
-          ? "Réception confirmée avec écart(s) — en attente d'arbitrage."
-          : "Réception confirmée, stock mis à jour."
+          ? `BL N°${bl.numero} confirmé avec écart(s) — en attente d'arbitrage.`
+          : `BL N°${bl.numero} confirmé, stock mis à jour.`
       );
       setBls((prev) => prev.filter((b) => b.id !== bl.id));
     } catch (err) {
@@ -106,7 +106,7 @@ export default function ConfirmerReception({ onRetour }) {
         bls.map((bl) => (
           <div className="reception-carte" key={bl.id}>
             <div className="reception-carte__entete">
-              <strong>De : {bl.etablissementExpediteur?.nom}</strong>
+              <strong>BL N°{bl.numero} — De : {bl.etablissementExpediteur?.nom}</strong>
               <span>{new Date(bl.dateEnvoi).toLocaleDateString("fr-FR")}</span>
             </div>
 

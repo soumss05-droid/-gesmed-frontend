@@ -14,6 +14,7 @@ import SuiviRequisitions from "./pages/SuiviRequisitions";
 import AdminPanel from "./pages/AdminPanel";
 import Rapports from "./pages/Rapports";
 import Ecarts from "./pages/Ecarts";
+import RechercheDossier from "./pages/RechercheDossier";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -46,6 +47,7 @@ function App() {
   if (vue === "admin") return <AdminPanel onRetour={() => setVue("dashboard")} />;
   if (vue === "rapports") return <Rapports session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "ecarts") return <Ecarts onRetour={() => setVue("dashboard")} />;
+  if (vue === "recherche-dossier") return <RechercheDossier onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -64,6 +66,7 @@ function App() {
       onAdmin={() => setVue("admin")}
       onRapports={() => setVue("rapports")}
       onEcarts={() => setVue("ecarts")}
+      onRechercheDossier={() => setVue("recherche-dossier")}
     />
   );
 }
