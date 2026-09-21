@@ -210,7 +210,7 @@ export default function Rapports({ session, onRetour }) {
   const refDiagrammePropre = useRef(null);
 
   const [produitsListe, setProduitsListe] = useState([]);
-  const [produitCroise, setProduitCroise] = useState("");
+  const [produitsCroises, setProduitsCroises] = useState([]); // sélection multiple
 
   const peutCroiserRegion = ["GESTIONNAIRE_DRS", "DIRECTEUR_DRS"].includes(session?.utilisateur?.role);
   const peutCroiserMoughataa = ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA"].includes(session?.utilisateur?.role);
@@ -241,6 +241,7 @@ export default function Rapports({ session, onRetour }) {
 
   const peutVoirPerformance = estAdmin || peutCroiserRegion;
   const [produitPerformance, setProduitPerformance] = useState("");
+  const [performanceGlobale, setPerformanceGlobale] = useState(false);
   const [performance, setPerformance] = useState(null);
   const [chargementPerformance, setChargementPerformance] = useState(false);
 
@@ -385,11 +386,12 @@ export default function Rapports({ session, onRetour }) {
   }
 
   // ---------------------------------------------------------------------------
-  // Croisement : pour un produit choisi, calcule le total et la répartition
-  // via le backend, selon le regroupement disponible pour le rôle connecté.
+  // Croisement : pour un ou plusieurs produits choisis (additionnés), calcule
+  // le total et la répartition via le backend, selon le regroupement
+  // disponible pour le rôle connecté.
   // ---------------------------------------------------------------------------
-  async function chargerCroisementNiveau(produitId, regroupement) {
-    if (!produitId) {
+  async function chargerCroisementNiveau(produitIds, regroupement) {
+    if (produitIds.length === 0) {
       setCroisementNiveau(null);
       return;
     }
@@ -397,7 +399,7 @@ export default function Rapports({ session, onRetour }) {
     try {
       const token = localStorage.getItem("gesmed_token");
       const res = await fetch(
-        `${API_URL}/stocks/croisement?produitId=${produitId}&regroupement=${regroupement}`,
+        `${API_URL}/stocks/croisement?produitIds=${produitIds.join(",")}&regroupement=${regroupement}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) setCroisementNiveau(await res.json());
@@ -409,27 +411,32 @@ export default function Rapports({ session, onRetour }) {
   }
 
   useEffect(() => {
-    if (peutCroiser && produitCroise) {
-      chargerCroisementNiveau(produitCroise, regroupementNiveau);
+    if (peutCroiser) {
+      chargerCroisementNiveau(produitsCroises, regroupementNiveau);
     }
-  }, [produitCroise, regroupementNiveau]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [produitsCroises.join(","), regroupementNiveau]);
+
+  function basculerProduitCroise(produitId) {
+    setProduitsCroises((prev) =>
+      prev.includes(produitId) ? prev.filter((id) => id !== produitId) : [...prev, produitId]
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Performance : compare le DMM de chaque Moughataa à la somme des CMM de
   // ses formations sanitaires — un écart persistant signale un problème de
-  // distribution ou de dimensionnement.
+  // distribution ou de dimensionnement. En vue globale, additionne tous les
+  // produits plutôt que de se limiter à un seul.
   // ---------------------------------------------------------------------------
   async function chargerPerformance(produitId) {
-    if (!produitId) {
-      setPerformance(null);
-      return;
-    }
     setChargementPerformance(true);
     try {
       const token = localStorage.getItem("gesmed_token");
-      const res = await fetch(`${API_URL}/stocks/performance-moughataa?produitId=${produitId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const url = produitId
+        ? `${API_URL}/stocks/performance-moughataa?produitId=${produitId}`
+        : `${API_URL}/stocks/performance-moughataa`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setPerformance(await res.json());
     } catch {
       // Reste à l'état précédent si l'appel échoue.
@@ -439,10 +446,15 @@ export default function Rapports({ session, onRetour }) {
   }
 
   useEffect(() => {
-    if (peutVoirPerformance && produitPerformance) {
+    if (!peutVoirPerformance) return;
+    if (performanceGlobale) {
+      chargerPerformance(null);
+    } else if (produitPerformance) {
       chargerPerformance(produitPerformance);
+    } else {
+      setPerformance(null);
     }
-  }, [produitPerformance]);
+  }, [produitPerformance, performanceGlobale]);
 
   const colonnesKanban = ORDRE_COLONNES_KANBAN.map((statut) => ({
     statut,
@@ -561,13 +573,24 @@ export default function Rapports({ session, onRetour }) {
 
           {peutCroiser ? (
             <>
+              <p className="rapports-sous-titre-info">
+                Coche un ou plusieurs produits — leurs quantités seront additionnées.
+              </p>
+              <select
+                className="rapports-select-multi"
+                multiple
+                size={Math.min(6, Math.max(3, produitsListe.length))}
+                value={produitsCroises}
+                onChange={(e) =>
+                  setProduitsCroises(Array.from(e.target.selectedOptions).map((o) => o.value))
+                }
+              >
+                {produitsListe.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nom}</option>
+                ))}
+              </select>
+
               <div className="rapports-filtres-croisement">
-                <select value={produitCroise} onChange={(e) => setProduitCroise(e.target.value)}>
-                  <option value="">Choisir un produit…</option>
-                  {produitsListe.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nom}</option>
-                  ))}
-                </select>
                 {regroupementsDisponibles.length > 1 && (
                   <select value={regroupementNiveau} onChange={(e) => setRegroupementNiveau(e.target.value)}>
                     {regroupementsDisponibles.map((r) => (
@@ -577,16 +600,17 @@ export default function Rapports({ session, onRetour }) {
                 )}
               </div>
 
-              {!produitCroise ? (
-                <p className="rapports-vide">Choisis un produit pour voir sa répartition — toute zone confondue.</p>
+              {produitsCroises.length === 0 ? (
+                <p className="rapports-vide">Choisis un ou plusieurs produits pour voir leur répartition — toute zone confondue.</p>
               ) : chargementCroisement ? (
                 <p>Chargement...</p>
               ) : !croisementNiveau ? (
-                <p className="rapports-vide">Aucune donnée pour ce produit.</p>
+                <p className="rapports-vide">Aucune donnée pour ces produits.</p>
               ) : (
                 <>
                   <p className="rapports-total-croisement">
-                    Stock total : <strong>{croisementNiveau.total}</strong>
+                    Stock total ({produitsCroises.length} produit{produitsCroises.length > 1 ? "s" : ""}) :{" "}
+                    <strong>{croisementNiveau.total}</strong>
                   </p>
                   <GraphiqueCroisement lignes={croisementNiveau.lignes} svgRef={refCroisement} />
                   <table className="rapports-table">
@@ -635,21 +659,32 @@ export default function Rapports({ session, onRetour }) {
             Compare ce que chaque Moughataa a distribué (son DMM) à ce que ses formations sanitaires ont
             réellement consommé (somme de leurs CMM). Un grand écart signale un problème de distribution.
           </p>
-          <div className="rapports-filtres-croisement">
-            <select value={produitPerformance} onChange={(e) => setProduitPerformance(e.target.value)}>
-              <option value="">Choisir un produit…</option>
-              {produitsListe.map((p) => (
-                <option key={p.id} value={p.id}>{p.nom}</option>
-              ))}
-            </select>
-          </div>
+          <label className="rapports-case">
+            <input
+              type="checkbox"
+              checked={performanceGlobale}
+              onChange={(e) => setPerformanceGlobale(e.target.checked)}
+            />
+            {" "}Vue globale (tous les produits additionnés)
+          </label>
 
-          {!produitPerformance ? (
-            <p className="rapports-vide">Choisis un produit pour comparer les Moughataa.</p>
+          {!performanceGlobale && (
+            <div className="rapports-filtres-croisement">
+              <select value={produitPerformance} onChange={(e) => setProduitPerformance(e.target.value)}>
+                <option value="">Choisir un produit…</option>
+                {produitsListe.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {!performanceGlobale && !produitPerformance ? (
+            <p className="rapports-vide">Choisis un produit pour comparer les Moughataa, ou coche la vue globale.</p>
           ) : chargementPerformance ? (
             <p>Chargement...</p>
-          ) : !performance || performance.length === 0 ? (
-            <p className="rapports-vide">Aucune donnée pour ce produit.</p>
+          ) : !performance || performance.lignes.length === 0 ? (
+            <p className="rapports-vide">Aucune donnée disponible.</p>
           ) : (
             <table className="rapports-table">
               <thead>
@@ -661,7 +696,7 @@ export default function Rapports({ session, onRetour }) {
                 </tr>
               </thead>
               <tbody>
-                {performance.map((p) => (
+                {performance.lignes.map((p) => (
                   <tr key={p.nom}>
                     <td>{p.nom}</td>
                     <td>{p.dmm}</td>

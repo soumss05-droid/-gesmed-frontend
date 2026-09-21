@@ -293,6 +293,27 @@
   margin-bottom: 10px;
 }
 
+.rapports-select-multi {
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 0.88rem;
+  background: #ffffff;
+  color: #1c2b28;
+  margin-bottom: 12px;
+}
+
+.rapports-case {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #1c2b28;
+  margin-bottom: 14px;
+}
+
 .rapports-carte--cliquable {
   cursor: pointer;
   text-align: left;

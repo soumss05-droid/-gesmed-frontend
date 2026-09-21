@@ -10,6 +10,14 @@ const LIBELLE_STATUT = {
   SURSTOCK: "Surstock",
 };
 
+const LIBELLE_NIVEAU = {
+  CAMEC: "CAMEC",
+  GAS_DRS: "Région (DRS)",
+  GAS_MOUGHATAA: "Moughataa",
+  FORMATION_SANITAIRE: "Formation sanitaire",
+  GAS_PROGRAMME_NATIONAL: "GAS Programme national",
+};
+
 export default function StockReseau({ onRetour }) {
   const [donnees, setDonnees] = useState([]);
   const [cmm, setCmm] = useState([]);
@@ -20,6 +28,7 @@ export default function StockReseau({ onRetour }) {
   const [etablissementsOuverts, setEtablissementsOuverts] = useState({});
   const [filtreRegion, setFiltreRegion] = useState("");
   const [filtreMoughataa, setFiltreMoughataa] = useState("");
+  const [filtreNiveau, setFiltreNiveau] = useState("");
 
   useEffect(() => {
     async function charger() {
@@ -72,6 +81,11 @@ export default function StockReseau({ onRetour }) {
     return Array.from(noms).sort();
   }, [donnees, filtreRegion]);
 
+  const niveauxDisponibles = useMemo(() => {
+    const types = new Set(donnees.map((e) => e.type).filter(Boolean));
+    return Array.from(types);
+  }, [donnees]);
+
   // -------------------------------------------------------------------------
   // Résumé global et filtrage — calculés à partir des données déjà chargées,
   // sans appel serveur supplémentaire.
@@ -93,6 +107,7 @@ export default function StockReseau({ onRetour }) {
     return donnees
       .filter((etab) => !filtreRegion || etab.regionNom === filtreRegion)
       .filter((etab) => !filtreMoughataa || etab.moughataaNom === filtreMoughataa)
+      .filter((etab) => !filtreNiveau || etab.type === filtreNiveau)
       .map((etab) => ({
         ...etab,
         stocks: etab.stocks.filter((s) => {
@@ -102,7 +117,7 @@ export default function StockReseau({ onRetour }) {
         }),
       }))
       .filter((etab) => etab.stocks.length > 0 || (!rechercheMin && !seulementRuptures));
-  }, [donnees, recherche, seulementRuptures, filtreRegion, filtreMoughataa]);
+  }, [donnees, recherche, seulementRuptures, filtreRegion, filtreMoughataa, filtreNiveau]);
 
   return (
     <div className="reseau-page">
@@ -154,8 +169,16 @@ export default function StockReseau({ onRetour }) {
             </label>
           </div>
 
-          {(regionsDisponibles.length > 1 || moughataasDisponibles.length > 1) && (
+          {(regionsDisponibles.length > 1 || moughataasDisponibles.length > 1 || niveauxDisponibles.length > 1) && (
             <div className="reseau-filtres reseau-filtres-cascade">
+              {niveauxDisponibles.length > 1 && (
+                <select value={filtreNiveau} onChange={(e) => setFiltreNiveau(e.target.value)}>
+                  <option value="">Tous les niveaux</option>
+                  {niveauxDisponibles.map((t) => (
+                    <option key={t} value={t}>{LIBELLE_NIVEAU[t] || t}</option>
+                  ))}
+                </select>
+              )}
               {regionsDisponibles.length > 1 && (
                 <select
                   value={filtreRegion}

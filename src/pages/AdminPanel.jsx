@@ -30,6 +30,15 @@ const LIBELLES_TYPE_NOTIF = {
   RUPTURE_STOCK: "Rupture de stock",
 };
 
+// Libellés dédiés au filtre "Niveau" de l'onglet Stocks — mêmes termes que
+// l'écran "Stock du réseau", pour rester cohérent d'un écran à l'autre.
+const LIBELLE_NIVEAU_STOCK = {
+  CAMEC: "CAMEC",
+  GAS_DRS: "Région (DRS)",
+  GAS_MOUGHATAA: "Moughataa",
+  FORMATION_SANITAIRE: "Formation sanitaire",
+  GAS_PROGRAMME_NATIONAL: "GAS Programme national",
+};
 // Seuls ces deux types d'établissement peuvent être marqués en
 // approvisionnement direct CAMEC (Moughataa ou formation sanitaire
 // exceptionnels, pour raisons géographiques).
@@ -1128,7 +1137,7 @@ export default function AdminPanel({ onRetour }) {
               <label>Niveau</label>
               <select value={filtreLotNiveau} onChange={(e) => setFiltreLotNiveau(e.target.value)}>
                 <option value="">Tous</option>
-                {Object.entries(LIBELLES_TYPE_ETAB).map(([val, lib]) => (
+                {Object.entries(LIBELLE_NIVEAU_STOCK).map(([val, lib]) => (
                   <option key={val} value={val}>{lib}</option>
                 ))}
               </select>
@@ -1164,7 +1173,7 @@ export default function AdminPanel({ onRetour }) {
                   <tr key={l.id}>
                     <td>{l.produit?.nom || "—"}</td>
                     <td>{l.etablissement?.nom || "—"}</td>
-                    <td>{LIBELLES_TYPE_ETAB[l.etablissement?.type] || l.etablissement?.type || "—"}</td>
+                    <td>{LIBELLE_NIVEAU_STOCK[l.etablissement?.type] || l.etablissement?.type || "—"}</td>
                     <td>{l.numeroLot}</td>
                     <td>
                       {new Date(l.datePeremption).toLocaleDateString("fr-FR", {

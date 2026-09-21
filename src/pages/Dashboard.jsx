@@ -183,6 +183,18 @@ export default function Dashboard({
             // Reste à "—" si l'appel échoue — pas bloquant pour le reste de l'écran.
           }
         }
+        if (utilisateur.role === "GAS_MOUGHATAA") {
+          try {
+            const [resAValider, resReception] = await Promise.all([
+              fetch(`${API_URL}/requisitions/a-valider`, { headers: { Authorization: `Bearer ${token}` } }),
+              fetch(`${API_URL}/distribution/reception/en-attente`, { headers: { Authorization: `Bearer ${token}` } }),
+            ]);
+            if (resAValider.ok) base[1].valeur = String((await resAValider.json()).length);
+            if (resReception.ok) base[2].valeur = String((await resReception.json()).length);
+          } catch {
+            // Reste à "—" si l'appel échoue — pas bloquant pour le reste de l'écran.
+          }
+        }
         setSections(base);
       } catch (erreur) {
         console.error(erreur);
@@ -288,7 +300,7 @@ export default function Dashboard({
         { roles: ["GESTIONNAIRE_CAMEC", "ADMIN"], icone: "camion", libelle: "Rentrée des produits", onClick: onRentreeCamec },
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
         { roles: ["FORMATION_SANITAIRE"], icone: "boite", libelle: "Enregistrer une dispensation", onClick: onDispensation },
-        { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
+        { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
         { roles: ["GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "balance", libelle: "Écarts en attente", onClick: onEcarts },
       ],
     },
