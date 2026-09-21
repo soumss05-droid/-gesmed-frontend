@@ -18,6 +18,8 @@ export default function StockReseau({ onRetour }) {
   const [recherche, setRecherche] = useState("");
   const [seulementRuptures, setSeulementRuptures] = useState(false);
   const [etablissementsOuverts, setEtablissementsOuverts] = useState({});
+  const [filtreRegion, setFiltreRegion] = useState("");
+  const [filtreMoughataa, setFiltreMoughataa] = useState("");
 
   useEffect(() => {
     async function charger() {
@@ -50,6 +52,27 @@ export default function StockReseau({ onRetour }) {
   }
 
   // -------------------------------------------------------------------------
+  // Listes disponibles pour le filtrage en cascade — dérivées des données
+  // déjà chargées, sans appel serveur supplémentaire. La liste des
+  // Moughataa se limite à celles de la région choisie, pour que le
+  // deuxième filtre reste cohérent avec le premier.
+  // -------------------------------------------------------------------------
+  const regionsDisponibles = useMemo(() => {
+    const noms = new Set(donnees.map((e) => e.regionNom).filter(Boolean));
+    return Array.from(noms).sort();
+  }, [donnees]);
+
+  const moughataasDisponibles = useMemo(() => {
+    const noms = new Set(
+      donnees
+        .filter((e) => !filtreRegion || e.regionNom === filtreRegion)
+        .map((e) => e.moughataaNom)
+        .filter(Boolean)
+    );
+    return Array.from(noms).sort();
+  }, [donnees, filtreRegion]);
+
+  // -------------------------------------------------------------------------
   // Résumé global et filtrage — calculés à partir des données déjà chargées,
   // sans appel serveur supplémentaire.
   // -------------------------------------------------------------------------
@@ -68,6 +91,8 @@ export default function StockReseau({ onRetour }) {
   const donneesFiltrees = useMemo(() => {
     const rechercheMin = recherche.trim().toLowerCase();
     return donnees
+      .filter((etab) => !filtreRegion || etab.regionNom === filtreRegion)
+      .filter((etab) => !filtreMoughataa || etab.moughataaNom === filtreMoughataa)
       .map((etab) => ({
         ...etab,
         stocks: etab.stocks.filter((s) => {
@@ -77,7 +102,7 @@ export default function StockReseau({ onRetour }) {
         }),
       }))
       .filter((etab) => etab.stocks.length > 0 || (!rechercheMin && !seulementRuptures));
-  }, [donnees, recherche, seulementRuptures]);
+  }, [donnees, recherche, seulementRuptures, filtreRegion, filtreMoughataa]);
 
   return (
     <div className="reseau-page">
@@ -128,6 +153,33 @@ export default function StockReseau({ onRetour }) {
               Alertes seulement (rupture / sous seuil)
             </label>
           </div>
+
+          {(regionsDisponibles.length > 1 || moughataasDisponibles.length > 1) && (
+            <div className="reseau-filtres reseau-filtres-cascade">
+              {regionsDisponibles.length > 1 && (
+                <select
+                  value={filtreRegion}
+                  onChange={(e) => {
+                    setFiltreRegion(e.target.value);
+                    setFiltreMoughataa(""); // On repart de zéro sur la Moughataa si la région change.
+                  }}
+                >
+                  <option value="">Toutes les régions</option>
+                  {regionsDisponibles.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              )}
+              {moughataasDisponibles.length > 1 && (
+                <select value={filtreMoughataa} onChange={(e) => setFiltreMoughataa(e.target.value)}>
+                  <option value="">Toutes les Moughataa</option>
+                  {moughataasDisponibles.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
 
           {cmm.length > 0 && (
             <details className="reseau-carte reseau-cmm">
@@ -186,9 +238,13 @@ export default function StockReseau({ onRetour }) {
                                 <td>{s.produit}</td>
                                 <td>{s.quantiteTotale}</td>
                                 <td>
-                                  <span className={`reseau-badge-statut reseau-badge-statut--${s.statut.toLowerCase()}`}>
-                                    {LIBELLE_STATUT[s.statut] || s.statut}
-                                  </span>
+                                  {s.statut ? (
+                                    <span className={`reseau-badge-statut reseau-badge-statut--${s.statut.toLowerCase()}`}>
+                                      {LIBELLE_STATUT[s.statut] || s.statut}
+                                    </span>
+                                  ) : (
+                                    <span className="reseau-badge-statut">—</span>
+                                  )}
                                 </td>
                               </tr>
                             ))}
