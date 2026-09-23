@@ -293,6 +293,12 @@
   margin-bottom: 10px;
 }
 
+.rapports-kanban-niveau {
+  font-size: 0.78rem;
+  color: #6b7873;
+  font-style: italic;
+}
+
 .rapports-select-multi {
   width: 100%;
   max-width: 360px;

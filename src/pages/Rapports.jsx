@@ -886,11 +886,12 @@ export default function Rapports({ session, onRetour }) {
               <div className="rapports-kanban-cartes">
                 {col.items.map((r) => (
                   <div className="rapports-kanban-carte" key={r.id}>
-                    <strong>{r.demandeur}</strong>
+                    <strong>N°{r.numero} — {r.demandeur}</strong>
                     <span>
                       {r.premierProduit}
                       {r.nbLignes > 1 ? ` +${r.nbLignes - 1}` : ""}
                     </span>
+                    {r.niveauActuel && <span className="rapports-kanban-niveau">Actuellement : {r.niveauActuel}</span>}
                     <span className="rapports-kanban-date">
                       {new Date(r.dateDerniereMaj).toLocaleDateString("fr-FR")}
                     </span>
