@@ -22,6 +22,14 @@ const LIBELLES_STATUT_REQ = {
   SCINDEE: "Scindée",
 };
 
+const LIBELLE_NIVEAU = {
+  CAMEC: "CAMEC",
+  GAS_DRS: "Région (DRS)",
+  GAS_MOUGHATAA: "Moughataa",
+  FORMATION_SANITAIRE: "Formation sanitaire",
+  GAS_PROGRAMME_NATIONAL: "GAS Programme national",
+};
+
 const ORDRE_COLONNES_KANBAN = [
   "EN_ATTENTE",
   "MODIFIEE_EN_ATTENTE_CONFIRMATION",
@@ -32,6 +40,10 @@ const ORDRE_COLONNES_KANBAN = [
   "SCINDEE",
   "REJETEE",
 ];
+
+function formaterDateJour(date) {
+  return new Date(date).toISOString().slice(0, 10);
+}
 
 // ---------------------------------------------------------------------------
 // Convertit un élément <svg> en image PNG téléchargeable — entièrement côté
@@ -120,7 +132,7 @@ function DiagrammeStocks({ stocks, svgRef }) {
 }
 
 function CourbeMouvements({ data, svgRef }) {
-  if (data.length === 0) return <p className="rapports-vide">Aucun mouvement sur les 30 derniers jours.</p>;
+  if (data.length === 0) return <p className="rapports-vide">Aucun mouvement sur cette période.</p>;
 
   const largeur = 640;
   const hauteur = 200;
@@ -204,6 +216,7 @@ function GraphiqueCroisement({ lignes, svgRef }) {
 export default function Rapports({ session, onRetour }) {
   const [onglet, setOnglet] = useState("apercu");
   const estAdmin = session?.utilisateur?.role === "ADMIN";
+  const estCamec = session?.utilisateur?.role === "GESTIONNAIRE_CAMEC";
 
   const refCourbe = useRef(null);
   const refCroisement = useRef(null);
@@ -245,6 +258,31 @@ export default function Rapports({ session, onRetour }) {
   const [performance, setPerformance] = useState(null);
   const [chargementPerformance, setChargementPerformance] = useState(false);
 
+  // ---------------------------------------------------------------------------
+  // Onglet Mouvements : période toujours choisie par l'utilisateur (jamais
+  // figée), filtre "niveau" optionnel selon l'étendue du périmètre du rôle.
+  // ---------------------------------------------------------------------------
+  const dateDefautDebut = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return formaterDateJour(d);
+  })();
+  const [dateDebut, setDateDebut] = useState(dateDefautDebut);
+  const [dateFin, setDateFin] = useState(formaterDateJour(new Date()));
+
+  const niveauxDisponibles = estAdmin
+    ? ["CAMEC", "GAS_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE", "GAS_PROGRAMME_NATIONAL"]
+    : peutCroiserRegion
+    ? ["GAS_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"]
+    : peutCroiserMoughataa
+    ? ["GAS_MOUGHATAA", "FORMATION_SANITAIRE"]
+    : estCamec
+    ? ["CAMEC", "GAS_DRS"]
+    : [];
+  const [filtreNiveauMouvements, setFiltreNiveauMouvements] = useState("");
+  const [mouvementsDetail, setMouvementsDetail] = useState(null);
+  const [chargementMouvements, setChargementMouvements] = useState(false);
+
   const [kpis, setKpis] = useState(null);
   const [produitsRupture, setProduitsRupture] = useState([]);
   const [stocks, setStocks] = useState([]);
@@ -260,11 +298,10 @@ export default function Rapports({ session, onRetour }) {
     try {
       const token = localStorage.getItem("gesmed_token");
       const entetes = { Authorization: `Bearer ${token}` };
-      const [resKpis, resRupture, resStocks, resEvolution, resKanban] = await Promise.all([
+      const [resKpis, resRupture, resStocks, resKanban] = await Promise.all([
         fetch(`${API_URL}/rapports/tableau-de-bord`, { headers: entetes }),
         fetch(`${API_URL}/rapports/produits-en-rupture`, { headers: entetes }),
         fetch(`${API_URL}/stocks`, { headers: entetes }),
-        fetch(`${API_URL}/rapports/evolution-mouvements`, { headers: entetes }),
         fetch(`${API_URL}/rapports/requisitions-kanban`, { headers: entetes }),
       ]);
       if (!resKpis.ok) throw new Error("Impossible de charger le tableau de bord.");
@@ -272,7 +309,6 @@ export default function Rapports({ session, onRetour }) {
       setKpis(await resKpis.json());
       setProduitsRupture(await resRupture.json());
       if (resStocks.ok) setStocks(await resStocks.json());
-      if (resEvolution.ok) setEvolution(await resEvolution.json());
       if (resKanban.ok) setKanban(await resKanban.json());
 
       if (peutCroiser) {
@@ -417,12 +453,6 @@ export default function Rapports({ session, onRetour }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [produitsCroises.join(","), regroupementNiveau]);
 
-  function basculerProduitCroise(produitId) {
-    setProduitsCroises((prev) =>
-      prev.includes(produitId) ? prev.filter((id) => id !== produitId) : [...prev, produitId]
-    );
-  }
-
   // ---------------------------------------------------------------------------
   // Performance : compare le DMM de chaque Moughataa à la somme des CMM de
   // ses formations sanitaires — un écart persistant signale un problème de
@@ -456,6 +486,86 @@ export default function Rapports({ session, onRetour }) {
     }
   }, [produitPerformance, performanceGlobale]);
 
+  // ---------------------------------------------------------------------------
+  // Mouvements détaillés (onglet dédié) : entrées, sorties, péremptions sur
+  // la période choisie, en respectant le périmètre réel du rôle — sert à la
+  // fois à la courbe (recalculée pour cette même période) et à l'export
+  // Excel détaillé.
+  // ---------------------------------------------------------------------------
+  async function chargerMouvementsDetailles() {
+    setChargementMouvements(true);
+    try {
+      const token = localStorage.getItem("gesmed_token");
+      const entetes = { Authorization: `Bearer ${token}` };
+      const paramsBase = `dateDebut=${dateDebut}&dateFin=${dateFin}`;
+      const paramNiveau = filtreNiveauMouvements ? `&niveau=${filtreNiveauMouvements}` : "";
+      const [resEvolution, resDetail] = await Promise.all([
+        fetch(`${API_URL}/rapports/evolution-mouvements?${paramsBase}`, { headers: entetes }),
+        fetch(`${API_URL}/rapports/mouvements-detailles?${paramsBase}${paramNiveau}`, { headers: entetes }),
+      ]);
+      if (resEvolution.ok) setEvolution(await resEvolution.json());
+      if (resDetail.ok) setMouvementsDetail(await resDetail.json());
+    } catch {
+      // Message d'erreur générique déjà géré ailleurs — on n'ajoute rien de
+      // bloquant ici, l'utilisateur peut réessayer avec le bouton.
+    } finally {
+      setChargementMouvements(false);
+    }
+  }
+
+  useEffect(() => {
+    chargerMouvementsDetailles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onglet === "mouvements"]);
+
+  function exporterMouvementsExcel() {
+    if (!mouvementsDetail) return;
+    const ligneMouvement = (m) =>
+      `<tr><td>${m.produit}</td><td>${m.numeroLot}</td><td>${m.etablissement}</td><td>${m.quantite}</td><td>${new Date(m.date).toLocaleDateString("fr-FR")}</td></tr>`;
+    const lignePerime = (l) =>
+      `<tr><td>${l.produit}</td><td>${l.numeroLot}</td><td>${l.etablissement}</td><td>${l.quantite}</td><td>${new Date(l.datePeremption).toLocaleDateString("fr-FR")}</td></tr>`;
+    const contenuHtml = `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>Mouvements GesMed — du ${new Date(dateDebut).toLocaleDateString("fr-FR")} au ${new Date(dateFin).toLocaleDateString("fr-FR")}</h2>
+          <h3>Entrées (${mouvementsDetail.entrees.length})</h3>
+          <table border="1">
+            <tr><th>Produit</th><th>N° de lot</th><th>Établissement</th><th>Quantité</th><th>Date</th></tr>
+            ${mouvementsDetail.entrees.map(ligneMouvement).join("")}
+          </table>
+          <br />
+          <h3>Sorties (${mouvementsDetail.sorties.length})</h3>
+          <table border="1">
+            <tr><th>Produit</th><th>N° de lot</th><th>Établissement</th><th>Quantité</th><th>Date</th></tr>
+            ${mouvementsDetail.sorties.map(ligneMouvement).join("")}
+          </table>
+          <br />
+          <h3>Péremptions sur la période (${mouvementsDetail.perimes.length})</h3>
+          <table border="1">
+            <tr><th>Produit</th><th>N° de lot</th><th>Établissement</th><th>Quantité restante</th><th>Périmé le</th></tr>
+            ${mouvementsDetail.perimes.map(lignePerime).join("")}
+          </table>
+        </body>
+      </html>
+    `;
+    const blob = new Blob([contenuHtml], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+    lien.href = url;
+    lien.download = `mouvements-gesmed-${dateDebut}-au-${dateFin}.xls`;
+    lien.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const totalEntrees = mouvementsDetail ? mouvementsDetail.entrees.reduce((acc, m) => acc + m.quantite, 0) : 0;
+  const totalSorties = mouvementsDetail ? mouvementsDetail.sorties.reduce((acc, m) => acc + m.quantite, 0) : 0;
+  const totalPerimes = mouvementsDetail ? mouvementsDetail.perimes.reduce((acc, l) => acc + l.quantite, 0) : 0;
+  const totalLivreBl = mouvementsDetail
+    ? mouvementsDetail.sorties.filter((m) => m.referenceType === "BL").reduce((acc, m) => acc + m.quantite, 0)
+    : 0;
+  const stockRestant = stocks.reduce((acc, s) => acc + s.quantiteTotale, 0);
+
   const colonnesKanban = ORDRE_COLONNES_KANBAN.map((statut) => ({
     statut,
     items: kanban.filter((r) => r.statut === statut),
@@ -476,6 +586,9 @@ export default function Rapports({ session, onRetour }) {
         </button>
         <button className={onglet === "graphiques" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("graphiques")}>
           Graphiques
+        </button>
+        <button className={onglet === "mouvements" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("mouvements")}>
+          Mouvements
         </button>
         <button className={onglet === "kanban" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("kanban")}>
           Kanban
@@ -641,17 +754,69 @@ export default function Rapports({ session, onRetour }) {
           ) : (
             <DiagrammeStocks stocks={stocks} svgRef={refDiagrammePropre} />
           )}
+        </>
+      ) : onglet === "mouvements" ? (
+        <>
+          <p className="rapports-sous-titre-info">
+            Choisis une période — aucune date n'est imposée par défaut au-delà d'un point de départ pratique.
+          </p>
+          <div className="rapports-filtres-croisement">
+            <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
+            <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} />
+            {niveauxDisponibles.length > 0 && (
+              <select value={filtreNiveauMouvements} onChange={(e) => setFiltreNiveauMouvements(e.target.value)}>
+                <option value="">Tous les niveaux</option>
+                {niveauxDisponibles.map((t) => (
+                  <option key={t} value={t}>{LIBELLE_NIVEAU[t] || t}</option>
+                ))}
+              </select>
+            )}
+            <button className="rapports-bouton-export" onClick={chargerMouvementsDetailles} disabled={chargementMouvements}>
+              {chargementMouvements ? "Chargement..." : "Appliquer"}
+            </button>
+          </div>
+
+          {estCamec && mouvementsDetail && (
+            <div className="rapports-grid">
+              <div className="rapports-carte">
+                <span className="rapports-carte-valeur">{totalLivreBl}</span>
+                <span className="rapports-carte-titre">Livré sur la période</span>
+              </div>
+              <div className="rapports-carte rapports-carte-dore">
+                <span className="rapports-carte-valeur">{totalPerimes}</span>
+                <span className="rapports-carte-titre">Périmé sur la période</span>
+              </div>
+              <div className="rapports-carte">
+                <span className="rapports-carte-valeur">{stockRestant}</span>
+                <span className="rapports-carte-titre">Reste en stock (aujourd'hui)</span>
+              </div>
+            </div>
+          )}
 
           <div className="rapports-section-entete">
-            <h2 className="rapports-sous-section">Mouvements des 30 derniers jours</h2>
+            <h2 className="rapports-sous-section">Mouvements sur la période</h2>
             <button
               className="rapports-bouton-export"
-              onClick={() => telechargerSvgEnPng(refCourbe.current, "mouvements-30-jours.png")}
+              onClick={() => telechargerSvgEnPng(refCourbe.current, "mouvements-periode.png")}
             >
               Télécharger en image
             </button>
           </div>
           <CourbeMouvements data={evolution} svgRef={refCourbe} />
+
+          {mouvementsDetail && (
+            <>
+              <div className="rapports-section-entete">
+                <h2 className="rapports-sous-section">Détail — export Excel</h2>
+                <button className="rapports-bouton-export" onClick={exporterMouvementsExcel}>
+                  Exporter en Excel
+                </button>
+              </div>
+              <p className="rapports-total-croisement">
+                {mouvementsDetail.entrees.length} entrée(s) ({totalEntrees} unités) — {mouvementsDetail.sorties.length} sortie(s) ({totalSorties} unités) — {mouvementsDetail.perimes.length} lot(s) périmé(s) sur la période ({totalPerimes} unités)
+              </p>
+            </>
+          )}
         </>
       ) : onglet === "performance" ? (
         <>
