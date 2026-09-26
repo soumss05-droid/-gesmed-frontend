@@ -3,11 +3,18 @@ import "./EnregistrerDispensation.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+// "label" : texte affiché dans la liste déroulante "Destiné à".
+// "labelChamp" : texte affiché au-dessus du champ de saisie qui apparaît
+// une fois le type choisi — volontairement différent du libellé de la liste
+// pour demander précisément la bonne information selon le type (le
+// responsable du labo, pas le nom du labo lui-même ; le service précis pour
+// "Autre service", etc.). "Responsable labo/maternité" plutôt que
+// "laborantin(e)" ou "responsable" seul, pour rester neutre côté genre.
 const TYPES_BENEFICIAIRE = [
-  { valeur: "PATIENT", label: "Patient", placeholder: "Nom, téléphone ou code patient" },
-  { valeur: "LABORATOIRE", label: "Laboratoire", placeholder: "Nom du laboratoire" },
-  { valeur: "MATERNITE", label: "Maternité", placeholder: "Nom du service" },
-  { valeur: "SERVICE", label: "Autre service interne", placeholder: "Nom du service" },
+  { valeur: "PATIENT", label: "Patient", labelChamp: "Patient", placeholder: "Nom, téléphone ou code patient" },
+  { valeur: "LABORATOIRE", label: "Laboratoire", labelChamp: "Responsable labo", placeholder: "Nom du responsable labo" },
+  { valeur: "MATERNITE", label: "Maternité", labelChamp: "Responsable maternité", placeholder: "Nom du/de la responsable" },
+  { valeur: "SERVICE", label: "Autre service", labelChamp: "Service", placeholder: "Nom du service" },
 ];
 
 export default function EnregistrerDispensation({ onRetour }) {
@@ -129,7 +136,7 @@ export default function EnregistrerDispensation({ onRetour }) {
 
           {typeChoisi && (
             <label className="dispensation-label">
-              {typeChoisi.label}
+              {typeChoisi.labelChamp}
               <input
                 type="text"
                 value={beneficiaire}

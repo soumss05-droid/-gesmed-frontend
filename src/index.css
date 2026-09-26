@@ -111,18 +111,14 @@ code {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  body > *:not(#zone-impression-temporaire) {
+    display: none !important;
   }
-  .zone-imprimable,
-  .zone-imprimable * {
-    visibility: visible;
+  #zone-impression-temporaire {
+    display: block !important;
   }
-  .zone-imprimable {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+  #zone-impression-temporaire * {
+    visibility: visible !important;
   }
   .no-print {
     display: none !important;

@@ -1,102 +1,130 @@
 .inventaire-page {
   color-scheme: light;
-  max-width: 820px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 24px 20px 60px;
-  background: #eef0e7;
+  padding: 28px 20px 60px;
+  background: #f4f5f0;
   color: #1c2b28;
 }
 
 .inventaire-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
-  margin-bottom: 4px;
+  margin-bottom: 24px;
 }
 
 .inventaire-retour {
   background: #ffffff;
-  border: 1px solid #dedcd0;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border: 1px solid #e2e0d4;
+  border-radius: 8px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #12302c;
+  box-shadow: 0 1px 2px rgba(28, 43, 40, 0.06);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+.inventaire-retour:hover {
+  background: #f0efe6;
+  box-shadow: 0 2px 6px rgba(28, 43, 40, 0.08);
 }
 
 .inventaire-header h1 {
-  font-size: 1.5rem;
-  margin: 0;
-  color: #1c2b28;
+  font-size: 1.4rem;
+  margin: 0 0 6px;
+  color: #12302c;
 }
 
 .inventaire-sous-titre {
   color: #6b7873;
-  margin-bottom: 24px;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.inventaire-sous-titre-carte {
+  color: #6b7873;
+  font-size: 0.88rem;
+  margin: 0 0 12px;
 }
 
 .inventaire-erreur {
   background: #fdecea;
   color: #b3492f;
   border: 1px solid #f2c2b8;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 16px;
 }
 
 .inventaire-message {
-  background: #fbf4e6;
+  background: #eef6f0;
   color: #1c2b28;
-  border: 1px solid #c99a4b;
-  border-radius: 6px;
+  border: 1px solid #b9dcc2;
+  border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 16px;
 }
 
 .inventaire-vide {
-  color: #6b7873;
+  color: #8b958f;
+  font-size: 0.9rem;
 }
 
-.inventaire-formulaire {
+/* Cartes : chaque section (comptage, nouveau lot, note+action, panneau bas)
+   dans son propre bloc visuellement séparé, avec une ombre légère plutôt
+   qu'une simple bordure plate. */
+.inventaire-carte {
   background: #ffffff;
-  border: 1px solid #dedcd0;
-  border-radius: 10px;
-  padding: 20px 24px;
+  border: 1px solid #ebe9dd;
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(28, 43, 40, 0.05);
 }
 
-.inventaire-produit {
-  margin-bottom: 24px;
-}
-
-.inventaire-produit h2 {
+.inventaire-carte h2 {
   font-size: 1.05rem;
-  margin: 0 0 8px;
-  color: #1c2b28;
+  margin: 0 0 14px;
+  color: #12302c;
 }
 
 .inventaire-sans-lot {
   color: #9aa39e;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.inventaire-table-scroll {
+  overflow-x: auto;
 }
 
 .inventaire-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .inventaire-table th {
   text-align: left;
   color: #6b7873;
-  font-weight: 500;
-  padding: 6px 8px;
-  border-bottom: 1px solid #dedcd0;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 2px solid #ebe9dd;
+  white-space: nowrap;
 }
 
 .inventaire-table td {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid #f0efe8;
   color: #1c2b28;
+}
+
+.inventaire-table tbody tr:hover {
+  background: #fafaf5;
 }
 
 .inventaire-table input {
@@ -108,43 +136,108 @@
   color: #1c2b28;
 }
 
+/* Champs du formulaire "Déclarer un nouveau lot" (et du rapport de
+   dispensation) : flexbox avec retour à la ligne plutôt qu'une grille, pour
+   qu'un élément qui ne tient pas dans la rangée s'enchaîne naturellement à
+   la ligne suivante, sans laisser de cellule vide réservée. */
+.inventaire-grille-nouveau-lot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.inventaire-grille-nouveau-lot select,
+.inventaire-grille-nouveau-lot input {
+  flex: 1 1 150px;
+  min-width: 150px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #dedcd0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1c2b28;
+  font-size: 0.9rem;
+}
+
+.inventaire-grille-nouveau-lot button {
+  flex: 1 1 150px;
+  min-width: 150px;
+}
+
+/* Confirmation visible des lots ajoutés au comptage, directement dans la
+   carte "Déclarer un nouveau lot" plutôt que seulement dans le tableau
+   tout en haut de la page, hors de vue. */
+.inventaire-lots-ajoutes {
+  margin-top: 14px;
+}
+
+.inventaire-lots-ajoutes-titre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1c2b28;
+  margin-bottom: 8px;
+}
+
+.inventaire-lot-ajoute {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafaf5;
+  border: 1px solid #ebe9dd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 0.88rem;
+}
+
 .inventaire-champ {
-  margin-top: 16px;
+  margin-bottom: 16px;
 }
 
 .inventaire-champ label {
   display: block;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 6px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: #1c2b28;
 }
 
 .inventaire-champ textarea {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid #dedcd0;
-  border-radius: 6px;
+  border-radius: 8px;
   resize: none;
   background: #ffffff;
   color: #1c2b28;
   box-sizing: border-box;
+  font: inherit;
 }
 
 .inventaire-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
 }
 
 .inventaire-bouton {
   background: #12302c;
   color: #f4f2ea;
   border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
+  border-radius: 8px;
+  padding: 11px 22px;
   font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.inventaire-bouton:hover:not(:disabled) {
+  background: #0b211e;
+}
+
+.inventaire-bouton:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .inventaire-bouton:disabled {
@@ -152,8 +245,75 @@
   cursor: default;
 }
 
-.inventaire-historique-section {
-  margin-top: 28px;
+.inventaire-bouton-secondaire {
+  background: #ffffff;
+  color: #12302c;
+  border: 1px solid #c7d4cf;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.inventaire-bouton-secondaire:hover:not(:disabled) {
+  background: #eef3f0;
+  border-color: #a9beb6;
+}
+
+.inventaire-bouton-secondaire:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.inventaire-lien-retirer {
+  background: none;
+  border: none;
+  color: #b3492f;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0;
+}
+
+/* Panneau du bas avec onglets, remplace les deux liens empilés qui
+   s'ouvraient indépendamment l'un sous l'autre. */
+.inventaire-panneau-bas {
+  padding: 0;
+  overflow: hidden;
+}
+
+.inventaire-onglets {
+  display: flex;
+  border-bottom: 1px solid #ebe9dd;
+  background: #fafaf5;
+}
+
+.inventaire-onglet {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 16px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #8b958f;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.inventaire-onglet:hover {
+  color: #12302c;
+}
+
+.inventaire-onglet-actif {
+  color: #12302c;
+  border-bottom-color: #12302c;
+}
+
+.inventaire-panneau-contenu {
+  padding: 22px 24px;
 }
 
 .inventaire-lien-historique {
@@ -162,18 +322,15 @@
   color: #12302c;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   padding: 0;
-}
-
-.inventaire-historique {
-  margin-top: 16px;
+  margin: 8px 0 12px;
 }
 
 .inventaire-historique-carte {
-  background: #ffffff;
-  border: 1px solid #dedcd0;
-  border-radius: 8px;
+  background: #fafaf5;
+  border: 1px solid #ebe9dd;
+  border-radius: 10px;
   padding: 14px 18px;
   margin-bottom: 12px;
 }
@@ -181,7 +338,7 @@
 .inventaire-historique-entete {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: #6b7873;
   margin-bottom: 6px;
 }
@@ -195,7 +352,7 @@
 .inventaire-historique-carte ul {
   margin: 0;
   padding-left: 18px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .inventaire-ecart-nul {
@@ -211,4 +368,168 @@
 .inventaire-ecart-surplus {
   color: #2f7a4f;
   font-weight: 600;
+}
+
+/* Rapport de dispensation (formation sanitaire) — champs de date en ligne */
+.inventaire-champ-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.inventaire-champ-inline input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.inventaire-champ-inline input[type="date"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Contrôles du rapport de dispensation (deux dates + bouton) : compacts et
+   alignés à gauche, sans s'étirer pour remplir toute la largeur de la carte
+   comme le fait la grille du formulaire "nouveau lot". */
+.inventaire-rapport-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.inventaire-rapport-controles .inventaire-champ-inline {
+  flex: 0 0 auto;
+}
+
+.inventaire-rapport-controles .inventaire-champ-inline input[type="date"] {
+  width: 160px;
+}
+
+.inventaire-rapport-controles button {
+  flex: 0 0 auto;
+}
+
+/* En-tête du rapport de dispensation : visible à l'écran ET dans les
+   exports (PDF, image, impression), pour que le document généré indique
+   toujours de quelle formation sanitaire et de quelle période il s'agit. */
+.inventaire-rapport-entete {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #ebe9dd;
+}
+
+.inventaire-rapport-entete h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #12302c;
+}
+
+.inventaire-rapport-entete p {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: #1c2b28;
+}
+
+.inventaire-rapport-entete-genere {
+  font-size: 0.8rem !important;
+  color: #8b958f !important;
+}
+
+/* Rapport de dispensation : uniquement le détail ligne par ligne, paginé */
+.inventaire-rapport-detail {
+  margin-top: 10px;
+}
+
+/* Tableau du rapport de dispensation : version plus soignée que le tableau
+   générique (.inventaire-table) — coins arrondis, en-tête colorée, rangs
+   alternés et petites pastilles de couleur pour le type de bénéficiaire.
+   Ce style reste propre à ce tableau : celui de "Comptage du stock" garde
+   son apparence simple habituelle. */
+.inventaire-rapport-table-scroll {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #ebe9dd;
+  box-shadow: 0 1px 4px rgba(28, 43, 40, 0.06);
+}
+
+.inventaire-table-rapport {
+  font-size: 0.88rem;
+}
+
+.inventaire-table-rapport thead tr {
+  background: #12302c;
+}
+
+.inventaire-table-rapport th {
+  color: #f4f2ea;
+  font-weight: 600;
+  border-bottom: none;
+  padding: 12px 14px;
+}
+
+.inventaire-table-rapport td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0efe8;
+}
+
+.inventaire-table-rapport tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.inventaire-table-rapport tbody tr:hover {
+  background: #eef3f0;
+}
+
+.inventaire-ligne-alternee {
+  background: #fafaf5;
+}
+
+.inventaire-table-rapport td:nth-child(3) {
+  font-weight: 600;
+  color: #12302c;
+}
+
+.inventaire-table-rapport td:nth-child(4) {
+  color: #2f6b5c;
+}
+
+.inventaire-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 0.88rem;
+  color: #6b7873;
+}
+/* Regroupe "Comptage du stock", "Déclarer un nouveau lot" et "Note" en un
+   seul bloc visuel continu, sans espace entre les cartes — et sert aussi de
+   zone capturée pour l'export PDF/image/impression, exactement comme pour
+   le rapport de dispensation plus bas. */
+.inventaire-groupe-comptage {
+  margin-bottom: 18px;
+}
+
+.inventaire-groupe-comptage .inventaire-carte {
+  margin-bottom: 0;
+  border-radius: 0;
+  border-bottom: none;
+}
+
+.inventaire-groupe-comptage .inventaire-carte:first-child {
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.inventaire-groupe-comptage .inventaire-carte:last-child {
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  border-bottom: 1px solid #ebe9dd;
 }

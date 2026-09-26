@@ -5,10 +5,31 @@ import "./BoutonsExport.css";
 // Composant générique à déposer sur n'importe quel écran (réquisition, BL,
 // rapport, fiche de stock...) pour donner à l'utilisateur le choix
 // d'imprimer, ou d'enregistrer en image (PNG) ou en PDF le contenu visé par
-// `cibleId`. L'élément portant cet id doit aussi porter la classe CSS
-// "zone-imprimable" pour que l'impression n'inclue que lui.
+// `cibleId`.
+//
+// Impression : on clone le contenu visé dans un conteneur temporaire ajouté
+// directement sous <body>, puis on masque tout le reste de la page avec
+// display:none (retiré du flux) plutôt que visibility:hidden (qui garde sa
+// place dans la mise en page et provoquait des pages blanches en trop dès
+// que la page contenait beaucoup de contenu caché — formulaires, onglets,
+// historique...). Le conteneur temporaire est retiré juste après
+// l'impression.
 export default function BoutonsExport({ cibleId, nomFichier = "document" }) {
   function imprimer() {
+    const element = document.getElementById(cibleId);
+    if (!element) return;
+
+    const conteneur = document.createElement("div");
+    conteneur.id = "zone-impression-temporaire";
+    conteneur.appendChild(element.cloneNode(true));
+    document.body.appendChild(conteneur);
+
+    function nettoyer() {
+      conteneur.remove();
+      window.removeEventListener("afterprint", nettoyer);
+    }
+    window.addEventListener("afterprint", nettoyer);
+
     window.print();
   }
 
