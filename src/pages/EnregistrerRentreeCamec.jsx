@@ -14,57 +14,71 @@ const champVide = {
   note: "",
 };
 
-const nouveauProduitVide = {
-  nom: "",
-  forme: "",
-  unite: "",
-  seuilMinDefaut: "",
-  seuilMaxDefaut: "",
-  programmeId: "",
-};
-
 export default function EnregistrerRentreeCamec({ onRetour }) {
   const [produits, setProduits] = useState([]);
   const [programmes, setProgrammes] = useState([]);
-  const [chargement, setChargement] = useState(true);
+  const [chargementProduits, setChargementProduits] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [message, setMessage] = useState(null);
-  const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const [enCours, setEnCours] = useState(false);
+
   const [form, setForm] = useState(champVide);
   const [erreursChamps, setErreursChamps] = useState({});
 
   const [afficherNouveauProduit, setAfficherNouveauProduit] = useState(false);
-  const [nouveauProduit, setNouveauProduit] = useState(nouveauProduitVide);
+  const [nouveauProduit, setNouveauProduit] = useState({
+    nom: "",
+    forme: "",
+    unite: "",
+    programmeId: "",
+  });
   const [erreurNouveauProduit, setErreurNouveauProduit] = useState(null);
   const [creationEnCours, setCreationEnCours] = useState(false);
 
-  async function chargerDonnees() {
-    setChargement(true);
-    setErreur(null);
+  async function chargerProduits() {
+    setChargementProduits(true);
     try {
       const token = localStorage.getItem("gesmed_token");
-      const [resProduits, resProgrammes] = await Promise.all([
-        fetch(`${API_URL}/produits`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/produits/programmes`, { headers: { Authorization: `Bearer ${token}` } }),
-      ]);
-      const dataProduits = await resProduits.json();
-      if (!resProduits.ok) throw new Error(dataProduits.erreur || "Impossible de charger les produits.");
-      setProduits(dataProduits);
-      if (resProgrammes.ok) setProgrammes(await resProgrammes.json());
+      const res = await fetch(`${API_URL}/produits`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erreur || "Impossible de charger les produits.");
+      setProduits(data);
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
     } finally {
-      setChargement(false);
+      setChargementProduits(false);
+    }
+  }
+
+  async function chargerProgrammes() {
+    try {
+      const token = localStorage.getItem("gesmed_token");
+      const res = await fetch(`${API_URL}/produits/programmes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setProgrammes(data);
+    } catch {
+      // silencieux : le sélecteur restera vide, l'erreur apparaîtra
+      // naturellement si l'utilisateur tente de créer un produit sans
+      // programme disponible
     }
   }
 
   useEffect(() => {
-    chargerDonnees();
+    chargerProduits();
+    chargerProgrammes();
   }, []);
 
-  function majChamp(cle, valeur) {
-    setForm((f) => ({ ...f, [cle]: valeur }));
-    setErreursChamps((e) => ({ ...e, [cle]: undefined }));
+  function majChamp(champ, valeur) {
+    setForm((prev) => ({ ...prev, [champ]: valeur }));
+    setErreursChamps((e) => ({ ...e, [champ]: undefined }));
+  }
+
+  function majNouveauProduit(champ, valeur) {
+    setNouveauProduit((prev) => ({ ...prev, [champ]: valeur }));
   }
 
   function validerChamps() {
@@ -77,18 +91,69 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
     return e;
   }
 
-  async function soumettre(ev) {
-    ev.preventDefault();
-    const e = validerChamps();
-    setErreursChamps(e);
-    if (Object.keys(e).length > 0) return;
+  // Détection de produits au nom proche déjà existants, pour éviter les
+  // doublons de catalogue sans bloquer la création (certains cas — formes
+  // différentes du même principe actif — restent légitimes).
+  function nomsSimilaires(nom) {
+    const saisie = nom.trim().toLowerCase();
+    if (saisie.length < 3) return [];
+    return produits.filter((p) => {
+      const existant = p.nom.trim().toLowerCase();
+      return existant.includes(saisie) || saisie.includes(existant);
+    });
+  }
 
-    setEnvoiEnCours(true);
-    setErreur(null);
+  async function creerNouveauProduit(e) {
+    e.preventDefault();
+    setErreurNouveauProduit(null);
     setMessage(null);
+
+    if (!nouveauProduit.nom.trim() || !nouveauProduit.programmeId) {
+      setErreurNouveauProduit("Nom et programme sont requis.");
+      return;
+    }
+
+    setCreationEnCours(true);
     try {
       const token = localStorage.getItem("gesmed_token");
-      const res = await fetch(`${API_URL}/receptions`, {
+      const res = await fetch(`${API_URL}/produits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nom: nouveauProduit.nom.trim(),
+          forme: nouveauProduit.forme || undefined,
+          unite: nouveauProduit.unite || undefined,
+          programmeId: nouveauProduit.programmeId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erreur || "La création du produit a échoué.");
+
+      setProduits((prev) => [...prev, data]);
+      majChamp("produitId", data.id);
+      setAfficherNouveauProduit(false);
+      setNouveauProduit({ nom: "", forme: "", unite: "", programmeId: "" });
+      setMessage("Produit créé et sélectionné.");
+    } catch (err) {
+      setErreurNouveauProduit(err.message || "Connexion instable, réessayez.");
+    } finally {
+      setCreationEnCours(false);
+    }
+  }
+
+  async function enregistrerRentree(e) {
+    e.preventDefault();
+    setErreur(null);
+    setMessage(null);
+
+    const erreursTrouvees = validerChamps();
+    setErreursChamps(erreursTrouvees);
+    if (Object.keys(erreursTrouvees).length > 0) return;
+
+    setEnCours(true);
+    try {
+      const token = localStorage.getItem("gesmed_token");
+      const res = await fetch(`${API_URL}/stocks/entree`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -103,82 +168,37 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "L'enregistrement de la rentrée a échoué.");
+      if (!res.ok) throw new Error(data.erreur || "L'enregistrement de la rentrée a échoué.");
 
       const produit = produits.find((p) => p.id === form.produitId);
       setMessage(
-        `Lot enregistré — ${form.quantite} unité(s) de ${produit?.nom ?? "ce produit"}, lot ${form.numeroLot.trim()}.`
+        `Rentrée enregistrée : lot ${form.numeroLot.trim()} (${form.quantite} unité(s) de ${produit?.nom ?? "ce produit"}).`
       );
       setForm(champVide);
+      setErreursChamps({});
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
     } finally {
-      setEnvoiEnCours(false);
+      setEnCours(false);
     }
   }
 
-  function majNouveauProduit(cle, valeur) {
-    setNouveauProduit((f) => ({ ...f, [cle]: valeur }));
-  }
-
-  async function creerNouveauProduit(ev) {
-    ev.preventDefault();
-    setErreurNouveauProduit(null);
-
-    if (!nouveauProduit.nom.trim() || !nouveauProduit.programmeId || !nouveauProduit.seuilMinDefaut || !nouveauProduit.seuilMaxDefaut) {
-      setErreurNouveauProduit("Nom, programme, seuil min et seuil max sont requis.");
-      return;
-    }
-
-    setCreationEnCours(true);
-    try {
-      const token = localStorage.getItem("gesmed_token");
-      const res = await fetch(`${API_URL}/produits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          nom: nouveauProduit.nom.trim(),
-          forme: nouveauProduit.forme || undefined,
-          unite: nouveauProduit.unite || undefined,
-          seuilMinDefaut: Number(nouveauProduit.seuilMinDefaut),
-          seuilMaxDefaut: Number(nouveauProduit.seuilMaxDefaut),
-          programmeId: nouveauProduit.programmeId,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.erreur || "La création du produit a échoué.");
-
-      // Rafraîchit la liste et sélectionne directement le produit qui
-      // vient d'être créé, pour enchaîner sur la rentrée sans re-chercher.
-      await chargerDonnees();
-      majChamp("produitId", data.id);
-      setNouveauProduit(nouveauProduitVide);
-      setAfficherNouveauProduit(false);
-    } catch (err) {
-      setErreurNouveauProduit(err.message || "Connexion instable, réessayez.");
-    } finally {
-      setCreationEnCours(false);
-    }
-  }
+  const similaires = nomsSimilaires(nouveauProduit.nom);
 
   return (
     <div className="rentree-page">
       <header className="rentree-header">
         <button className="rentree-retour" onClick={onRetour}>← Retour</button>
-        <h1>Rentrée des produits</h1>
+        <h1>Rentrée de produits — CAMEC</h1>
       </header>
-
-      <p className="rentree-sous-titre">
-        Enregistre un nouveau lot reçu à la CAMEC centrale. Le stock est mis à jour automatiquement.
-      </p>
 
       {erreur && <p className="rentree-erreur" role="alert">{erreur}</p>}
       {message && <p className="rentree-message">{message}</p>}
 
-      {chargement ? (
+      {chargementProduits ? (
         <p>Chargement des produits...</p>
       ) : (
-        <form className="rentree-formulaire" onSubmit={soumettre}>
+        <form className="rentree-formulaire" onSubmit={enregistrerRentree}>
           <div className="rentree-champ">
             <label>
               Produit <span className="rentree-obligatoire">*</span>
@@ -188,11 +208,10 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
               onChange={(e) => majChamp("produitId", e.target.value)}
               className={erreursChamps.produitId ? "rentree-input-erreur" : ""}
             >
-              <option value="">Sélectionner un produit…</option>
+              <option value="">-- Sélectionner un produit --</option>
               {produits.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nom}
-                  {p.forme ? ` — ${p.forme}` : ""}
+                  {p.nom} {p.forme ? `— ${p.forme}` : ""}
                 </option>
               ))}
             </select>
@@ -209,17 +228,34 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
 
           {afficherNouveauProduit && (
             <div className="rentree-panneau-nouveau-produit">
-              <h2>Nouveau produit</h2>
+              <h2>Créer un nouveau produit</h2>
               {erreurNouveauProduit && <p className="rentree-erreur-champ">{erreurNouveauProduit}</p>}
               <div className="rentree-grille">
                 <div className="rentree-champ">
-                  <label>Nom *</label>
+                  <label>Nom <span className="rentree-obligatoire">*</span></label>
                   <input
                     type="text"
                     value={nouveauProduit.nom}
                     onChange={(e) => majNouveauProduit("nom", e.target.value)}
                     placeholder="ex. Doliprane 500mg"
                   />
+                  {similaires.length > 0 && (
+                    <p className="rentree-erreur-champ">
+                      ⚠ Produit(s) proche(s) déjà existant(s) : {similaires.map((p) => p.nom).join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div className="rentree-champ">
+                  <label>Programme <span className="rentree-obligatoire">*</span></label>
+                  <select
+                    value={nouveauProduit.programmeId}
+                    onChange={(e) => majNouveauProduit("programmeId", e.target.value)}
+                  >
+                    <option value="">-- Sélectionner un programme --</option>
+                    {programmes.map((prog) => (
+                      <option key={prog.id} value={prog.id}>{prog.nom}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="rentree-champ">
                   <label>Forme</label>
@@ -239,45 +275,17 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
                     placeholder="ex. boîte, flacon..."
                   />
                 </div>
-                <div className="rentree-champ">
-                  <label>Programme *</label>
-                  <select
-                    value={nouveauProduit.programmeId}
-                    onChange={(e) => majNouveauProduit("programmeId", e.target.value)}
-                  >
-                    <option value="">Sélectionner…</option>
-                    {programmes.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nom}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="rentree-champ">
-                  <label>Seuil minimum *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={nouveauProduit.seuilMinDefaut}
-                    onChange={(e) => majNouveauProduit("seuilMinDefaut", e.target.value)}
-                  />
-                </div>
-                <div className="rentree-champ">
-                  <label>Seuil maximum *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={nouveauProduit.seuilMaxDefaut}
-                    onChange={(e) => majNouveauProduit("seuilMaxDefaut", e.target.value)}
-                  />
-                </div>
               </div>
-              <button
-                type="button"
-                className="rentree-bouton"
-                disabled={creationEnCours}
-                onClick={creerNouveauProduit}
-              >
-                {creationEnCours ? "..." : "Créer ce produit"}
-              </button>
+              <div className="rentree-actions">
+                <button
+                  type="button"
+                  className="rentree-bouton"
+                  disabled={creationEnCours || !nouveauProduit.nom.trim() || !nouveauProduit.programmeId}
+                  onClick={creerNouveauProduit}
+                >
+                  {creationEnCours ? "Création..." : "Créer le produit"}
+                </button>
+              </div>
             </div>
           )}
 
@@ -385,8 +393,8 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
             >
               Réinitialiser
             </button>
-            <button type="submit" className="rentree-bouton" disabled={envoiEnCours}>
-              {envoiEnCours ? "..." : "Enregistrer le lot"}
+            <button type="submit" className="rentree-bouton" disabled={enCours}>
+              {enCours ? "..." : "Enregistrer le lot"}
             </button>
           </div>
         </form>

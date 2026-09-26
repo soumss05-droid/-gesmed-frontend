@@ -109,3 +109,22 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .zone-imprimable,
+  .zone-imprimable * {
+    visibility: visible;
+  }
+  .zone-imprimable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./ValidationRequisitions.css";
+import BoutonsExport from "../components/BoutonsExport";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -85,21 +86,20 @@ export default function ValidationRequisitions({ session, onRetour }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.erreur || "La décision n'a pas pu être enregistrée.");
 
-      const prefixe = `Réquisition N°${requisition.numero} —`;
       if (decision === "valider") {
         if (data.partiel) {
           setMessage(
             data.escalade === false
-              ? `${prefixe} livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant.`
-              : `${prefixe} une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur.`
+              ? "Livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant."
+              : "Une partie a été livrée directement depuis votre stock ; le reste a été transmis au niveau supérieur."
           );
         } else if (data.livreeDirectement) {
-          setMessage(`${prefixe} livrée entièrement depuis votre stock — bordereau de livraison généré.`);
+          setMessage("Livrée entièrement depuis votre stock — bordereau de livraison généré.");
         } else {
           setMessage(
             data.escalade === false
-              ? `${prefixe} clôturée : aucun stock disponible pour l'instant.`
-              : `${prefixe} transmise au niveau supérieur.`
+              ? "Réquisition clôturée : aucun stock disponible pour l'instant."
+              : "Réquisition transmise au niveau supérieur."
           );
         }
       }
@@ -129,68 +129,96 @@ export default function ValidationRequisitions({ session, onRetour }) {
       )}
 
       {!chargement &&
-        requisitions.map((r) => (
-          <div className="validation-carte" key={r.id}>
-            <div className="validation-carte__entete">
-              <strong>N°{r.numero} — {r.etablissementDemandeur?.nom}</strong>
-              <span>{new Date(r.dateCreation).toLocaleDateString("fr-FR")}</span>
-            </div>
+        requisitions.map((r) => {
+          const idCarte = `requisition-${r.id}`;
+          return (
+            <div className="validation-carte zone-imprimable" id={idCarte} key={r.id}>
+              <div className="validation-carte__entete">
+                <strong>N°{r.numero} — {r.etablissementDemandeur?.nom}</strong>
+                <span>{new Date(r.dateCreation).toLocaleDateString("fr-FR")}</span>
+              </div>
 
-            {r.justification && <p className="validation-justification">« {r.justification} »</p>}
+              {r.justification && <p className="validation-justification">« {r.justification} »</p>}
 
-            <table className="validation-table">
-              <thead>
-                <tr>
-                  <th>Produit</th>
-                  <th>Demandé</th>
-                  <th>Disponible ici</th>
-                  <th>Validé</th>
-                </tr>
-              </thead>
-              <tbody>
-                {r.lignesEditees.map((ligne) => {
-                  const disponible = stocksParProduit[ligne.produitId] ?? 0;
-                  return (
-                    <tr key={ligne.id}>
-                      <td>{ligne.produit?.nom}</td>
-                      <td>{ligne.quantiteDemandee}</td>
-                      <td className={disponible >= ligne.quantiteValidee ? "validation-dispo-ok" : "validation-dispo-partiel"}>
-                        {disponible}
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          value={ligne.quantiteValidee}
-                          onChange={(e) => modifierQuantite(r.id, ligne.id, e.target.value)}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              <table className="validation-table">
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th>Demandé</th>
+                    <th>Disponible ici</th>
+                    <th>Suggéré*</th>
+                    <th>Validé</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.lignesEditees.map((ligne) => {
+                    const disponible = stocksParProduit[ligne.produitId] ?? 0;
+                    const alerte = ligne.alerteSurstock === true;
+                    return (
+                      <tr key={ligne.id} style={alerte ? { background: "#fdecea" } : undefined}>
+                        <td>
+                          {ligne.produit?.nom}
+                          {alerte && (
+                            <span
+                              title={
+                                ligne.statutStockDemandeur === "SURSTOCK"
+                                  ? "Le demandeur est déjà en surstock sur ce produit."
+                                  : "La quantité demandée dépasse largement le besoin normal calculé."
+                              }
+                              style={{ color: "#b3492f", marginLeft: 6, fontWeight: "bold" }}
+                            >
+                              ⚠
+                            </span>
+                          )}
+                        </td>
+                        <td>{ligne.quantiteDemandee}</td>
+                        <td className={disponible >= ligne.quantiteValidee ? "validation-dispo-ok" : "validation-dispo-partiel"}>
+                          {disponible}
+                        </td>
+                        <td style={alerte ? { color: "#b3492f", fontWeight: "bold" } : undefined}>
+                          {ligne.quantiteNormale ?? "—"}
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            value={ligne.quantiteValidee}
+                            onChange={(e) => modifierQuantite(r.id, ligne.id, e.target.value)}
+                            style={alerte ? { borderColor: "#b3492f" } : undefined}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p style={{ fontSize: "0.78rem", color: "#6b7873", marginTop: 4 }}>
+                * Quantité normalement nécessaire pour le demandeur, calculée à partir de sa consommation réelle (CMM/DMM) et de son stock disponible.
+              </p>
 
-            <div className="validation-actions">
-              {peutRejeter && (
+              <BoutonsExport cibleId={idCarte} nomFichier={`requisition-${r.numero || r.id}`} />
+
+              <div className="validation-actions no-print">
+                {peutRejeter && (
+                  <button
+                    className="validation-bouton validation-bouton--rejeter"
+                    disabled={enCours === r.id}
+                    onClick={() => envoyerDecision(r, "rejeter")}
+                  >
+                    Rejeter
+                  </button>
+                )}
                 <button
-                  className="validation-bouton validation-bouton--rejeter"
+                  className="validation-bouton validation-bouton--valider"
                   disabled={enCours === r.id}
-                  onClick={() => envoyerDecision(r, "rejeter")}
+                  onClick={() => envoyerDecision(r, "valider")}
                 >
-                  Rejeter
+                  {enCours === r.id ? "..." : estCamec ? "Livrer" : "Valider"}
                 </button>
-              )}
-              <button
-                className="validation-bouton validation-bouton--valider"
-                disabled={enCours === r.id}
-                onClick={() => envoyerDecision(r, "valider")}
-              >
-                {enCours === r.id ? "..." : estCamec ? "Livrer" : "Valider"}
-              </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
     </div>
   );
 }

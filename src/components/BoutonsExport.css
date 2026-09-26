@@ -1,0 +1,19 @@
+.export-actions {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.export-bouton {
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #12302c;
+}
+
+.export-bouton:hover {
+  background: #f4f2ea;
+}

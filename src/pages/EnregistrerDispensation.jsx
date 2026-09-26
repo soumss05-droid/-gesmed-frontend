@@ -3,10 +3,19 @@ import "./EnregistrerDispensation.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+const TYPES_BENEFICIAIRE = [
+  { valeur: "PATIENT", label: "Patient", placeholder: "Nom, téléphone ou code patient" },
+  { valeur: "LABORATOIRE", label: "Laboratoire", placeholder: "Nom du laboratoire" },
+  { valeur: "MATERNITE", label: "Maternité", placeholder: "Nom du service" },
+  { valeur: "SERVICE", label: "Autre service interne", placeholder: "Nom du service" },
+];
+
 export default function EnregistrerDispensation({ onRetour }) {
   const [produits, setProduits] = useState([]);
   const [produitId, setProduitId] = useState("");
   const [quantite, setQuantite] = useState("");
+  const [typeBeneficiaire, setTypeBeneficiaire] = useState("");
+  const [beneficiaire, setBeneficiaire] = useState("");
   const [chargementProduits, setChargementProduits] = useState(true);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState(null);
@@ -28,12 +37,22 @@ export default function EnregistrerDispensation({ onRetour }) {
     chargerProduits();
   }, []);
 
+  const typeChoisi = TYPES_BENEFICIAIRE.find((t) => t.valeur === typeBeneficiaire);
+
   async function envoyerDispensation(e) {
     e.preventDefault();
     setErreur(null);
 
     if (!produitId || !quantite || Number(quantite) <= 0) {
       setErreur("Choisis un produit et une quantité valide.");
+      return;
+    }
+    if (!typeBeneficiaire) {
+      setErreur("Précise à qui cette dispensation est destinée.");
+      return;
+    }
+    if (!beneficiaire.trim()) {
+      setErreur("Précise le nom, le téléphone ou le code du bénéficiaire.");
       return;
     }
 
@@ -43,7 +62,12 @@ export default function EnregistrerDispensation({ onRetour }) {
       const res = await fetch(`${API_URL}/stocks/dispensation`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ produitId, quantite: Number(quantite) }),
+        body: JSON.stringify({
+          produitId,
+          quantite: Number(quantite),
+          typeBeneficiaire,
+          beneficiaire: beneficiaire.trim(),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.erreur || "La dispensation n'a pas pu être enregistrée.");
@@ -89,9 +113,31 @@ export default function EnregistrerDispensation({ onRetour }) {
           </label>
 
           <label className="dispensation-label">
-            Quantité donnée au(x) patient(s)
+            Quantité donnée
             <input type="number" min="1" value={quantite} onChange={(e) => setQuantite(e.target.value)} />
           </label>
+
+          <label className="dispensation-label">
+            Destiné à
+            <select value={typeBeneficiaire} onChange={(e) => setTypeBeneficiaire(e.target.value)}>
+              <option value="">Choisir…</option>
+              {TYPES_BENEFICIAIRE.map((t) => (
+                <option key={t.valeur} value={t.valeur}>{t.label}</option>
+              ))}
+            </select>
+          </label>
+
+          {typeChoisi && (
+            <label className="dispensation-label">
+              {typeChoisi.label}
+              <input
+                type="text"
+                value={beneficiaire}
+                onChange={(e) => setBeneficiaire(e.target.value)}
+                placeholder={typeChoisi.placeholder}
+              />
+            </label>
+          )}
 
           {erreur && <p className="dispensation-erreur" role="alert">{erreur}</p>}
 
