@@ -14,6 +14,12 @@ const LIBELLES_STATUT = {
   SCINDEE: "Scindée",
 };
 
+// Statuts où aucune décision n'a encore été prise par le niveau supérieur —
+// tant qu'on y est, la quantité "validée" est juste une copie technique de
+// la quantité demandée, pas un vrai accord. On ne l'affiche pas pour éviter
+// de laisser croire au demandeur que sa réquisition est déjà validée.
+const STATUTS_EN_ATTENTE_DECISION = ["BROUILLON", "EN_ATTENTE", "REJETEE_POUR_CORRECTION"];
+
 function classeStatut(statut) {
   if (statut === "REJETEE_POUR_CORRECTION" || statut === "REJETEE") return "suivi-badge-rouge";
   if (statut === "VALIDEE" || statut === "CLOTUREE" || statut === "EXPEDIEE") return "suivi-badge-vert";
@@ -22,6 +28,8 @@ function classeStatut(statut) {
 }
 
 function CarteRequisition({ requisition, estFille = false }) {
+  const enAttenteDecision = STATUTS_EN_ATTENTE_DECISION.includes(requisition.statut);
+
   return (
     <div className={`suivi-carte ${estFille ? "suivi-carte-fille" : ""}`}>
       <div className="suivi-carte-entete">
@@ -48,7 +56,8 @@ function CarteRequisition({ requisition, estFille = false }) {
       <ul className="suivi-lignes">
         {requisition.lignes.map((l) => (
           <li key={l.id}>
-            {l.produit.nom} — demandé {l.quantiteDemandee}, validé {l.quantiteValidee}
+            {l.produit.nom} — demandé {l.quantiteDemandee}
+            {enAttenteDecision ? " (en attente de validation)" : `, validé ${l.quantiteValidee}`}
           </li>
         ))}
       </ul>

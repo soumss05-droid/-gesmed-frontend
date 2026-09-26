@@ -16,6 +16,7 @@ export default function NouvelleRequisition({ onRetour }) {
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [succes, setSucces] = useState(false);
+  const [numeroCree, setNumeroCree] = useState(null);
 
   useEffect(() => {
     async function chargerDonnees() {
@@ -98,6 +99,7 @@ export default function NouvelleRequisition({ onRetour }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.erreur || "La réquisition n'a pas pu être créée.");
+      setNumeroCree(data.numero);
       setSucces(true);
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
@@ -111,7 +113,12 @@ export default function NouvelleRequisition({ onRetour }) {
       <div className="requisition-page">
         <div className="requisition-confirmation">
           <h1>Réquisition envoyée</h1>
-          <p>Elle a été transmise au GAS Moughataa pour validation.</p>
+          <p>
+            {numeroCree ? `Réquisition N°${numeroCree} — elle` : "Elle"} a été transmise au GAS Moughataa pour validation.
+          </p>
+          <p className="requisition-suggestion">
+            Note ce numéro pour la retrouver plus tard via « Rechercher un dossier ».
+          </p>
           <button className="requisition-bouton" onClick={onRetour}>
             Retour au tableau de bord
           </button>
