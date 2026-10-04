@@ -10,6 +10,13 @@ const COULEUR_STATUT_STOCK = {
   SURSTOCK: "#3f6b8f",
 };
 
+const LIBELLE_STATUT_STOCK = {
+  RUPTURE: "Rupture",
+  SOUS_SEUIL: "Sous seuil",
+  NORMAL: "Normal",
+  SURSTOCK: "Surstock",
+};
+
 const LIBELLES_STATUT_REQ = {
   BROUILLON: "Brouillon",
   EN_ATTENTE: "En attente",
@@ -45,10 +52,6 @@ function formaterDateJour(date) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
-// ---------------------------------------------------------------------------
-// Convertit un élément <svg> en image PNG téléchargeable — entièrement côté
-// navigateur, sans dépendance externe (SVG → Blob → Image → Canvas → PNG).
-// ---------------------------------------------------------------------------
 function telechargerSvgEnPng(svgElement, nomFichier) {
   if (!svgElement) return;
   const serializer = new XMLSerializer();
@@ -62,7 +65,7 @@ function telechargerSvgEnPng(svgElement, nomFichier) {
   img.onload = () => {
     const largeur = svgElement.width.baseVal.value || svgElement.getBoundingClientRect().width;
     const hauteur = svgElement.height.baseVal.value || svgElement.getBoundingClientRect().height;
-    const echelle = 2; // Image plus nette au téléchargement.
+    const echelle = 2;
     const canvas = document.createElement("canvas");
     canvas.width = largeur * echelle;
     canvas.height = hauteur * echelle;
@@ -84,24 +87,106 @@ function telechargerSvgEnPng(svgElement, nomFichier) {
   img.src = url;
 }
 
+function exporterGraphiqueImprimable(svgElement, { titre, sousTitre, colonnes, lignes, nomEtablissement }) {
+  if (!svgElement) return;
+  const serializer = new XMLSerializer();
+  let source = serializer.serializeToString(svgElement);
+  if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+    source = source.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+  const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(source)))}`;
+
+  const ligneTableau = (valeurs) => `<tr>${valeurs.map((v) => `<td>${v}</td>`).join("")}</tr>`;
+  const tableauHtml =
+    lignes && lignes.length > 0
+      ? `
+        <table>
+          <thead><tr>${colonnes.map((c) => `<th>${c}</th>`).join("")}</tr></thead>
+          <tbody>${lignes.map(ligneTableau).join("")}</tbody>
+        </table>
+      `
+      : "";
+
+  const fenetre = window.open("", "_blank");
+  fenetre.document.write(`
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>${titre}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; color: #1c2b28; }
+          h1 { font-size: 1.3rem; margin-bottom: 2px; }
+          .rapports-impression-meta { color: #6b7873; font-size: 0.85rem; margin-bottom: 4px; }
+          .rapports-impression-soustitre { font-size: 0.95rem; margin-bottom: 16px; }
+          .rapports-impression-svg-wrap { overflow-x: auto; border: 1px solid #e4e2d6; padding: 8px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+          th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; font-size: 0.85rem; }
+          th { background: #f0f0f0; }
+          @media print {
+            .rapports-impression-svg-wrap { overflow: visible; border: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>${titre}</h1>
+        ${nomEtablissement ? `<p class="rapports-impression-meta">Établissement : ${nomEtablissement}</p>` : ""}
+        <p class="rapports-impression-meta">
+          Généré le ${new Date().toLocaleDateString("fr-FR")} à ${new Date().toLocaleTimeString("fr-FR")}
+        </p>
+        ${sousTitre ? `<p class="rapports-impression-soustitre">${sousTitre}</p>` : ""}
+        <div class="rapports-impression-svg-wrap">
+          <img src="${svgDataUrl}" />
+        </div>
+        ${tableauHtml}
+      </body>
+    </html>
+  `);
+  fenetre.document.close();
+  fenetre.focus();
+  setTimeout(() => fenetre.print(), 300);
+}
+
+function EtiquetteBarre({ x, hauteurMax, texte }) {
+  return (
+    <text
+      x={x + 5}
+      y={hauteurMax + 16}
+      textAnchor="start"
+      fontSize="12.5"
+      fontWeight="600"
+      fill="#1c2b28"
+      transform={`rotate(90 ${x + 5} ${hauteurMax + 16})`}
+    >
+      {texte}
+    </text>
+  );
+}
+
+function calculerHauteurLabels(noms) {
+  const longueurMax = Math.max(8, ...noms.map((n) => n.length));
+  return 30 + longueurMax * 7;
+}
+
 function DiagrammeStocks({ stocks, svgRef }) {
   if (stocks.length === 0) return <p className="rapports-vide">Aucun stock à afficher.</p>;
 
-  const largeurBarre = 42;
-  const espace = 18;
+  const largeurBarre = 48;
+  const espace = 28;
   const hauteurMax = 160;
+  const hauteurLabels = calculerHauteurLabels(stocks.map((s) => s.produit));
   const max = Math.max(1, ...stocks.map((s) => s.quantiteTotale));
   const largeurTotale = stocks.length * (largeurBarre + espace) + espace;
 
   return (
     <div className="rapports-svg-scroll">
-      <svg ref={svgRef} width={largeurTotale} height={hauteurMax + 70} className="rapports-svg">
+      <svg ref={svgRef} width={largeurTotale} height={hauteurMax + hauteurLabels} className="rapports-svg">
         {stocks.map((s, i) => {
           const hauteur = Math.max(2, (s.quantiteTotale / max) * hauteurMax);
           const x = espace + i * (largeurBarre + espace);
           const y = hauteurMax - hauteur + 20;
           return (
             <g key={s.produitId || s.produit}>
+              <title>{s.produit}</title>
               <rect
                 x={x}
                 y={y}
@@ -110,19 +195,10 @@ function DiagrammeStocks({ stocks, svgRef }) {
                 fill={COULEUR_STATUT_STOCK[s.statut] || "#12302c"}
                 rx="3"
               />
-              <text x={x + largeurBarre / 2} y={y - 6} textAnchor="middle" fontSize="11" fill="#1c2b28">
+              <text x={x + largeurBarre / 2} y={y - 6} textAnchor="middle" fontSize="12" fill="#1c2b28">
                 {s.quantiteTotale}
               </text>
-              <text
-                x={x + largeurBarre / 2}
-                y={hauteurMax + 36}
-                textAnchor="end"
-                fontSize="10"
-                fill="#6b7873"
-                transform={`rotate(-40 ${x + largeurBarre / 2} ${hauteurMax + 36})`}
-              >
-                {s.produit.length > 16 ? s.produit.slice(0, 16) + "…" : s.produit}
-              </text>
+              <EtiquetteBarre x={x} hauteurMax={hauteurMax} texte={s.produit} />
             </g>
           );
         })}
@@ -168,43 +244,31 @@ function CourbeMouvements({ data, svgRef }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Graphique générique pour le croisement (DRS, Moughataa ou formation
-// sanitaire, toute zone confondue) — un simple diagramme en barres, réutilisé
-// quel que soit le regroupement choisi.
-// ---------------------------------------------------------------------------
 function GraphiqueCroisement({ lignes, svgRef }) {
   if (lignes.length === 0) return <p className="rapports-vide">Aucune donnée pour ce produit.</p>;
 
-  const largeurBarre = 42;
-  const espace = 18;
+  const largeurBarre = 48;
+  const espace = 28;
   const hauteurMax = 160;
+  const hauteurLabels = calculerHauteurLabels(lignes.map((l) => l.nom));
   const max = Math.max(1, ...lignes.map((l) => l.quantite));
   const largeurTotale = lignes.length * (largeurBarre + espace) + espace;
 
   return (
     <div className="rapports-svg-scroll">
-      <svg ref={svgRef} width={largeurTotale} height={hauteurMax + 70} className="rapports-svg">
+      <svg ref={svgRef} width={largeurTotale} height={hauteurMax + hauteurLabels} className="rapports-svg">
         {lignes.map((l, i) => {
           const hauteur = Math.max(2, (l.quantite / max) * hauteurMax);
           const x = espace + i * (largeurBarre + espace);
           const y = hauteurMax - hauteur + 20;
           return (
             <g key={l.nom}>
+              <title>{l.nom}</title>
               <rect x={x} y={y} width={largeurBarre} height={hauteur} fill="#12302c" rx="3" />
-              <text x={x + largeurBarre / 2} y={y - 6} textAnchor="middle" fontSize="11" fill="#1c2b28">
+              <text x={x + largeurBarre / 2} y={y - 6} textAnchor="middle" fontSize="12" fill="#1c2b28">
                 {l.quantite}
               </text>
-              <text
-                x={x + largeurBarre / 2}
-                y={hauteurMax + 36}
-                textAnchor="end"
-                fontSize="10"
-                fill="#6b7873"
-                transform={`rotate(-40 ${x + largeurBarre / 2} ${hauteurMax + 36})`}
-              >
-                {l.nom.length > 16 ? l.nom.slice(0, 16) + "…" : l.nom}
-              </text>
+              <EtiquetteBarre x={x} hauteurMax={hauteurMax} texte={l.nom} />
             </g>
           );
         })}
@@ -223,7 +287,7 @@ export default function Rapports({ session, onRetour }) {
   const refDiagrammePropre = useRef(null);
 
   const [produitsListe, setProduitsListe] = useState([]);
-  const [produitsCroises, setProduitsCroises] = useState([]); // sélection multiple
+  const [produitsCroises, setProduitsCroises] = useState([]);
 
   const peutCroiserRegion = ["GESTIONNAIRE_DRS", "DIRECTEUR_DRS"].includes(session?.utilisateur?.role);
   const peutCroiserMoughataa = ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA"].includes(session?.utilisateur?.role);
@@ -258,10 +322,6 @@ export default function Rapports({ session, onRetour }) {
   const [performance, setPerformance] = useState(null);
   const [chargementPerformance, setChargementPerformance] = useState(false);
 
-  // ---------------------------------------------------------------------------
-  // Onglet Mouvements : période toujours choisie par l'utilisateur (jamais
-  // figée), filtre "niveau" optionnel selon l'étendue du périmètre du rôle.
-  // ---------------------------------------------------------------------------
   const dateDefautDebut = (() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -296,7 +356,7 @@ export default function Rapports({ session, onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const entetes = { Authorization: `Bearer ${token}` };
       const [resKpis, resRupture, resStocks, resKanban] = await Promise.all([
         fetch(`${API_URL}/rapports/tableau-de-bord`, { headers: entetes }),
@@ -341,18 +401,13 @@ export default function Rapports({ session, onRetour }) {
     URL.revokeObjectURL(url);
   }
 
-  // ---------------------------------------------------------------------------
-  // Export Excel : un tableau HTML enregistré avec le type MIME Excel — Excel
-  // l'ouvre nativement comme un vrai classeur, sans aucune bibliothèque à
-  // installer.
-  // ---------------------------------------------------------------------------
   function exporterExcel() {
     const ligneKpi = (label, valeur) => `<tr><td>${label}</td><td>${valeur}</td></tr>`;
     const contenuHtml = `
       <html>
         <head><meta charset="utf-8" /></head>
         <body>
-          <h2>Rapport GesMed — ${new Date().toLocaleDateString("fr-FR")}</h2>
+          <h2>Rapport SYGIMS — ${new Date().toLocaleDateString("fr-FR")}</h2>
           <table border="1">
             <tr><th colspan="2">Indicateurs</th></tr>
             ${ligneKpi("Références en stock", kpis.referencesEnStock)}
@@ -373,16 +428,11 @@ export default function Rapports({ session, onRetour }) {
     const url = URL.createObjectURL(blob);
     const lien = document.createElement("a");
     lien.href = url;
-    lien.download = `rapport-gesmed-${new Date().toISOString().slice(0, 10)}.xls`;
+    lien.download = `rapport-SYGIMS-${new Date().toISOString().slice(0, 10)}.xls`;
     lien.click();
     URL.revokeObjectURL(url);
   }
 
-  // ---------------------------------------------------------------------------
-  // Export PDF : ouvre une vue imprimable dans un nouvel onglet et déclenche
-  // l'impression — l'utilisateur choisit "Enregistrer au format PDF" dans la
-  // boîte de dialogue native du navigateur. Aucune bibliothèque nécessaire.
-  // ---------------------------------------------------------------------------
   function exporterPdf() {
     const fenetre = window.open("", "_blank");
     const ligneKpi = (label, valeur) => `<tr><td>${label}</td><td>${valeur}</td></tr>`;
@@ -390,7 +440,7 @@ export default function Rapports({ session, onRetour }) {
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Rapport GesMed</title>
+          <title>Rapport SYGIMS</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 24px; color: #1c2b28; }
             h1 { font-size: 1.3rem; }
@@ -400,7 +450,7 @@ export default function Rapports({ session, onRetour }) {
           </style>
         </head>
         <body>
-          <h1>Rapport GesMed — ${new Date().toLocaleDateString("fr-FR")}</h1>
+          <h1>Rapport SYGIMS — ${new Date().toLocaleDateString("fr-FR")}</h1>
           <table>
             <tr><th colspan="2">Indicateurs</th></tr>
             ${ligneKpi("Références en stock", kpis.referencesEnStock)}
@@ -421,11 +471,6 @@ export default function Rapports({ session, onRetour }) {
     setTimeout(() => fenetre.print(), 300);
   }
 
-  // ---------------------------------------------------------------------------
-  // Croisement : pour un ou plusieurs produits choisis (additionnés), calcule
-  // le total et la répartition via le backend, selon le regroupement
-  // disponible pour le rôle connecté.
-  // ---------------------------------------------------------------------------
   async function chargerCroisementNiveau(produitIds, regroupement) {
     if (produitIds.length === 0) {
       setCroisementNiveau(null);
@@ -433,7 +478,7 @@ export default function Rapports({ session, onRetour }) {
     }
     setChargementCroisement(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(
         `${API_URL}/stocks/croisement?produitIds=${produitIds.join(",")}&regroupement=${regroupement}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -453,16 +498,10 @@ export default function Rapports({ session, onRetour }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [produitsCroises.join(","), regroupementNiveau]);
 
-  // ---------------------------------------------------------------------------
-  // Performance : compare le DMM de chaque Moughataa à la somme des CMM de
-  // ses formations sanitaires — un écart persistant signale un problème de
-  // distribution ou de dimensionnement. En vue globale, additionne tous les
-  // produits plutôt que de se limiter à un seul.
-  // ---------------------------------------------------------------------------
   async function chargerPerformance(produitId) {
     setChargementPerformance(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const url = produitId
         ? `${API_URL}/stocks/performance-moughataa?produitId=${produitId}`
         : `${API_URL}/stocks/performance-moughataa`;
@@ -486,16 +525,10 @@ export default function Rapports({ session, onRetour }) {
     }
   }, [produitPerformance, performanceGlobale]);
 
-  // ---------------------------------------------------------------------------
-  // Mouvements détaillés (onglet dédié) : entrées, sorties, péremptions sur
-  // la période choisie, en respectant le périmètre réel du rôle — sert à la
-  // fois à la courbe (recalculée pour cette même période) et à l'export
-  // Excel détaillé.
-  // ---------------------------------------------------------------------------
   async function chargerMouvementsDetailles() {
     setChargementMouvements(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const entetes = { Authorization: `Bearer ${token}` };
       const paramsBase = `dateDebut=${dateDebut}&dateFin=${dateFin}`;
       const paramNiveau = filtreNiveauMouvements ? `&niveau=${filtreNiveauMouvements}` : "";
@@ -506,8 +539,7 @@ export default function Rapports({ session, onRetour }) {
       if (resEvolution.ok) setEvolution(await resEvolution.json());
       if (resDetail.ok) setMouvementsDetail(await resDetail.json());
     } catch {
-      // Message d'erreur générique déjà géré ailleurs — on n'ajoute rien de
-      // bloquant ici, l'utilisateur peut réessayer avec le bouton.
+      // Message d'erreur générique déjà géré ailleurs.
     } finally {
       setChargementMouvements(false);
     }
@@ -528,7 +560,7 @@ export default function Rapports({ session, onRetour }) {
       <html>
         <head><meta charset="utf-8" /></head>
         <body>
-          <h2>Mouvements GesMed — du ${new Date(dateDebut).toLocaleDateString("fr-FR")} au ${new Date(dateFin).toLocaleDateString("fr-FR")}</h2>
+          <h2>Mouvements SYGIMS — du ${new Date(dateDebut).toLocaleDateString("fr-FR")} au ${new Date(dateFin).toLocaleDateString("fr-FR")}</h2>
           <h3>Entrées (${mouvementsDetail.entrees.length})</h3>
           <table border="1">
             <tr><th>Produit</th><th>N° de lot</th><th>Établissement</th><th>Quantité</th><th>Date</th></tr>
@@ -553,7 +585,7 @@ export default function Rapports({ session, onRetour }) {
     const url = URL.createObjectURL(blob);
     const lien = document.createElement("a");
     lien.href = url;
-    lien.download = `mouvements-gesmed-${dateDebut}-au-${dateFin}.xls`;
+    lien.download = `mouvements-SYGIMS-${dateDebut}-au-${dateFin}.xls`;
     lien.click();
     URL.revokeObjectURL(url);
   }
@@ -675,12 +707,63 @@ export default function Rapports({ session, onRetour }) {
           <div className="rapports-section-entete">
             <h2 className="rapports-sous-section">Stock par produit</h2>
             {peutCroiser && croisementNiveau && (
-              <button
-                className="rapports-bouton-export"
-                onClick={() => telechargerSvgEnPng(refCroisement.current, "stock-par-produit.png")}
-              >
-                Télécharger en image
-              </button>
+              <div className="rapports-boutons-export">
+                <button
+                  className="rapports-bouton-export"
+                  onClick={() => telechargerSvgEnPng(refCroisement.current, "stock-par-produit.png")}
+                >
+                  Télécharger en image
+                </button>
+                <button
+                  className="rapports-bouton-export"
+                  onClick={() =>
+                    exporterGraphiqueImprimable(refCroisement.current, {
+                      titre: "Rapport SYGIMS — Stock par produit (croisement)",
+                      sousTitre: `Regroupement : ${
+                        croisementNiveau.regroupement === "drs"
+                          ? "par DRS"
+                          : croisementNiveau.regroupement === "moughataa"
+                          ? "par Moughataa"
+                          : "par formation sanitaire"
+                      } — Stock total : ${croisementNiveau.total}`,
+                      colonnes: [
+                        croisementNiveau.regroupement === "drs"
+                          ? "DRS"
+                          : croisementNiveau.regroupement === "moughataa"
+                          ? "Moughataa"
+                          : "Établissement",
+                        "Quantité",
+                      ],
+                      lignes: croisementNiveau.lignes.map((l) => [l.nom, l.quantite]),
+                    })
+                  }
+                >
+                  Imprimer / PDF
+                </button>
+              </div>
+            )}
+            {!peutCroiser && stocks.length > 0 && (
+              <div className="rapports-boutons-export">
+                <button
+                  className="rapports-bouton-export"
+                  onClick={() => telechargerSvgEnPng(refDiagrammePropre.current, "stock-par-produit.png")}
+                >
+                  Télécharger en image
+                </button>
+                <button
+                  className="rapports-bouton-export"
+                  onClick={() =>
+                    exporterGraphiqueImprimable(refDiagrammePropre.current, {
+                      titre: "Rapport SYGIMS — Stock par produit",
+                      colonnes: ["Produit", "Quantité", "Statut"],
+                      lignes: stocks.map((s) => [s.produit, s.quantiteTotale, LIBELLE_STATUT_STOCK?.[s.statut] || s.statut || "—"]),
+                      nomEtablissement: session?.utilisateur?.etablissementNom,
+                    })
+                  }
+                >
+                  Imprimer / PDF
+                </button>
+              </div>
             )}
           </div>
 

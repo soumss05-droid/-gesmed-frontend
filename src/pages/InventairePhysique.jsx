@@ -4,15 +4,6 @@ import BoutonsExport from "../components/BoutonsExport";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-const LIBELLES_TYPE_BENEFICIAIRE = {
-  PATIENT: "Patient",
-  LABORATOIRE: "Laboratoire",
-  MATERNITE: "Maternité",
-  SERVICE: "Autre service",
-};
-
-const LIGNES_PAR_PAGE_RAPPORT = 15;
-
 export default function InventairePhysique({ session, onRetour }) {
   const role = session?.utilisateur?.role;
   // Une formation sanitaire compte sa propre consommation patient (CMM).
@@ -23,6 +14,13 @@ export default function InventairePhysique({ session, onRetour }) {
   const utiliseDmm = ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GESTIONNAIRE_CAMEC", "ADMIN"].includes(role);
   const libelleColonneIndicateur = utiliseDmm ? "DMM" : "CMM";
   const estFormationSanitaire = role === "FORMATION_SANITAIRE";
+
+  // Une formation sanitaire n'a pas de "zone" d'établissements sous elle —
+  // le panneau "Situation de la zone" ne la concerne donc pas. Son rapport
+  // de dispensation, lui, a été déplacé vers la page Dispensation (voir
+  // EnregistrerDispensation.jsx) : il n'y a donc plus de second onglet pour
+  // elle ici, seulement "Historique des inventaires".
+  const aOngletZone = !estFormationSanitaire;
 
   const [stocks, setStocks] = useState([]);
   const [cmm, setCmm] = useState([]);
@@ -38,26 +36,10 @@ export default function InventairePhysique({ session, onRetour }) {
   const [chargementZone, setChargementZone] = useState(false);
   const [zoneChargee, setZoneChargee] = useState(false);
 
-  // Onglet actif du panneau du bas : "historique" ou, selon le rôle,
-  // "rapport" (formation sanitaire) ou "zone" (GAS Moughataa/DRS). Un seul
-  // panneau visible à la fois plutôt que deux liens empilés qui s'ouvrent
-  // indépendamment — plus lisible et plus logique.
+  // Onglet actif du panneau du bas : "historique", ou "zone" pour un GAS
+  // Moughataa/DRS (une formation sanitaire n'a qu'un seul onglet désormais,
+  // voir aOngletZone ci-dessus).
   const [ongletBas, setOngletBas] = useState("historique");
-
-  // Rapport de dispensation par période — uniquement pour une formation
-  // sanitaire, qui n'a pas de "zone" d'établissements en dessous d'elle
-  // (contrairement à un GAS Moughataa ou GAS DRS) : ce qui a du sens à sa
-  // place, c'est plutôt la répartition de ses propres dispensations par
-  // type de bénéficiaire, sur une période qu'elle choisit.
-  const [dateDebutRapport, setDateDebutRapport] = useState("");
-  const [dateFinRapport, setDateFinRapport] = useState("");
-  const [rapportDispensation, setRapportDispensation] = useState(null);
-  const [chargementRapport, setChargementRapport] = useState(false);
-  const [erreurRapport, setErreurRapport] = useState(null);
-  // Le détail ligne par ligne peut vite devenir très long (des centaines de
-  // dispensations) : paginé, pour que l'écran reste lisible même avec
-  // beaucoup de données.
-  const [pageDetailRapport, setPageDetailRapport] = useState(0);
 
   // Lots physiquement trouvés mais encore inconnus du système (produit sans
   // stock théorique, ou tous les lots système tombés à zéro) — ajoutés comme
@@ -75,7 +57,7 @@ export default function InventairePhysique({ session, onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const [resStocks, resProduits, resIndicateur] = await Promise.all([
         fetch(`${API_URL}/stocks`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }),
         fetch(`${API_URL}/produits`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }),
@@ -95,7 +77,7 @@ export default function InventairePhysique({ session, onRetour }) {
 
   async function chargerHistorique() {
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/inventaires`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
@@ -109,12 +91,11 @@ export default function InventairePhysique({ session, onRetour }) {
 
   // Vue consolidée en lecture seule de toute la zone (région ou Moughataa
   // selon le rôle) — chargée seulement au premier passage sur l'onglet, pas
-  // au chargement initial de l'écran. Non proposée à une formation sanitaire
-  // (voir rapportDispensation ci-dessous, qui la remplace pour ce rôle).
+  // au chargement initial de l'écran. Non proposée à une formation sanitaire.
   async function chargerInventairesZone() {
     setChargementZone(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/inventaires/zone`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
@@ -134,31 +115,6 @@ export default function InventairePhysique({ session, onRetour }) {
     if (onglet === "zone" && !zoneChargee) chargerInventairesZone();
   }
 
-  // Rapport de dispensation — appelable à tout moment pour rafraîchir avec
-  // les dates actuellement saisies (vide = pas de borne sur ce côté).
-  async function chargerRapportDispensation() {
-    setChargementRapport(true);
-    setErreurRapport(null);
-    try {
-      const token = localStorage.getItem("gesmed_token");
-      const params = new URLSearchParams();
-      if (dateDebutRapport) params.set("dateDebut", dateDebutRapport);
-      if (dateFinRapport) params.set("dateFin", dateFinRapport);
-      const res = await fetch(`${API_URL}/stocks/dispensation/rapport?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.erreur || "Impossible de charger le rapport de dispensation.");
-      setRapportDispensation(data);
-      setPageDetailRapport(0);
-    } catch (err) {
-      setErreurRapport(err.message || "Connexion instable, réessayez.");
-    } finally {
-      setChargementRapport(false);
-    }
-  }
-
   // useLayoutEffect (et non useEffect) : s'exécute avant que le navigateur
   // affiche la page, donc sans flash visible. Avec un useEffect classique, le
   // navigateur affichait d'abord un instant la page à l'ancienne position de
@@ -172,7 +128,6 @@ export default function InventairePhysique({ session, onRetour }) {
   useEffect(() => {
     chargerStocks();
     chargerHistorique();
-    if (estFormationSanitaire) chargerRapportDispensation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -182,9 +137,8 @@ export default function InventairePhysique({ session, onRetour }) {
 
   // Nom de l'établissement pour l'en-tête du document exporté — disponible
   // pour tous les rôles via session.utilisateur.etablissement (même champ
-  // utilisé dans le Dashboard). Fallback sur le rapport de dispensation au
-  // cas où, pour une formation sanitaire, ce champ ne serait pas présent.
-  const nomEtablissement = session?.utilisateur?.etablissement || rapportDispensation?.etablissement || null;
+  // utilisé dans le Dashboard).
+  const nomEtablissement = session?.utilisateur?.etablissement || null;
 
   // Indicateur par produitId (CMM ou DMM selon le rôle) — regroupé par ID et
   // non par nom, exactement comme côté backend : deux produits différents du
@@ -197,7 +151,8 @@ export default function InventairePhysique({ session, onRetour }) {
   }, [cmm, utiliseDmm]);
 
   // Une seule ligne par lot, tous produits confondus — c'est la vue demandée :
-  // Produit / N° de lot / DMM / Quantité théorique / Quantité physique / Écart.
+  // Produit / N° de lot / Date de péremption / DMM / Quantité théorique /
+  // Quantité physique / Écart.
   const lignesLots = useMemo(() => {
     const lignes = [];
     for (const stock of stocks) {
@@ -238,21 +193,6 @@ export default function InventairePhysique({ session, onRetour }) {
   const produitsSansLotActif = useMemo(() => {
     return stocks.filter((s) => !s.lots || s.lots.length === 0).map((s) => s.produit);
   }, [stocks]);
-
-  // Page courante du détail des dispensations — recalculée seulement quand
-  // le rapport ou la page change, pas à chaque rendu. Le détail ligne par
-  // ligne est désormais tout le rapport (plus de résumé par type/produit ni
-  // de chips), donc il est affiché directement, sans bouton pour le
-  // masquer/afficher.
-  const totalPagesDetailRapport = rapportDispensation
-    ? Math.max(1, Math.ceil(rapportDispensation.lignes.length / LIGNES_PAR_PAGE_RAPPORT))
-    : 1;
-
-  const lignesDetailRapportPage = useMemo(() => {
-    if (!rapportDispensation) return [];
-    const debut = pageDetailRapport * LIGNES_PAR_PAGE_RAPPORT;
-    return rapportDispensation.lignes.slice(debut, debut + LIGNES_PAR_PAGE_RAPPORT);
-  }, [rapportDispensation, pageDetailRapport]);
 
   function ajouterNouveauLot() {
     const { produitId, numeroLot, datePeremption, quantitePhysique } = formNouveauLot;
@@ -316,7 +256,7 @@ export default function InventairePhysique({ session, onRetour }) {
 
     setEnvoiEnCours(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/inventaires`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -346,8 +286,6 @@ export default function InventairePhysique({ session, onRetour }) {
       setEnvoiEnCours(false);
     }
   }
-
-  const libelleOngletSecondaire = estFormationSanitaire ? "Rapport de dispensation" : "Situation de la zone";
 
   return (
     <div className="inventaire-page">
@@ -395,6 +333,7 @@ export default function InventairePhysique({ session, onRetour }) {
                       <tr>
                         <th>Produit</th>
                         <th>N° de lot</th>
+                        <th>Date de péremption</th>
                         <th>{libelleColonneIndicateur}</th>
                         <th>Qté théorique</th>
                         <th>Qté physique</th>
@@ -410,6 +349,7 @@ export default function InventairePhysique({ session, onRetour }) {
                           <tr key={l.cle}>
                             <td>{l.produit}</td>
                             <td>{l.numeroLot}{l.estNouveau ? " (nouveau)" : ""}</td>
+                            <td>{l.datePeremption ? new Date(l.datePeremption).toLocaleDateString("fr-FR") : "—"}</td>
                             <td>{l.dmm}</td>
                             <td>{l.quantiteTheorique}</td>
                             <td>
@@ -543,33 +483,36 @@ export default function InventairePhysique({ session, onRetour }) {
         </form>
 
         {/* -------------------------------------------------------------
-            Panneau du bas : un seul onglet actif à la fois, plutôt que
-            deux liens qui s'ouvrent indépendamment l'un sous l'autre.
-            Placé dans le même bloc que le formulaire (donc affiché
-            seulement une fois "Comptage du stock" chargé) pour que les
-            titres des onglets n'apparaissent pas avant le reste de la page.
+            Panneau du bas : pour une formation sanitaire, un seul onglet
+            désormais ("Historique des inventaires", le rapport de
+            dispensation vit dans la page Dispensation). Pour les autres
+            rôles, deux onglets comme avant (historique / zone).
         --------------------------------------------------------------- */}
         <section className="inventaire-carte inventaire-panneau-bas">
-        <div className="inventaire-onglets" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={ongletBas === "historique"}
-            className={`inventaire-onglet ${ongletBas === "historique" ? "inventaire-onglet-actif" : ""}`}
-            onClick={() => choisirOnglet("historique")}
-          >
-            Historique des inventaires
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={ongletBas === (estFormationSanitaire ? "rapport" : "zone")}
-            className={`inventaire-onglet ${ongletBas === (estFormationSanitaire ? "rapport" : "zone") ? "inventaire-onglet-actif" : ""}`}
-            onClick={() => choisirOnglet(estFormationSanitaire ? "rapport" : "zone")}
-          >
-            {libelleOngletSecondaire}
-          </button>
-        </div>
+        {aOngletZone ? (
+          <div className="inventaire-onglets" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={ongletBas === "historique"}
+              className={`inventaire-onglet ${ongletBas === "historique" ? "inventaire-onglet-actif" : ""}`}
+              onClick={() => choisirOnglet("historique")}
+            >
+              Historique des inventaires
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={ongletBas === "zone"}
+              className={`inventaire-onglet ${ongletBas === "zone" ? "inventaire-onglet-actif" : ""}`}
+              onClick={() => choisirOnglet("zone")}
+            >
+              Situation de la zone
+            </button>
+          </div>
+        ) : (
+          <h2 className="inventaire-titre-panneau-unique">Historique des inventaires</h2>
+        )}
 
         {ongletBas === "historique" && (
           <div className="inventaire-panneau-contenu">
@@ -600,121 +543,7 @@ export default function InventairePhysique({ session, onRetour }) {
           </div>
         )}
 
-        {ongletBas === "rapport" && estFormationSanitaire && (
-          <div className="inventaire-panneau-contenu">
-            <p className="inventaire-sous-titre-carte">
-              Répartition de tes dispensations par type de bénéficiaire, sur la période de ton choix.
-            </p>
-
-            <div className="inventaire-rapport-controles">
-              <label className="inventaire-champ-inline">
-                Du
-                <input
-                  type="date"
-                  value={dateDebutRapport}
-                  onChange={(e) => setDateDebutRapport(e.target.value)}
-                />
-              </label>
-              <label className="inventaire-champ-inline">
-                Au
-                <input
-                  type="date"
-                  value={dateFinRapport}
-                  onChange={(e) => setDateFinRapport(e.target.value)}
-                />
-              </label>
-              <button
-                type="button"
-                className="inventaire-bouton-secondaire"
-                onClick={chargerRapportDispensation}
-                disabled={chargementRapport}
-              >
-                {chargementRapport ? "..." : "Générer le rapport"}
-              </button>
-            </div>
-
-            {erreurRapport && <p className="inventaire-erreur" role="alert">{erreurRapport}</p>}
-
-            {rapportDispensation && (
-              <>
-                <div id="rapport-dispensation" className="zone-imprimable">
-                  <div className="inventaire-rapport-entete">
-                    <h3>Rapport de dispensation</h3>
-                    <p>
-                      <strong>{rapportDispensation.etablissement || "Formation sanitaire"}</strong>
-                      {" — "}
-                      {rapportDispensation.periode.dateDebut || rapportDispensation.periode.dateFin
-                        ? `du ${rapportDispensation.periode.dateDebut || "—"} au ${rapportDispensation.periode.dateFin || "—"}`
-                        : "tout l'historique"}
-                    </p>
-                    <p className="inventaire-rapport-entete-genere">
-                      Généré le {new Date().toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
-
-                  {rapportDispensation.totalDispensations === 0 ? (
-                    <p className="inventaire-vide">Aucune dispensation sur cette période.</p>
-                  ) : (
-                    <div className="inventaire-rapport-detail">
-                      <div className="inventaire-table-scroll inventaire-rapport-table-scroll">
-                        <table className="inventaire-table inventaire-table-rapport">
-                          <thead>
-                            <tr>
-                              <th>Date</th>
-                              <th>Produit</th>
-                              <th>Quantité</th>
-                              <th>Type</th>
-                              <th>Bénéficiaire</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {lignesDetailRapportPage.map((l, index) => (
-                              <tr key={l.id} className={index % 2 === 1 ? "inventaire-ligne-alternee" : undefined}>
-                                <td>{new Date(l.date).toLocaleDateString("fr-FR")}</td>
-                                <td>{l.produit}</td>
-                                <td>{l.quantite}</td>
-                                <td>{LIBELLES_TYPE_BENEFICIAIRE[l.typeBeneficiaire] || l.typeBeneficiaire}</td>
-                                <td>{l.beneficiaire}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {totalPagesDetailRapport > 1 && (
-                        <div className="inventaire-pagination no-print">
-                          <button
-                            type="button"
-                            className="inventaire-bouton-secondaire"
-                            onClick={() => setPageDetailRapport((p) => Math.max(0, p - 1))}
-                            disabled={pageDetailRapport === 0}
-                          >
-                            ← Précédent
-                          </button>
-                          <span>Page {pageDetailRapport + 1} / {totalPagesDetailRapport}</span>
-                          <button
-                            type="button"
-                            className="inventaire-bouton-secondaire"
-                            onClick={() => setPageDetailRapport((p) => Math.min(totalPagesDetailRapport - 1, p + 1))}
-                            disabled={pageDetailRapport >= totalPagesDetailRapport - 1}
-                          >
-                            Suivant →
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* En dehors de la zone capturée : les 3 boutons ne
-                    doivent jamais apparaître dans le PDF/l'image/l'impression. */}
-                <BoutonsExport cibleId="rapport-dispensation" nomFichier="rapport-dispensation" />
-              </>
-            )}
-          </div>
-        )}
-
-        {ongletBas === "zone" && !estFormationSanitaire && (
+        {ongletBas === "zone" && aOngletZone && (
           <div className="inventaire-panneau-contenu">
             {chargementZone ? (
               <p>Chargement...</p>

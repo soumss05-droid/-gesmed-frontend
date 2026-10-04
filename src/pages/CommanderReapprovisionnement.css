@@ -138,3 +138,50 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.reappro-confirmation {
+  background: #ffffff;
+  border: 1px solid #c99a4b;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-top: 12px;
+}
+
+.reappro-confirmation h2 {
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+  color: #1c2b28;
+}
+
+.reappro-confirmation-meta {
+  color: #6b7873;
+  font-size: 0.85rem;
+  margin: 2px 0;
+}
+
+.reappro-table-confirmation {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 14px 0;
+}
+
+.reappro-table-confirmation th,
+.reappro-table-confirmation td {
+  border: 1px solid #dedcd0;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.reappro-table-confirmation th {
+  background: #eef0e7;
+  color: #1c2b28;
+  font-weight: 500;
+}
+
+.reappro-confirmation-justif {
+  font-size: 0.9rem;
+  color: #1c2b28;
+  white-space: pre-wrap;
+  margin-top: 10px;
+}

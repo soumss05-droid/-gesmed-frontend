@@ -14,7 +14,17 @@ const champVide = {
   note: "",
 };
 
-export default function EnregistrerRentreeCamec({ onRetour }) {
+// Rôles pour qui cet écran reste la "rentrée CAMEC" classique — tous les
+// autres (GAS_MOUGHATAA, GESTIONNAIRE_DRS, FORMATION_SANITAIRE) l'utilisent
+// pour leur SAISIE INITIALE de stock, qui sera ensuite verrouillée via le
+// système de verrouillage (voir Verrouillage.jsx / verrouillage.controller.js).
+const ROLES_RENTREE_CAMEC = ["GESTIONNAIRE_CAMEC", "ADMIN"];
+
+export default function EnregistrerRentreeCamec({ session, onRetour }) {
+  const role = session?.utilisateur?.role;
+  const estSaisieInitiale = role && !ROLES_RENTREE_CAMEC.includes(role);
+  const titre = estSaisieInitiale ? "Saisie initiale de stock" : "Rentrée de produits — CAMEC";
+
   const [produits, setProduits] = useState([]);
   const [programmes, setProgrammes] = useState([]);
   const [chargementProduits, setChargementProduits] = useState(true);
@@ -38,7 +48,7 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
   async function chargerProduits() {
     setChargementProduits(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/produits`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -54,7 +64,7 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
 
   async function chargerProgrammes() {
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/produits/programmes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -115,7 +125,7 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
 
     setCreationEnCours(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/produits`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -152,7 +162,7 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
 
     setEnCours(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/stocks/entree`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -189,8 +199,15 @@ export default function EnregistrerRentreeCamec({ onRetour }) {
     <div className="rentree-page">
       <header className="rentree-header">
         <button className="rentree-retour" onClick={onRetour}>← Retour</button>
-        <h1>Rentrée de produits — CAMEC</h1>
+        <h1>{titre}</h1>
       </header>
+
+      {estSaisieInitiale && (
+        <p className="rentree-note-saisie-initiale">
+          Cette saisie sert à initialiser le stock de ton établissement. Une fois la dotation de départ terminée,
+          ta zone pourra être verrouillée : les entrées suivantes passeront alors par le circuit réquisition / bordereau de livraison.
+        </p>
+      )}
 
       {erreur && <p className="rentree-erreur" role="alert">{erreur}</p>}
       {message && <p className="rentree-message">{message}</p>}

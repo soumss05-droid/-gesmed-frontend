@@ -1,0 +1,82 @@
+.verrouillage-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.verrouillage-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.verrouillage-retour {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.verrouillage-explication {
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.verrouillage-erreur {
+  color: #b00020;
+  margin-bottom: 12px;
+}
+
+.verrouillage-message {
+  color: #1b7a1b;
+  margin-bottom: 12px;
+}
+
+.verrouillage-bouton {
+  background: #b00020;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.verrouillage-bouton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.verrouillage-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.verrouillage-table th,
+.verrouillage-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.verrouillage-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.verrouillage-badge--verrouille {
+  background: #fde2e2;
+  color: #b00020;
+}
+
+.verrouillage-badge--libre {
+  background: #e2f6e2;
+  color: #1b7a1b;
+}

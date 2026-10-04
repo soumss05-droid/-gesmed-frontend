@@ -1,22 +1,25 @@
+// CommanderReapprovisionnement.jsx
 import { useEffect, useState } from "react";
+import BoutonsExport from "../components/BoutonsExport";
 import "./CommanderReapprovisionnement.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-export default function CommanderReapprovisionnement({ onRetour }) {
+export default function CommanderReapprovisionnement({ session, onRetour }) {
   const [suggestions, setSuggestions] = useState([]);
-  const [quantites, setQuantites] = useState({}); // { produitId: "30" }
+  const [quantites, setQuantites] = useState({});
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [message, setMessage] = useState(null);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const [justification, setJustification] = useState("");
+  const [derniereCommande, setDerniereCommande] = useState(null);
 
   async function chargerSuggestions() {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/stocks/commande-suggeree`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
@@ -25,7 +28,6 @@ export default function CommanderReapprovisionnement({ onRetour }) {
       if (!res.ok) throw new Error(data.erreur || "Impossible de calculer la commande suggérée.");
       setSuggestions(data);
 
-      // Pré-remplit les quantités avec la suggestion, pour les produits qui en ont une.
       const initial = {};
       for (const s of data) {
         if (s.quantiteSuggeree > 0) initial[s.produitId] = String(s.quantiteSuggeree);
@@ -60,9 +62,14 @@ export default function CommanderReapprovisionnement({ onRetour }) {
       return;
     }
 
+    const lignesAvecNoms = lignes.map((l) => ({
+      ...l,
+      produit: suggestions.find((s) => s.produitId === l.produitId)?.produit || l.produitId,
+    }));
+
     setEnvoiEnCours(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/requisitions/reapprovisionnement`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -71,12 +78,22 @@ export default function CommanderReapprovisionnement({ onRetour }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.erreur || "La commande a échoué.");
 
-      const nb = data.requisitions?.length || 0;
+      const requisitionsCreees = data.requisitions || [];
+      const numeros = requisitionsCreees.map((r) => r.numero).filter((n) => n !== undefined && n !== null);
+      const nb = requisitionsCreees.length;
+
       setMessage(
         nb > 1
-          ? `Commande envoyée — scindée en ${nb} réquisitions (plusieurs programmes concernés).`
+          ? `Commande envoyée — scindée en ${nb} réquisitions (plusieurs programmes concernés) : N°${numeros.join(", N°")}.`
+          : numeros.length > 0
+          ? `Commande envoyée avec succès — N°${numeros[0]}.`
           : "Commande envoyée avec succès."
       );
+      setDerniereCommande({
+        numeros: numeros.length > 0 ? numeros : ["—"],
+        lignes: lignesAvecNoms,
+        justification,
+      });
       setQuantites({});
       setJustification("");
       chargerSuggestions();
@@ -100,7 +117,54 @@ export default function CommanderReapprovisionnement({ onRetour }) {
       </p>
 
       {erreur && <p className="reappro-erreur" role="alert">{erreur}</p>}
-      {message && <p className="reappro-message">{message}</p>}
+
+      {message && (
+        <div className="reappro-message">
+          <p>{message}</p>
+          {derniereCommande && (
+            <div id="confirmation-commande" className="reappro-confirmation">
+              <h2>
+                {derniereCommande.numeros.length > 1
+                  ? `Commande de réapprovisionnement — N°${derniereCommande.numeros.join(", N°")}`
+                  : `Commande de réapprovisionnement — N°${derniereCommande.numeros[0]}`}
+              </h2>
+              {session?.utilisateur?.etablissementNom && (
+                <p className="reappro-confirmation-meta">
+                  Établissement : {session.utilisateur.etablissementNom}
+                </p>
+              )}
+              <p className="reappro-confirmation-meta">
+                Envoyée le {new Date().toLocaleDateString("fr-FR")} à {new Date().toLocaleTimeString("fr-FR")}
+              </p>
+              <table className="reappro-table-confirmation">
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th>Quantité commandée</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {derniereCommande.lignes.map((l) => (
+                    <tr key={l.produitId}>
+                      <td>{l.produit}</td>
+                      <td>{l.quantite}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {derniereCommande.justification && (
+                <p className="reappro-confirmation-justif">
+                  <strong>Justification :</strong> {derniereCommande.justification}
+                </p>
+              )}
+              <BoutonsExport
+                cibleId="confirmation-commande"
+                nomFichier={`commande-${derniereCommande.numeros.join("-")}`}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {chargement ? (
         <p>Calcul des besoins en cours...</p>

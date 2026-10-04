@@ -21,7 +21,7 @@ export default function NouvelleRequisition({ onRetour }) {
   useEffect(() => {
     async function chargerDonnees() {
       try {
-        const token = localStorage.getItem("gesmed_token");
+        const token = localStorage.getItem("SYGIMS_token");
         const [resProduits, resSuggestions] = await Promise.all([
           fetch(`${API_URL}/produits`, { headers: { Authorization: `Bearer ${token}` } }),
           fetch(`${API_URL}/stocks/commande-suggeree`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -73,6 +73,19 @@ export default function NouvelleRequisition({ onRetour }) {
     setLignes((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // Une ligne est "non recommandée" quand on connaît la quantité suggérée
+  // pour ce produit (CMM × 1 mois − stock disponible) et que la quantité
+  // saisie s'en écarte — dans ce cas une justification devient obligatoire
+  // plutôt que simplement proposée.
+  function ligneEstNonRecommandee(ligne) {
+    if (!ligne.produitId || ligne.quantiteDemandee === "") return false;
+    const suggestion = suggestions[ligne.produitId];
+    if (!suggestion) return false;
+    return Number(ligne.quantiteDemandee) !== suggestion.quantiteSuggeree;
+  }
+
+  const aUneQuantiteNonRecommandee = lignes.some(ligneEstNonRecommandee);
+
   async function envoyerRequisition(e) {
     e.preventDefault();
     setErreur(null);
@@ -83,9 +96,16 @@ export default function NouvelleRequisition({ onRetour }) {
       return;
     }
 
+    if (aUneQuantiteNonRecommandee && !justification.trim()) {
+      setErreur(
+        "Une justification est obligatoire : au moins une quantité demandée diffère de la quantité suggérée."
+      );
+      return;
+    }
+
     setEnvoi(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/requisitions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -140,6 +160,7 @@ export default function NouvelleRequisition({ onRetour }) {
         <form className="requisition-form" onSubmit={envoyerRequisition}>
           {lignes.map((ligne, index) => {
             const suggestion = suggestions[ligne.produitId];
+            const nonRecommandee = ligneEstNonRecommandee(ligne);
             return (
               <div className="requisition-ligne-bloc" key={index}>
                 <div className="requisition-ligne">
@@ -168,6 +189,12 @@ export default function NouvelleRequisition({ onRetour }) {
                     Consommation moyenne mensuelle : {suggestion.cmm} — Stock disponible : {suggestion.stockDisponible} — Suggéré : {suggestion.quantiteSuggeree}
                   </p>
                 )}
+
+                {nonRecommandee && (
+                  <p className="requisition-suggestion" style={{ color: "#b45309", fontWeight: 600 }}>
+                    ⚠️ Quantité différente de la suggestion ({suggestion.quantiteSuggeree}) — une justification est obligatoire.
+                  </p>
+                )}
               </div>
             );
           })}
@@ -175,8 +202,13 @@ export default function NouvelleRequisition({ onRetour }) {
           <button type="button" className="requisition-ajouter" onClick={ajouterLigne}>+ Ajouter un produit</button>
 
           <label className="requisition-label">
-            Justification (optionnel)
-            <textarea value={justification} onChange={(e) => setJustification(e.target.value)} rows={3} />
+            Justification {aUneQuantiteNonRecommandee ? "(obligatoire — quantité différente de la suggestion)" : "(optionnel)"}
+            <textarea
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              rows={3}
+              required={aUneQuantiteNonRecommandee}
+            />
           </label>
 
           {erreur && <p className="requisition-erreur" role="alert">{erreur}</p>}

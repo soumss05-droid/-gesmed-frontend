@@ -4,6 +4,10 @@
   margin: 10px 0;
 }
 
+.export-menu-conteneur {
+  position: relative;
+}
+
 .export-bouton {
   background: #ffffff;
   border: 1px solid #dedcd0;
@@ -15,5 +19,34 @@
 }
 
 .export-bouton:hover {
+  background: #f4f2ea;
+}
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(18, 48, 44, 0.15);
+  min-width: 150px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.export-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #12302c;
+  cursor: pointer;
+}
+
+.export-menu button:hover {
   background: #f4f2ea;
 }

@@ -15,6 +15,7 @@ import AdminPanel from "./pages/AdminPanel";
 import Rapports from "./pages/Rapports";
 import Ecarts from "./pages/Ecarts";
 import RechercheDossier from "./pages/RechercheDossier";
+import Verrouillage from "./pages/Verrouillage";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -26,7 +27,7 @@ function App() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("gesmed_token");
+    localStorage.removeItem("SYGIMS_token");
     setSession(null);
   }
 
@@ -37,9 +38,9 @@ function App() {
   if (vue === "nouvelle-requisition") return <NouvelleRequisition onRetour={() => setVue("dashboard")} />;
   if (vue === "validation-requisitions") return <ValidationRequisitions session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "stock-reseau") return <StockReseau onRetour={() => setVue("dashboard")} />;
-  if (vue === "dispensation") return <EnregistrerDispensation onRetour={() => setVue("dashboard")} />;
+  if (vue === "dispensation") return <EnregistrerDispensation session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "reception") return <ConfirmerReception onRetour={() => setVue("dashboard")} />;
-  if (vue === "rentree-camec") return <EnregistrerRentreeCamec onRetour={() => setVue("dashboard")} />;
+  if (vue === "rentree-camec") return <EnregistrerRentreeCamec session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "inventaire-physique") return <InventairePhysique session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "reapprovisionnement") return <CommanderReapprovisionnement onRetour={() => setVue("dashboard")} />;
   if (vue === "notifications") return <Notifications session={session} onRetour={() => setVue("dashboard")} />;
@@ -48,6 +49,7 @@ function App() {
   if (vue === "rapports") return <Rapports session={session} onRetour={() => setVue("dashboard")} />;
   if (vue === "ecarts") return <Ecarts onRetour={() => setVue("dashboard")} />;
   if (vue === "recherche-dossier") return <RechercheDossier onRetour={() => setVue("dashboard")} />;
+  if (vue === "verrouillage") return <Verrouillage session={session} onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -67,6 +69,7 @@ function App() {
       onRapports={() => setVue("rapports")}
       onEcarts={() => setVue("ecarts")}
       onRechercheDossier={() => setVue("recherche-dossier")}
+      onVerrouillage={() => setVue("verrouillage")}
     />
   );
 }

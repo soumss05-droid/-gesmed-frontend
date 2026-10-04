@@ -14,12 +14,6 @@ const LIBELLES_STATUT = {
   SCINDEE: "Scindée",
 };
 
-// Statuts où aucune décision n'a encore été prise par le niveau supérieur —
-// tant qu'on y est, la quantité "validée" est juste une copie technique de
-// la quantité demandée, pas un vrai accord. On ne l'affiche pas pour éviter
-// de laisser croire au demandeur que sa réquisition est déjà validée.
-const STATUTS_EN_ATTENTE_DECISION = ["BROUILLON", "EN_ATTENTE", "REJETEE_POUR_CORRECTION"];
-
 function classeStatut(statut) {
   if (statut === "REJETEE_POUR_CORRECTION" || statut === "REJETEE") return "suivi-badge-rouge";
   if (statut === "VALIDEE" || statut === "CLOTUREE" || statut === "EXPEDIEE") return "suivi-badge-vert";
@@ -27,12 +21,23 @@ function classeStatut(statut) {
   return "suivi-badge-neutre"; // EN_ATTENTE, BROUILLON
 }
 
-function CarteRequisition({ requisition, estFille = false }) {
-  const enAttenteDecision = STATUTS_EN_ATTENTE_DECISION.includes(requisition.statut);
+const DELAI_AVANT_RELANCE_HEURES = 48;
+
+function heuresEcoulees(depuis) {
+  return (Date.now() - new Date(depuis).getTime()) / (1000 * 60 * 60);
+}
+
+function CarteRequisition({ requisition, estFille = false, onRelancer, relanceEtat }) {
+  const peutRelancer =
+    requisition.statut === "EN_ATTENTE" &&
+    heuresEcoulees(requisition.dateDerniereMaj || requisition.dateCreation) >= DELAI_AVANT_RELANCE_HEURES;
+
+  const etat = relanceEtat?.[requisition.id];
 
   return (
     <div className={`suivi-carte ${estFille ? "suivi-carte-fille" : ""}`}>
       <div className="suivi-carte-entete">
+        <span className="suivi-numero">N°{requisition.numero}</span>
         <span className={`suivi-badge ${classeStatut(requisition.statut)}`}>
           {LIBELLES_STATUT[requisition.statut] || requisition.statut}
         </span>
@@ -49,6 +54,23 @@ function CarteRequisition({ requisition, estFille = false }) {
         Niveau actuel : <strong>{requisition.niveauActuel?.nom || "—"}</strong>
       </p>
 
+      {peutRelancer && (
+        <div className="suivi-relance">
+          <button
+            className="suivi-bouton-relance"
+            disabled={etat?.enCours}
+            onClick={() => onRelancer(requisition.id)}
+          >
+            {etat?.enCours ? "Envoi..." : "Relancer"}
+          </button>
+          {etat?.message && (
+            <span className={`suivi-relance-message ${etat.succes ? "suivi-relance-ok" : "suivi-relance-erreur"}`}>
+              {etat.message}
+            </span>
+          )}
+        </div>
+      )}
+
       {requisition.justification && (
         <p className="suivi-justification">{requisition.justification}</p>
       )}
@@ -56,8 +78,7 @@ function CarteRequisition({ requisition, estFille = false }) {
       <ul className="suivi-lignes">
         {requisition.lignes.map((l) => (
           <li key={l.id}>
-            {l.produit.nom} — demandé {l.quantiteDemandee}
-            {enAttenteDecision ? " (en attente de validation)" : `, validé ${l.quantiteValidee}`}
+            {l.produit.nom} — demandé {l.quantiteDemandee}, validé {l.quantiteValidee}
           </li>
         ))}
       </ul>
@@ -68,7 +89,13 @@ function CarteRequisition({ requisition, estFille = false }) {
             Scindée en {requisition.requisitionsEnfants.length} réquisition(s) :
           </p>
           {requisition.requisitionsEnfants.map((fille) => (
-            <CarteRequisition key={fille.id} requisition={fille} estFille />
+            <CarteRequisition
+              key={fille.id}
+              requisition={fille}
+              estFille
+              onRelancer={onRelancer}
+              relanceEtat={relanceEtat}
+            />
           ))}
         </div>
       )}
@@ -80,12 +107,35 @@ export default function SuiviRequisitions({ onRetour }) {
   const [requisitions, setRequisitions] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
+  const [relanceEtat, setRelanceEtat] = useState({});
+
+  async function relancer(requisitionId) {
+    setRelanceEtat((etats) => ({ ...etats, [requisitionId]: { enCours: true } }));
+    try {
+      const token = localStorage.getItem("SYGIMS_token");
+      const res = await fetch(`${API_URL}/requisitions/${requisitionId}/relancer`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erreur || "Impossible de relancer cette réquisition.");
+      setRelanceEtat((etats) => ({
+        ...etats,
+        [requisitionId]: { enCours: false, succes: true, message: "Relance envoyée." },
+      }));
+    } catch (err) {
+      setRelanceEtat((etats) => ({
+        ...etats,
+        [requisitionId]: { enCours: false, succes: false, message: err.message || "Échec de la relance." },
+      }));
+    }
+  }
 
   async function charger() {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/requisitions/mes-requisitions`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
@@ -124,7 +174,7 @@ export default function SuiviRequisitions({ onRetour }) {
       ) : (
         <div className="suivi-liste">
           {requisitions.map((r) => (
-            <CarteRequisition key={r.id} requisition={r} />
+            <CarteRequisition key={r.id} requisition={r} onRelancer={relancer} relanceEtat={relanceEtat} />
           ))}
         </div>
       )}

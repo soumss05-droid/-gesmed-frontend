@@ -190,3 +190,20 @@
 .admin-filtres .admin-champ {
   min-width: 160px;
 }
+.admin-reconciliation {
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.admin-reconciliation-note {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: #6b7873;
+}
+
+.admin-reconciliation .admin-table {
+  margin-top: 14px;
+}

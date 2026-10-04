@@ -533,3 +533,7 @@
   border-bottom-right-radius: 14px;
   border-bottom: 1px solid #ebe9dd;
 }
+.inventaire-titre-panneau-unique {
+  font-size: 1rem;
+  margin: 0 0 12px;
+}

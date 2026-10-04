@@ -14,7 +14,7 @@ export default function ConfirmerReception({ onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/distribution/reception/en-attente`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -57,7 +57,7 @@ export default function ConfirmerReception({ onRetour }) {
     setErreur(null);
     setMessage(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/distribution/reception/${bl.id}/confirmer`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

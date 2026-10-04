@@ -67,7 +67,7 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
-      localStorage.setItem("gesmed_token", data.token);
+      localStorage.setItem("SYGIMS_token", data.token);
       onLoginSuccess?.(data);
     } catch (err) {
       setError(err.message || "Connexion instable, réessayez.");
@@ -80,7 +80,7 @@ export default function Login({ onLoginSuccess }) {
     <div className="login-screen">
       <aside className="login-panel" aria-hidden="true">
         <div className="login-panel__brand">
-          <span className="login-panel__mark">GesMed</span>
+          <span className="login-panel__mark">SYGIMS</span>
           <p className="login-panel__tagline">
             Suivi des médicaments, de la centrale d'achat
             <br />

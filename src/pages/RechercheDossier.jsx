@@ -41,7 +41,7 @@ export default function RechercheDossier({ onRetour }) {
     setDossier(null);
     setRecherchee(true);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/requisitions/recherche/${numero.trim()}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",

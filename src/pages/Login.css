@@ -37,6 +37,14 @@
   overflow: hidden;
 }
 
+.login-panel__brand {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+  text-align: center;
+  margin: 0 auto;
+}
+
 .login-panel__mark {
   font-family: "Fraunces", Georgia, serif;
   font-size: 2rem;
@@ -46,7 +54,9 @@
 
 .login-panel__tagline {
   margin-top: 0.9rem;
-  max-width: 30ch;
+  max-width: 34ch;
+  margin-left: auto;
+  margin-right: auto;
   font-size: 0.95rem;
   line-height: 1.5;
   color: #cdd8d1;

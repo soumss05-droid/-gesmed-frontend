@@ -1,10 +1,359 @@
-.dispensation-page { max-width: 480px; margin: 0 auto; padding: 24px; }
+.dispensation-page { max-width: 720px; margin: 0 auto; padding: 24px; }
 .dispensation-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
 .dispensation-header h1 { font-size: 1.5rem; margin: 0; }
 .dispensation-retour { background: none; border: none; cursor: pointer; font-size: 1rem; white-space: nowrap; }
-.dispensation-form { display: flex; flex-direction: column; gap: 16px; }
+.dispensation-form { display: flex; flex-direction: column; gap: 16px; max-width: 480px; }
 .dispensation-label { display: flex; flex-direction: column; gap: 4px; }
 .dispensation-label select, .dispensation-label input { padding: 8px; }
 .dispensation-erreur { color: #b00020; background: #fde8e8; padding: 12px; border-radius: 6px; }
 .dispensation-bouton { background: #0f2e2e; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
-.dispensation-confirmation { text-align: center; padding: 48px 24px; }.dispensation-confirmation h1 { font-size: 1.5rem; margin-bottom: 8px; }
+.dispensation-bouton-secondaire { background: white; color: #0f2e2e; border: 1px solid #0f2e2e; padding: 10px 12px; border-radius: 6px; cursor: pointer; }
+.dispensation-confirmation { text-align: center; padding: 48px 24px; }
+.dispensation-confirmation h1 { font-size: 1.5rem; margin-bottom: 8px; }
+
+.dispensation-facture-actions { display: flex; gap: 12px; margin-top: 16px; max-width: 480px; }
+.dispensation-facture-actions .dispensation-bouton,
+.dispensation-facture-actions .dispensation-bouton-secondaire { flex: 1; }
+
+/* ----------------------------------------------------------------------
+   Ordonnance / bordereau de dispensation — format "ordonnance" sobre et
+   professionnel, en deux exemplaires identiques (établissement + bénéficiaire).
+   À l'impression, chaque exemplaire est contraint à la moitié d'une page A4
+   (voir @media print plus bas) pour que les deux tiennent sur une seule feuille.
+---------------------------------------------------------------------- */
+.ordonnance-feuille {
+  max-width: 480px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ordonnance-copie {
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 10px;
+  padding: 20px 22px;
+}
+
+.ordonnance-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #12302c;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.ordonnance-etablissement strong {
+  display: block;
+  font-size: 1rem;
+  color: #12302c;
+}
+
+.ordonnance-soustitre {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #6b7873;
+  margin-top: 2px;
+}
+
+.ordonnance-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #4a5551;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.ordonnance-beneficiaire {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 0.92rem;
+}
+
+.ordonnance-label {
+  font-weight: 600;
+  color: #12302c;
+}
+
+.ordonnance-valeur {
+  color: #1c2b28;
+}
+
+.ordonnance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.ordonnance-table th, .ordonnance-table td {
+  border: 1px solid #dedcd0;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.ordonnance-table th {
+  background: #f5f5f0;
+  color: #12302c;
+}
+
+.ordonnance-agent {
+  font-size: 0.8rem;
+  color: #6b7873;
+  margin: 0 0 14px;
+}
+
+.ordonnance-signature {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #4a5551;
+}
+
+.ordonnance-case-signature {
+  display: inline-block;
+  width: 150px;
+  height: 54px;
+  border: 1px solid #c7d4cf;
+  border-radius: 6px;
+}
+
+@media print {
+  .ordonnance-feuille {
+    max-width: none;
+    height: 277mm;
+    justify-content: space-between;
+    gap: 0;
+  }
+  .ordonnance-copie {
+    height: 130mm;
+    box-sizing: border-box;
+    border: 1px dashed #999;
+  }
+}
+
+/* ----------------------------------------------------------------------
+   Rapport de dispensation — recopié tel quel depuis InventairePhysique.css
+   pour garder exactement la même présentation qu'avant son déplacement ici.
+---------------------------------------------------------------------- */
+.inventaire-carte {
+  background: #ffffff;
+  border: 1px solid #ebe9dd;
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-top: 24px;
+  box-shadow: 0 1px 3px rgba(28, 43, 40, 0.05);
+}
+
+.inventaire-carte h2 {
+  font-size: 1.05rem;
+  margin: 0 0 14px;
+  color: #12302c;
+}
+
+.inventaire-sous-titre-carte {
+  color: #6b7873;
+  font-size: 0.88rem;
+  margin: 0 0 12px;
+}
+
+.inventaire-erreur {
+  background: #fdecea;
+  color: #b3492f;
+  border: 1px solid #f2c2b8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.inventaire-vide {
+  color: #8b958f;
+  font-size: 0.9rem;
+}
+
+.inventaire-table-scroll {
+  overflow-x: auto;
+}
+
+.inventaire-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.inventaire-table th {
+  text-align: left;
+  color: #6b7873;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 2px solid #ebe9dd;
+  white-space: nowrap;
+}
+
+.inventaire-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0efe8;
+  color: #1c2b28;
+}
+
+.inventaire-table tbody tr:hover {
+  background: #fafaf5;
+}
+
+.inventaire-champ-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.inventaire-champ-inline input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.inventaire-champ-inline input[type="date"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.inventaire-rapport-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.inventaire-rapport-controles .inventaire-champ-inline {
+  flex: 0 0 auto;
+}
+
+.inventaire-rapport-controles .inventaire-champ-inline input[type="date"] {
+  width: 160px;
+}
+
+.inventaire-rapport-controles button {
+  flex: 0 0 auto;
+}
+
+.inventaire-bouton-secondaire {
+  background: #ffffff;
+  color: #12302c;
+  border: 1px solid #c7d4cf;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.inventaire-bouton-secondaire:hover:not(:disabled) {
+  background: #eef3f0;
+  border-color: #a9beb6;
+}
+
+.inventaire-bouton-secondaire:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.inventaire-rapport-entete {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #ebe9dd;
+}
+
+.inventaire-rapport-entete h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #12302c;
+}
+
+.inventaire-rapport-entete p {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: #1c2b28;
+}
+
+.inventaire-rapport-entete-genere {
+  font-size: 0.8rem !important;
+  color: #8b958f !important;
+}
+
+.inventaire-rapport-detail {
+  margin-top: 10px;
+}
+
+.inventaire-rapport-table-scroll {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #ebe9dd;
+  box-shadow: 0 1px 4px rgba(28, 43, 40, 0.06);
+}
+
+.inventaire-table-rapport {
+  font-size: 0.88rem;
+}
+
+.inventaire-table-rapport thead tr {
+  background: #12302c;
+}
+
+.inventaire-table-rapport th {
+  color: #f4f2ea;
+  font-weight: 600;
+  border-bottom: none;
+  padding: 12px 14px;
+}
+
+.inventaire-table-rapport td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0efe8;
+}
+
+.inventaire-table-rapport tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.inventaire-table-rapport tbody tr:hover {
+  background: #eef3f0;
+}
+
+.inventaire-ligne-alternee {
+  background: #fafaf5;
+}
+
+.inventaire-table-rapport td:nth-child(3) {
+  font-weight: 600;
+  color: #12302c;
+}
+
+.inventaire-table-rapport td:nth-child(4) {
+  color: #2f6b5c;
+}
+
+.inventaire-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 0.88rem;
+  color: #6b7873;
+}

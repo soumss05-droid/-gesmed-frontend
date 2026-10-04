@@ -17,7 +17,7 @@ export default function Ecarts({ onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const entetes = { Authorization: `Bearer ${token}` };
       const [resBl, resInv] = await Promise.all([
         fetch(`${API_URL}/ecarts/en-attente`, { headers: entetes }),
@@ -52,7 +52,7 @@ export default function Ecarts({ onRetour }) {
     setMessage(null);
     setEnCours(ligneId);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/ecarts/${ligneId}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -79,7 +79,7 @@ export default function Ecarts({ onRetour }) {
     setMessage(null);
     setEnCours(ligneId);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const res = await fetch(`${API_URL}/inventaires/lignes/${ligneId}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

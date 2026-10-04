@@ -4,6 +4,15 @@ import BoutonsExport from "../components/BoutonsExport";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+// Même seuil que côté relance (requisitions.controller.js) : une réquisition
+// posée depuis au moins 48h à CE niveau est jugée en retard, quel que soit le
+// niveau (Moughataa, DRS, Programme national, CAMEC) — l'écran est partagé.
+const DELAI_RETARD_HEURES = 48;
+
+function heuresEcoulees(depuis) {
+  return (Date.now() - new Date(depuis).getTime()) / (1000 * 60 * 60);
+}
+
 export default function ValidationRequisitions({ session, onRetour }) {
   const [requisitions, setRequisitions] = useState([]);
   const [stocksParProduit, setStocksParProduit] = useState({});
@@ -19,7 +28,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
     setChargement(true);
     setErreur(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const [resRequisitions, resStocks] = await Promise.all([
         fetch(`${API_URL}/requisitions/a-valider`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_URL}/stocks`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -70,7 +79,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
     setErreur(null);
     setMessage(null);
     try {
-      const token = localStorage.getItem("gesmed_token");
+      const token = localStorage.getItem("SYGIMS_token");
       const body = {
         decision,
         lignes: requisition.lignesEditees.map((l) => ({
@@ -131,11 +140,19 @@ export default function ValidationRequisitions({ session, onRetour }) {
       {!chargement &&
         requisitions.map((r) => {
           const idCarte = `requisition-${r.id}`;
+          const enRetard = heuresEcoulees(r.dateDerniereMaj || r.dateCreation) >= DELAI_RETARD_HEURES;
           return (
-            <div className="validation-carte zone-imprimable" id={idCarte} key={r.id}>
+            <div
+              className={`validation-carte zone-imprimable ${enRetard ? "validation-carte--retard" : ""}`}
+              id={idCarte}
+              key={r.id}
+            >
               <div className="validation-carte__entete">
                 <strong>N°{r.numero} — {r.etablissementDemandeur?.nom}</strong>
-                <span>{new Date(r.dateCreation).toLocaleDateString("fr-FR")}</span>
+                <span className="validation-carte__droite">
+                  {enRetard && <span className="validation-badge-retard no-print">⚠ En retard</span>}
+                  {new Date(r.dateCreation).toLocaleDateString("fr-FR")}
+                </span>
               </div>
 
               {r.justification && <p className="validation-justification">« {r.justification} »</p>}
@@ -157,7 +174,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
                     return (
                       <tr key={ligne.id} style={alerte ? { background: "#fdecea" } : undefined}>
                         <td>
-                          {ligne.produit?.nom}
+                          {ligne.produit}
                           {alerte && (
                             <span
                               title={

@@ -43,6 +43,76 @@
   color: #6b7873;
 }
 
+/* Bloc d'en-tête : résumé + bouton d'export, côte à côte et repliables sur petit écran */
+.reseau-section-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.reseau-section-entete .reseau-resume {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.reseau-bouton-export {
+  background: #12302c;
+  color: #f4f2ea;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reseau-bouton-export:hover {
+  background: #0d2420;
+}
+
+/* Barre d'actions export/impression (menu déroulant Excel/PDF/Word + bouton Imprimer) */
+.reseau-export-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.reseau-export-conteneur {
+  position: relative;
+}
+
+.reseau-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #dedcd0;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(18, 48, 44, 0.15);
+  min-width: 150px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.reseau-export-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #12302c;
+  cursor: pointer;
+}
+
+.reseau-export-menu button:hover {
+  background: #f4f2ea;
+}
+
 /* Résumé */
 .reseau-resume {
   display: grid;
@@ -107,6 +177,15 @@
   font-size: 0.85rem;
   color: #6b7873;
   white-space: nowrap;
+}
+
+.reseau-filtres-cascade select {
+  padding: 7px 10px;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #ffffff;
+  color: #1c2b28;
 }
 
 /* Cartes établissement */
@@ -183,6 +262,28 @@
   color: #1c2b28;
 }
 
+/* Première colonne (nom du produit) alignée à gauche ; toutes les colonnes
+   suivantes (quantités, lot, date, statut) centrées — plus lisible et plus
+   soigné visuellement qu'un alignement à gauche uniforme. */
+.reseau-table th:first-child,
+.reseau-table td:first-child {
+  text-align: left;
+}
+
+.reseau-table th:not(:first-child),
+.reseau-table td:not(:first-child) {
+  text-align: center;
+}
+
+/* Nom de produit : tronqué avec ellipse si trop long, le titre complet reste
+   accessible via l'attribut title du <td> (infobulle au survol). */
+.reseau-nom-produit {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .reseau-badge-statut {
   display: inline-block;
   font-size: 0.75rem;
@@ -224,6 +325,106 @@
   color: #b3492f;
 }
 
+/* Bandeau de verrouillage de la saisie initiale — même famille visuelle que
+   le bandeau de justification obligatoire, pour rester cohérent. */
+.reseau-verrouillage-bandeau {
+  background: #fdecea;
+  border: 1px solid #f2c2b8;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+
+.reseau-verrouillage-bandeau h2 {
+  font-size: 1rem;
+  margin: 0 0 4px;
+  color: #b3492f;
+}
+
+.reseau-verrouillage-bandeau > p {
+  font-size: 0.88rem;
+  color: #6b7873;
+  margin: 0 0 8px;
+}
+
+.reseau-verrouillage-liste {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: #1c2b28;
+}
+
+.reseau-verrouillage-note {
+  margin: 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: #6b7873;
+}
+
+/* Bandeau obligatoire de justification (rupture / surstock non justifiés) */
+.reseau-justification-bandeau {
+  background: #fdecea;
+  border: 1px solid #f2c2b8;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+
+.reseau-justification-bandeau h2 {
+  font-size: 1rem;
+  margin: 0 0 4px;
+  color: #b3492f;
+}
+
+.reseau-justification-bandeau > p {
+  font-size: 0.88rem;
+  color: #6b7873;
+  margin: 0 0 12px;
+}
+
+.reseau-justification-ligne {
+  background: #ffffff;
+  border: 1px solid #f2c2b8;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.reseau-justification-ligne:last-child {
+  margin-bottom: 0;
+}
+
+.reseau-justification-entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.reseau-justification-produit {
+  font-weight: 600;
+  color: #1c2b28;
+}
+
+.reseau-justification-quantite {
+  font-size: 0.82rem;
+  color: #6b7873;
+}
+
+.reseau-justification-texte {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 8px;
+  color: #1c2b28;
+}
+
 /* CMM (accordéon natif <details>) */
 .reseau-cmm summary {
   cursor: pointer;
@@ -244,4 +445,57 @@
 
 .reseau-cmm[open] summary::before {
   content: "▾ ";
+}
+
+/* Demande de destruction d'un lot périmé */
+.reseau-perimes-message {
+  background: #e7f2ea;
+  color: #2f7a4f;
+  border: 1px solid #c7e0cd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+
+.reseau-destruction-cellule {
+  min-width: 220px;
+}
+
+.reseau-destruction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.reseau-destruction-quantite,
+.reseau-destruction-motif {
+  padding: 5px 8px;
+  border: 1px solid #dedcd0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: #1c2b28;
+  background: #ffffff;
+}
+
+.reseau-destruction-quantite {
+  width: 80px;
+  align-self: center;
+}
+
+.reseau-bouton-destruction {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  background: #b3492f;
+}
+
+.reseau-bouton-destruction:hover {
+  background: #8f3a25;
+}
+
+.reseau-destruction-envoyee {
+  color: #6b7873;
+  font-size: 0.82rem;
+  font-style: italic;
 }

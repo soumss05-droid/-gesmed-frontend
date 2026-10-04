@@ -60,7 +60,7 @@ async function appelApi(chemin, options, token) {
 }
 
 export default function AdminPanel({ onRetour }) {
-  const token = localStorage.getItem("gesmed_token");
+  const token = localStorage.getItem("SYGIMS_token");
 
   const [onglet, setOnglet] = useState("etablissements");
   const [chargement, setChargement] = useState(true);
@@ -76,11 +76,18 @@ export default function AdminPanel({ onRetour }) {
   const [notifications, setNotifications] = useState([]);
   const [lots, setLots] = useState([]);
   const [produits, setProduits] = useState([]);
+  const [verrous, setVerrous] = useState([]);
 
   const [filtreLotProduit, setFiltreLotProduit] = useState("");
   const [filtreLotNiveau, setFiltreLotNiveau] = useState("");
   const [filtreLotDateDebut, setFiltreLotDateDebut] = useState("");
   const [filtreLotDateFin, setFiltreLotDateFin] = useState("");
+
+  // Résultat de la dernière réconciliation Stock.quantiteTotale / somme des
+  // lots réels (voir reconcilierStocksLots ci-dessous) — affiché sous forme
+  // de détail dépliable pour que l'admin voie précisément ce qui a été corrigé.
+  const [reconciliationEnCours, setReconciliationEnCours] = useState(false);
+  const [reconciliationResultat, setReconciliationResultat] = useState(null);
 
   const [filtreEtablissement, setFiltreEtablissement] = useState("");
   const [filtreType, setFiltreType] = useState("");
@@ -131,11 +138,19 @@ export default function AdminPanel({ onRetour }) {
   const [editionUserId, setEditionUserId] = useState(null);
   const [editionUserForm, setEditionUserForm] = useState({});
 
+  const [etablissementAVerrouiller, setEtablissementAVerrouiller] = useState("");
+  const [verrouillageEnCours, setVerrouillageEnCours] = useState(false);
+
+  // Import en masse des formations sanitaires (voir importerFosaSubmit).
+  const [fichierImportFosa, setFichierImportFosa] = useState(null);
+  const [importFosaEnCours, setImportFosaEnCours] = useState(false);
+  const [resultatImportFosa, setResultatImportFosa] = useState(null);
+
   async function chargerTout() {
     setChargement(true);
     setErreur(null);
     try {
-      const [d, m, p, r, e, u, n, l, prod] = await Promise.all([
+      const [d, m, p, r, e, u, n, l, prod, verr] = await Promise.all([
         appelApi("/admin/drs", { method: "GET" }, token),
         appelApi("/admin/moughataa", { method: "GET" }, token),
         appelApi("/admin/programmes", { method: "GET" }, token),
@@ -145,6 +160,7 @@ export default function AdminPanel({ onRetour }) {
         appelApi("/admin/notifications", { method: "GET" }, token),
         appelApi("/admin/stocks", { method: "GET" }, token),
         appelApi("/produits", { method: "GET" }, token),
+        appelApi("/verrouillage", { method: "GET" }, token),
       ]);
       setDrsListe(d);
       setMoughataas(m);
@@ -155,6 +171,7 @@ export default function AdminPanel({ onRetour }) {
       setNotifications(n);
       setLots(l);
       setProduits(prod);
+      setVerrous(verr);
     } catch (err) {
       setErreur(err.message);
     } finally {
@@ -165,6 +182,29 @@ export default function AdminPanel({ onRetour }) {
   useEffect(() => {
     chargerTout();
   }, []);
+
+  // Recale Stock.quantiteTotale sur la somme réelle des lots en base, pour
+  // chaque produit/établissement — corrige l'écart historique qui pouvait
+  // laisser certains stocks affichés avec une quantité théorique sans lot
+  // réel correspondant (donc sans numéro de lot ni péremption affichables
+  // dans Stock du réseau).
+  async function reconcilierStocksLots() {
+    if (!window.confirm("Recaler tous les stocks sur la quantité réelle de leurs lots ? Cette action corrige les écarts existants.")) return;
+    setErreur(null);
+    setMessage(null);
+    setReconciliationResultat(null);
+    setReconciliationEnCours(true);
+    try {
+      const resultat = await appelApi("/admin/reconcilier-stocks-lots", { method: "POST" }, token);
+      setMessage(resultat.message);
+      setReconciliationResultat(resultat.detail || []);
+      chargerTout();
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setReconciliationEnCours(false);
+    }
+  }
 
   async function creerEtablissement(ev) {
     ev.preventDefault();
@@ -428,6 +468,116 @@ export default function AdminPanel({ onRetour }) {
     }
   }
 
+  // Verrouille manuellement un établissement précis (hors CAMEC) — verrou
+  // total, indépendamment de toute cascade de rôle. Utile pour un cas
+  // particulier non couvert par le verrouillage en cascade (ex. un
+  // établissement isolé, ou une correction manuelle).
+  async function verrouillerEtablissementAction(ev) {
+    ev.preventDefault();
+    if (!etablissementAVerrouiller) {
+      setErreur("Choisis un établissement à verrouiller.");
+      return;
+    }
+    setErreur(null);
+    setMessage(null);
+    setVerrouillageEnCours(true);
+    try {
+      await appelApi(`/verrouillage/etablissements/${etablissementAVerrouiller}`, { method: "POST" }, token);
+      setMessage("Établissement verrouillé.");
+      setEtablissementAVerrouiller("");
+      chargerTout();
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setVerrouillageEnCours(false);
+    }
+  }
+
+  // Lève tous les verrous (total ou par programme) d'un établissement — seul
+  // ADMIN peut le faire, quel que soit le rôle qui les a posés à l'origine.
+  async function deverrouillerEtablissementAction(etablissementId, nom) {
+    if (!window.confirm(`Lever tous les verrous de saisie initiale pour "${nom}" ? L'établissement pourra à nouveau utiliser /stocks/entree librement.`)) return;
+    setErreur(null);
+    setMessage(null);
+    try {
+      const resultat = await appelApi(`/verrouillage/etablissements/${etablissementId}`, { method: "DELETE" }, token);
+      setMessage(resultat.message);
+      chargerTout();
+    } catch (err) {
+      setErreur(err.message);
+    }
+  }
+
+  // Import en masse de formations sanitaires depuis un fichier Excel/CSV —
+  // voir POST /admin/etablissements/import-fosa. multipart/form-data, donc
+  // pas d'appelApi ici (celui-ci force Content-Type: application/json) :
+  // fetch direct, en laissant le navigateur fixer le boundary multipart.
+  async function importerFosaSubmit(ev) {
+    ev.preventDefault();
+    if (!fichierImportFosa) {
+      setErreur("Choisis un fichier Excel ou CSV avant d'importer.");
+      return;
+    }
+    setErreur(null);
+    setMessage(null);
+    setResultatImportFosa(null);
+    setImportFosaEnCours(true);
+    try {
+      const formData = new FormData();
+      formData.append("fichier", fichierImportFosa);
+      const res = await fetch(`${API_URL}/admin/etablissements/import-fosa`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erreur || "Échec de l'import.");
+      setMessage(data.message);
+      setResultatImportFosa(data.resultats);
+      setFichierImportFosa(null);
+      chargerTout();
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setImportFosaEnCours(false);
+    }
+  }
+
+  // Génère un fichier CSV téléchargeable avec les identifiants et mots de
+  // passe des comptes créés avec succès — seul moment où le mot de passe en
+  // clair est visible, donc seul moment où il peut être récupéré pour
+  // distribution aux responsables.
+  function telechargerIdentifiantsFosa() {
+    const lignesOk = (resultatImportFosa || []).filter((r) => r.statut === "ok");
+    if (lignesOk.length === 0) return;
+    const echapper = (v) => `"${(v || "").toString().replace(/"/g, '""')}"`;
+    const entetes = ["FOSA", "Moughataa", "Responsable", "Identifiant", "Mot de passe"];
+    const lignesCsv = lignesOk.map((r) =>
+      [r.nomFosa, r.moughataa, r.responsable, r.identifiant, r.motDePasse].map(echapper).join(";")
+    );
+    const contenu = [entetes.join(";"), ...lignesCsv].join("\n");
+    const blob = new Blob(["\uFEFF" + contenu], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+    lien.href = url;
+    lien.download = `identifiants_fosa_${new Date().toISOString().slice(0, 10)}.csv`;
+    lien.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Regroupe les lignes de verrous par établissement, pour n'afficher qu'une
+  // ligne par établissement dans le tableau (avec le détail des programmes
+  // concernés si le verrou n'est pas total).
+  const verrousParEtablissement = verrous.reduce((acc, v) => {
+    if (!acc[v.etablissementId]) {
+      acc[v.etablissementId] = { etablissement: v.etablissement, lignes: [] };
+    }
+    acc[v.etablissementId].lignes.push(v);
+    return acc;
+  }, {});
+
+  const etablissementsVerrouillables = etablissements.filter((e) => e.type !== "CAMEC");
+
   return (
     <div className="admin-page">
       <header className="admin-header">
@@ -468,6 +618,12 @@ export default function AdminPanel({ onRetour }) {
           onClick={() => setOnglet("stocks")}
         >
           Stocks
+        </button>
+        <button
+          className={onglet === "verrouillage" ? "admin-onglet-actif" : "admin-onglet"}
+          onClick={() => setOnglet("verrouillage")}
+        >
+          Verrouillage
         </button>
       </div>
 
@@ -739,6 +895,63 @@ export default function AdminPanel({ onRetour }) {
             </div>
             <button type="submit" className="admin-bouton">Créer l'établissement</button>
           </form>
+
+          <form className="admin-formulaire" onSubmit={importerFosaSubmit}>
+            <h2>Importer des formations sanitaires en masse</h2>
+            <p className="admin-reconciliation-note">
+              Fichier Excel (.xlsx) ou CSV avec les colonnes : <strong>Nom FOSA</strong>, <strong>Moughataa</strong>
+              {" "}(nom exact tel que créé dans Régions), <strong>Responsable</strong> (nom complet),{" "}
+              <strong>Telephone</strong> (optionnel), <strong>Identifiant</strong> (optionnel — généré automatiquement
+              si vide). Un compte et un mot de passe sont créés pour chaque ligne valide.
+            </p>
+            <div className="admin-grille">
+              <div className="admin-champ">
+                <label>Fichier</label>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={(e) => setFichierImportFosa(e.target.files?.[0] || null)}
+                />
+              </div>
+            </div>
+            <button type="submit" className="admin-bouton" disabled={importFosaEnCours}>
+              {importFosaEnCours ? "Import en cours..." : "Importer"}
+            </button>
+          </form>
+
+          {resultatImportFosa && (
+            <div className="admin-reconciliation">
+              <div className="admin-rattachement-ligne">
+                <span>
+                  {resultatImportFosa.filter((r) => r.statut === "ok").length} créée(s) avec succès sur{" "}
+                  {resultatImportFosa.length} ligne(s).
+                </span>
+                {resultatImportFosa.some((r) => r.statut === "ok") && (
+                  <button className="admin-lien-action" onClick={telechargerIdentifiantsFosa}>
+                    Télécharger les identifiants (CSV)
+                  </button>
+                )}
+              </div>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Ligne</th>
+                    <th>FOSA</th>
+                    <th>Résultat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resultatImportFosa.map((r) => (
+                    <tr key={r.ligne} className={r.statut === "erreur" ? "admin-ligne-inactive" : ""}>
+                      <td>{r.ligne}</td>
+                      <td>{r.nomFosa}</td>
+                      <td>{r.statut === "ok" ? `Créée (identifiant : ${r.identifiant})` : r.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <div className="admin-filtres">
             <div className="admin-champ">
@@ -1121,8 +1334,49 @@ export default function AdminPanel({ onRetour }) {
             </tbody>
           </table>
         </>
-      ) : (
+      ) : onglet === "stocks" ? (
         <>
+          <div className="admin-reconciliation">
+            <button
+              type="button"
+              className="admin-bouton"
+              onClick={reconcilierStocksLots}
+              disabled={reconciliationEnCours}
+            >
+              {reconciliationEnCours ? "Réconciliation en cours..." : "Réconcilier stocks / lots"}
+            </button>
+            <p className="admin-reconciliation-note">
+              Recale la quantité théorique de chaque stock sur la somme réelle de ses lots —
+              à lancer si des produits affichent un stock sans numéro de lot ni péremption dans "Stock du réseau".
+            </p>
+            {reconciliationResultat && (
+              reconciliationResultat.length === 0 ? (
+                <p className="admin-message">Aucun écart détecté : tous les stocks sont déjà cohérents avec leurs lots.</p>
+              ) : (
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Établissement</th>
+                      <th>Produit</th>
+                      <th>Avant</th>
+                      <th>Après (réel)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reconciliationResultat.map((d, i) => (
+                      <tr key={i}>
+                        <td>{d.etablissement || "—"}</td>
+                        <td>{d.produit || "—"}</td>
+                        <td>{d.avant}</td>
+                        <td>{d.apres}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            )}
+          </div>
+
           <div className="admin-filtres">
             <div className="admin-champ">
               <label>Produit</label>
@@ -1185,6 +1439,87 @@ export default function AdminPanel({ onRetour }) {
                     <td>{l.quantite}</td>
                   </tr>
                 ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <>
+          <form className="admin-formulaire" onSubmit={verrouillerEtablissementAction}>
+            <h2>Verrouiller un établissement</h2>
+            <p className="admin-reconciliation-note">
+              Verrou total et immédiat sur /stocks/entree pour l'établissement choisi (CAMEC exclue : elle est
+              toujours libre). Pour verrouiller une zone entière d'un coup, ce sont les gestionnaires de zone
+              (GAS Moughataa, DRS, Programme national) qui le font depuis leur propre tableau de bord.
+            </p>
+            <div className="admin-grille">
+              <div className="admin-champ">
+                <label>Établissement</label>
+                <select
+                  value={etablissementAVerrouiller}
+                  onChange={(e) => setEtablissementAVerrouiller(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {etablissementsVerrouillables.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.nom} ({LIBELLES_TYPE_ETAB[e.type] || e.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button type="submit" className="admin-bouton" disabled={verrouillageEnCours}>
+              {verrouillageEnCours ? "Verrouillage..." : "Verrouiller"}
+            </button>
+          </form>
+
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Établissement</th>
+                <th>Type</th>
+                <th>Portée</th>
+                <th>Posé par</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(verrousParEtablissement).map(([etablissementId, groupe]) => (
+                <tr key={etablissementId}>
+                  <td>{groupe.etablissement?.nom || "—"}</td>
+                  <td>{LIBELLES_TYPE_ETAB[groupe.etablissement?.type] || groupe.etablissement?.type || "—"}</td>
+                  <td>
+                    {groupe.lignes.some((v) => v.programmeId === null)
+                      ? "Total"
+                      : groupe.lignes.map((v) => v.programme?.nom).filter(Boolean).join(", ")}
+                  </td>
+                  <td>
+                    {groupe.lignes
+                      .map((v) => `${v.posePar?.nomComplet || "—"} (${LIBELLES_ROLE[v.posePar?.role] || v.posePar?.role || "—"})`)
+                      .join(" / ")}
+                  </td>
+                  <td>
+                    {new Date(groupe.lignes[0].dateVerrouillage).toLocaleDateString("fr-FR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                  </td>
+                  <td>
+                    <button
+                      className="admin-lien-action"
+                      onClick={() => deverrouillerEtablissementAction(etablissementId, groupe.etablissement?.nom)}
+                    >
+                      Déverrouiller
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {Object.keys(verrousParEtablissement).length === 0 && (
+                <tr>
+                  <td colSpan={6}>Aucun verrou actif actuellement.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </>

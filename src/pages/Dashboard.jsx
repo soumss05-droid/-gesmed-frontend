@@ -72,6 +72,14 @@ const SECTIONS_PAR_ROLE = {
   ],
 };
 
+// Nom du produit lisible, que le champ soit une chaîne (cas de /stocks) ou
+// un objet imbriqué { id, nom } (cas d'autres endpoints comme /admin/stocks)
+// — évite tout crash React ("Objects are not valid as a React child") si la
+// forme de la réponse venait à changer.
+function nomProduit(produit) {
+  return (typeof produit === "object" && produit !== null ? produit.nom : produit) ?? "—";
+}
+
 function calculerValeursStock(stocks) {
   const nombreProduits = stocks.length;
   const nombreAlertes = stocks.filter((s) => s.statut === "RUPTURE" || s.statut === "SOUS_SEUIL").length;
@@ -83,7 +91,7 @@ function calculerValeursStock(stocks) {
       const date = new Date(lot.datePeremption);
       if (!prochaineDate || date < prochaineDate) {
         prochaineDate = date;
-        prochaineLotLabel = stock.produit;
+        prochaineLotLabel = nomProduit(stock.produit);
       }
     }
   }
@@ -113,6 +121,7 @@ const tracesIcones = {
   chariot: "M9 22a1 1 0 100-2 1 1 0 000 2zM20 22a1 1 0 100-2 1 1 0 000 2zM1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6",
   balance: "M12 3v18M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0zM5 7h14M12 3l-4 4h8z",
   loupe: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35",
+  cadenas: "M5 11V7a7 7 0 0114 0v4M5 11h14v10H5zM12 15v3",
 };
 
 function Icone({ nom }) {
@@ -142,6 +151,7 @@ export default function Dashboard({
   onRapports,
   onEcarts,
   onRechercheDossier,
+  onVerrouillage,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -153,7 +163,7 @@ export default function Dashboard({
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("gesmed_token");
+    const token = localStorage.getItem("SYGIMS_token");
 
     async function chargerStocks() {
       try {
@@ -172,6 +182,14 @@ export default function Dashboard({
         }
         if (utilisateur.role === "GESTIONNAIRE_DRS") {
           base[2].valeur = String(nombreAlertes);
+          try {
+            const resAValider = await fetch(`${API_URL}/requisitions/a-valider`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (resAValider.ok) base[1].valeur = String((await resAValider.json()).length);
+          } catch {
+            // Reste à "—" si l'appel échoue — pas bloquant pour le reste de l'écran.
+          }
         }
         if (utilisateur.role === "GESTIONNAIRE_CAMEC") {
           try {
@@ -296,12 +314,14 @@ export default function Dashboard({
     {
       titre: "Stock",
       actions: [
-        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS", "MEDECIN_CHEF_MOUGHATAA"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
+        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS", "MEDECIN_CHEF_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
         { roles: ["GESTIONNAIRE_CAMEC", "ADMIN"], icone: "camion", libelle: "Rentrée des produits", onClick: onRentreeCamec },
+        { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "FORMATION_SANITAIRE"], icone: "camion", libelle: "Saisie initiale de stock", onClick: onRentreeCamec },
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
         { roles: ["FORMATION_SANITAIRE"], icone: "boite", libelle: "Enregistrer une dispensation", onClick: onDispensation },
         { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
         { roles: ["GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "balance", libelle: "Écarts en attente", onClick: onEcarts },
+        { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "cadenas", libelle: "Verrouiller ma zone", onClick: onVerrouillage },
       ],
     },
     {
@@ -317,7 +337,7 @@ export default function Dashboard({
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <span className="dashboard-header__brand">GesMed</span>
+        <span className="dashboard-header__brand">SYGIMS</span>
         <div className="dashboard-header__user">
           <div className="dashboard-header__identity">
             <span className="dashboard-header__nom">{utilisateur.nomComplet}</span>
