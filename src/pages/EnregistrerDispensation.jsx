@@ -225,6 +225,12 @@ export default function EnregistrerDispensation({ session, onRetour }) {
         </>
       ) : (
         <>
+          <section className="inventaire-carte dispensation-carte">
+          <h2>Dispensation</h2>
+          <p className="inventaire-sous-titre-carte">
+            Enregistre ce que ton établissement donne : produit, quantité et bénéficiaire.
+          </p>
+
           {chargementProduits && <p>Chargement du catalogue produits...</p>}
 
           {!chargementProduits && (
@@ -273,6 +279,7 @@ export default function EnregistrerDispensation({ session, onRetour }) {
               </button>
             </form>
           )}
+          </section>
         </>
       )}
 
