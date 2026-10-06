@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./AdminPanel.css";
+import ImportStructures from "./ImportStructures.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -146,8 +147,10 @@ export default function AdminPanel({ onRetour }) {
   const [importFosaEnCours, setImportFosaEnCours] = useState(false);
   const [resultatImportFosa, setResultatImportFosa] = useState(null);
 
-  async function chargerTout() {
-    setChargement(true);
+  // { silencieux: true } recharge les données sans afficher « Chargement... »,
+  // pour ne pas démonter l'écran (et son compte rendu d'import) pendant la mise à jour.
+  async function chargerTout(options = {}) {
+    if (!options.silencieux) setChargement(true);
     setErreur(null);
     try {
       const [d, m, p, r, e, u, n, l, prod, verr] = await Promise.all([
@@ -655,6 +658,9 @@ export default function AdminPanel({ onRetour }) {
             </div>
             <button type="submit" className="admin-bouton">Créer la DRS</button>
           </form>
+
+          <ImportStructures type="drs" token={token} onTermine={() => chargerTout({ silencieux: true })} />
+          <ImportStructures type="moughataa" token={token} onTermine={() => chargerTout({ silencieux: true })} />
 
           <table className="admin-table">
             <thead>
