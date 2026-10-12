@@ -16,6 +16,9 @@ import Rapports from "./pages/Rapports";
 import Ecarts from "./pages/Ecarts";
 import RechercheDossier from "./pages/RechercheDossier";
 import Verrouillage from "./pages/Verrouillage";
+import EquipeDrs from "./pages/EquipeDrs";
+import JournalEquipe from "./pages/JournalEquipe";
+import ChangerMotDePasse from "./pages/ChangerMotDePasse";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -50,6 +53,9 @@ function App() {
   if (vue === "ecarts") return <Ecarts onRetour={() => setVue("dashboard")} />;
   if (vue === "recherche-dossier") return <RechercheDossier onRetour={() => setVue("dashboard")} />;
   if (vue === "verrouillage") return <Verrouillage session={session} onRetour={() => setVue("dashboard")} />;
+  if (vue === "equipe") return <EquipeDrs onRetour={() => setVue("dashboard")} />;
+  if (vue === "journal-equipe") return <JournalEquipe onRetour={() => setVue("dashboard")} />;
+  if (vue === "mot-de-passe") return <ChangerMotDePasse onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -70,6 +76,9 @@ function App() {
       onEcarts={() => setVue("ecarts")}
       onRechercheDossier={() => setVue("recherche-dossier")}
       onVerrouillage={() => setVue("verrouillage")}
+      onEquipe={() => setVue("equipe")}
+      onJournalEquipe={() => setVue("journal-equipe")}
+      onChangerMotDePasse={() => setVue("mot-de-passe")}
     />
   );
 }

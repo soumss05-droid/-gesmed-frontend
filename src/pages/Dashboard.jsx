@@ -152,6 +152,9 @@ export default function Dashboard({
   onEcarts,
   onRechercheDossier,
   onVerrouillage,
+  onEquipe,
+  onJournalEquipe,
+  onChangerMotDePasse,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -329,7 +332,10 @@ export default function Dashboard({
       actions: [
         { roles: utilisateur.role !== "ADMIN" ? [utilisateur.role] : [], icone: "cloche", libelle: "Notifications", onClick: onNotifications },
         { roles: ["ADMIN"], icone: "reglage", libelle: "Administration", onClick: onAdmin },
+        { roles: ["ADMIN"], icone: "personnes", libelle: "Activité des DRS", onClick: onJournalEquipe },
+        { roles: ["GESTIONNAIRE_DRS"], icone: "personnes", libelle: "Mon équipe", onClick: onEquipe },
         { roles: [utilisateur.role], icone: "graphique", libelle: "Rapports", onClick: onRapports },
+        { roles: [utilisateur.role], icone: "cadenas", libelle: "Changer mon mot de passe", onClick: onChangerMotDePasse },
       ],
     },
   ];

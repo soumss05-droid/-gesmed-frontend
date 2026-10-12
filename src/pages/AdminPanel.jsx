@@ -45,6 +45,10 @@ const LIBELLE_NIVEAU_STOCK = {
 // exceptionnels, pour raisons géographiques).
 const TYPES_ELIGIBLES_APPRO_DIRECT = ["GAS_MOUGHATAA", "FORMATION_SANITAIRE"];
 
+// Longueur minimale d'un mot de passe réinitialisé par l'admin (même règle
+// que le changement fait par l'utilisateur lui-même).
+const MOT_DE_PASSE_MIN = 8;
+
 async function appelApi(chemin, options, token) {
   const res = await fetch(`${API_URL}${chemin}`, {
     ...options,
@@ -445,14 +449,37 @@ export default function AdminPanel({ onRetour }) {
 
   function demarrerEditionUser(u) {
     setEditionUserId(u.id);
-    setEditionUserForm({ nomComplet: u.nomComplet, identifiant: u.identifiant, telephone: u.telephone || "" });
+    setEditionUserForm({
+      nomComplet: u.nomComplet,
+      identifiant: u.identifiant,
+      telephone: u.telephone || "",
+      motDePasse: "",
+    });
   }
 
+  // Le mot de passe n'est envoyé que s'il est rempli (vide = inchangé), et
+  // doit faire au moins MOT_DE_PASSE_MIN caractères. L'admin n'a pas besoin de
+  // connaître l'ancien : c'est la réinitialisation (absence, oubli, changement
+  // de personne au poste).
   async function enregistrerEditionUser(id) {
     setErreur(null);
+    setMessage(null);
+    const { motDePasse, ...infos } = editionUserForm;
+    const nouveauMotDePasse = (motDePasse || "").trim();
+    if (nouveauMotDePasse && nouveauMotDePasse.length < MOT_DE_PASSE_MIN) {
+      setErreur(`Le nouveau mot de passe doit contenir au moins ${MOT_DE_PASSE_MIN} caractères.`);
+      return;
+    }
+    const corps = { ...infos };
+    if (nouveauMotDePasse) corps.motDePasse = nouveauMotDePasse;
     try {
-      await appelApi(`/admin/utilisateurs/${id}`, { method: "PATCH", body: JSON.stringify(editionUserForm) }, token);
+      await appelApi(`/admin/utilisateurs/${id}`, { method: "PATCH", body: JSON.stringify(corps) }, token);
       setEditionUserId(null);
+      setMessage(
+        nouveauMotDePasse
+          ? "Compte mis à jour. Le mot de passe a été réinitialisé : communique-le à la personne."
+          : "Compte mis à jour."
+      );
       chargerTout();
     } catch (err) {
       setErreur(err.message);
@@ -1196,7 +1223,25 @@ export default function AdminPanel({ onRetour }) {
                           onChange={(e) => setEditionUserForm((f) => ({ ...f, identifiant: e.target.value }))}
                         />
                       </td>
-                      <td>—</td>
+                      <td>
+                        <div className="admin-champ">
+                          <label>Téléphone</label>
+                          <input
+                            type="text"
+                            value={editionUserForm.telephone || ""}
+                            onChange={(e) => setEditionUserForm((f) => ({ ...f, telephone: e.target.value }))}
+                          />
+                        </div>
+                        <div className="admin-champ">
+                          <label>Nouveau mot de passe (vide = inchangé)</label>
+                          <input
+                            type="text"
+                            autoComplete="off"
+                            value={editionUserForm.motDePasse || ""}
+                            onChange={(e) => setEditionUserForm((f) => ({ ...f, motDePasse: e.target.value }))}
+                          />
+                        </div>
+                      </td>
                       <td>{u.actif ? "Actif" : "Désactivé"}</td>
                       <td>
                         <button className="admin-lien-action" onClick={() => enregistrerEditionUser(u.id)}>Enregistrer</button>
@@ -1205,7 +1250,10 @@ export default function AdminPanel({ onRetour }) {
                     </>
                   ) : (
                     <>
-                      <td>{u.nomComplet}{u.estAdminSysteme ? " (Admin)" : ""}</td>
+                      <td>
+                        {u.nomComplet}{u.estAdminSysteme ? " (Admin)" : ""}
+                        {u.telephone && <div style={{ fontSize: "0.85em", opacity: 0.75 }}>{u.telephone}</div>}
+                      </td>
                       <td>{u.identifiant}</td>
                       <td>
                         {u.etablissements.map((r) => (
