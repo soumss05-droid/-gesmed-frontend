@@ -155,6 +155,7 @@ export default function Dashboard({
   onEquipe,
   onJournalEquipe,
   onChangerMotDePasse,
+  onMesServices,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -325,6 +326,12 @@ export default function Dashboard({
         { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
         { roles: ["GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "balance", libelle: "Écarts en attente", onClick: onEcarts },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "cadenas", libelle: "Verrouiller ma zone", onClick: onVerrouillage },
+      ],
+    },
+    {
+      titre: "Offre de service",
+      actions: [
+        { roles: ["FORMATION_SANITAIRE"], icone: "liste", libelle: "Mes services", onClick: onMesServices },
       ],
     },
     {

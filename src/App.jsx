@@ -19,6 +19,7 @@ import Verrouillage from "./pages/Verrouillage";
 import EquipeDrs from "./pages/EquipeDrs";
 import JournalEquipe from "./pages/JournalEquipe";
 import ChangerMotDePasse from "./pages/ChangerMotDePasse";
+import MesServices from "./pages/MesServices";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -56,6 +57,7 @@ function App() {
   if (vue === "equipe") return <EquipeDrs onRetour={() => setVue("dashboard")} />;
   if (vue === "journal-equipe") return <JournalEquipe onRetour={() => setVue("dashboard")} />;
   if (vue === "mot-de-passe") return <ChangerMotDePasse onRetour={() => setVue("dashboard")} />;
+  if (vue === "mes-services") return <MesServices onRetour={() => setVue("dashboard")} />;
 
   return (
     <Dashboard
@@ -79,6 +81,7 @@ function App() {
       onEquipe={() => setVue("equipe")}
       onJournalEquipe={() => setVue("journal-equipe")}
       onChangerMotDePasse={() => setVue("mot-de-passe")}
+      onMesServices={() => setVue("mes-services")}
     />
   );
 }
