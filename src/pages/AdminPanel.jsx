@@ -114,7 +114,7 @@ export default function AdminPanel({ onRetour }) {
   const [filtreEtabType, setFiltreEtabType] = useState("");
   const [filtreEtabDrs, setFiltreEtabDrs] = useState("");
   const [filtreEtabMoughataa, setFiltreEtabMoughataa] = useState("");
-  const [filtreEtabStatut, setFiltreEtabStatut] = useState("");
+  const [filtreEtabNiveau, setFiltreEtabNiveau] = useState("");
 
   const [filtreUserEtablissement, setFiltreUserEtablissement] = useState("");
   const [filtreUserRole, setFiltreUserRole] = useState("");
@@ -1056,14 +1056,21 @@ export default function AdminPanel({ onRetour }) {
               <label>Type</label>
               <select value={filtreEtabType} onChange={(e) => setFiltreEtabType(e.target.value)}>
                 <option value="">Tous</option>
-                {Object.entries(LIBELLES_TYPE_ETAB).map(([val, lib]) => (
+                {Object.entries(LIBELLES_TYPE_ETAB).filter(([val]) => val === "CAMEC" || val === "GAS_PROGRAMME_NATIONAL").map(([val, lib]) => (
                   <option key={val} value={val}>{lib}</option>
                 ))}
               </select>
             </div>
             <div className="admin-champ">
               <label>DRS</label>
-              <select value={filtreEtabDrs} onChange={(e) => setFiltreEtabDrs(e.target.value)}>
+              <select
+                value={filtreEtabDrs}
+                onChange={(e) => {
+                  setFiltreEtabDrs(e.target.value);
+                  setFiltreEtabMoughataa("");
+                  setFiltreEtabNiveau("");
+                }}
+              >
                 <option value="">Toutes</option>
                 {drsListe.map((d) => (
                   <option key={d.id} value={d.nom}>{d.nom}</option>
@@ -1071,20 +1078,43 @@ export default function AdminPanel({ onRetour }) {
               </select>
             </div>
             <div className="admin-champ">
-              <label>Moughataa</label>
-              <select value={filtreEtabMoughataa} onChange={(e) => setFiltreEtabMoughataa(e.target.value)}>
+              <label>GAS DRS et Moughataa</label>
+              <select
+                value={filtreEtabMoughataa}
+                onChange={(e) => {
+                  setFiltreEtabMoughataa(e.target.value);
+                  setFiltreEtabNiveau("");
+                }}
+              >
                 <option value="">Toutes</option>
-                {moughataas.map((m) => (
+                {filtreEtabDrs && (
+                  <option value="__GAS_DRS__">
+                    {etablissements.find((x) => x.type === "GAS_DRS" && x.drs?.nom === filtreEtabDrs)?.nom || "GAS DRS"}
+                  </option>
+                )}
+                {moughataas
+                  .filter((m) => !filtreEtabDrs || m.drs?.nom === filtreEtabDrs)
+                  .map((m) => (
                   <option key={m.id} value={m.nom}>{m.nom}</option>
                 ))}
               </select>
             </div>
             <div className="admin-champ">
-              <label>Statut</label>
-              <select value={filtreEtabStatut} onChange={(e) => setFiltreEtabStatut(e.target.value)}>
-                <option value="">Tous</option>
-                <option value="actif">Actif</option>
-                <option value="inactif">Désactivé</option>
+              <label>GAS Moughataa/FOSA</label>
+              <select
+                value={filtreEtabNiveau}
+                onChange={(e) => setFiltreEtabNiveau(e.target.value)}
+                disabled={!filtreEtabMoughataa || filtreEtabMoughataa === "__GAS_DRS__"}
+              >
+                <option value="">
+                  {filtreEtabMoughataa && filtreEtabMoughataa !== "__GAS_DRS__" ? "Tous" : "Choisir une Moughataa"}
+                </option>
+                {etablissements
+                  .filter((x) => (x.type === "FORMATION_SANITAIRE" || x.type === "GAS_MOUGHATAA") && x.moughataa?.nom === filtreEtabMoughataa)
+                  .sort((a, b) => (a.type === "GAS_MOUGHATAA" ? 0 : 1) - (b.type === "GAS_MOUGHATAA" ? 0 : 1) || String(a.nom).localeCompare(String(b.nom)))
+                  .map((x) => (
+                    <option key={x.id} value={x.id}>{x.type === "GAS_MOUGHATAA" ? x.nom + " (GAS)" : x.nom}</option>
+                  ))}
               </select>
             </div>
           </div>
@@ -1118,8 +1148,8 @@ export default function AdminPanel({ onRetour }) {
               {etablissements
                 .filter((e) => !filtreEtabType || e.type === filtreEtabType)
                 .filter((e) => !filtreEtabDrs || e.drs?.nom === filtreEtabDrs)
-                .filter((e) => !filtreEtabMoughataa || e.moughataa?.nom === filtreEtabMoughataa)
-                .filter((e) => !filtreEtabStatut || (filtreEtabStatut === "actif" ? e.actif : !e.actif))
+                .filter((e) => !filtreEtabMoughataa || (filtreEtabMoughataa === "__GAS_DRS__" ? e.type === "GAS_DRS" : e.moughataa?.nom === filtreEtabMoughataa))
+                .filter((e) => !filtreEtabNiveau || e.id === filtreEtabNiveau)
                 .map((e) => (
                 <tr key={e.id} className={!e.actif ? "admin-ligne-inactive" : ""}>
                   {editionEtabId === e.id ? (
