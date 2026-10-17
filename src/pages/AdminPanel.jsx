@@ -94,6 +94,9 @@ export default function AdminPanel({ onRetour }) {
 
   const [filtreLotProduit, setFiltreLotProduit] = useState("");
   const [filtreLotNiveau, setFiltreLotNiveau] = useState("");
+  const [filtreLotDrs, setFiltreLotDrs] = useState("");
+  const [filtreLotMoughataa, setFiltreLotMoughataa] = useState("");
+  const [filtreLotFosa, setFiltreLotFosa] = useState("");
   const [filtreLotDateDebut, setFiltreLotDateDebut] = useState("");
   const [filtreLotDateFin, setFiltreLotDateFin] = useState("");
 
@@ -137,6 +140,8 @@ export default function AdminPanel({ onRetour }) {
   });
 
   const [formRattachement, setFormRattachement] = useState({});
+  const [niveauxEnAttente, setNiveauxEnAttente] = useState({});
+  const [niveauxEnCours, setNiveauxEnCours] = useState(false);
 
   const [formDrs, setFormDrs] = useState({ nom: "", code: "" });
   const [editionDrsId, setEditionDrsId] = useState(null);
@@ -282,27 +287,53 @@ export default function AdminPanel({ onRetour }) {
 
   // Change le niveau (Hôpital, CS de Moughataa, etc.) d'une formation sanitaire
   // directement depuis le tableau. Une valeur vide retire le niveau.
-  async function changerNiveauEtablissement(etab, niveau) {
+  // Les niveaux choisis restent « en attente » jusqu'au clic sur
+  // « Enregistrer les niveaux » : rien n'est envoyé avant.
+  function choisirNiveau(etab, niveau) {
     setErreur(null);
-    const niveauPrecedent = etab.niveau || null;
-    const niveauNouveau = niveau || null;
-    // Mise à jour immédiate de la ligne, sans recharger la page.
-    setEtablissements((liste) =>
-      liste.map((x) => (x.id === etab.id ? { ...x, niveau: niveauNouveau } : x))
-    );
-    try {
-      await appelApi(
-        `/admin/etablissements/${etab.id}`,
-        { method: "PATCH", body: JSON.stringify({ niveau: niveauNouveau }) },
-        token
-      );
-    } catch (err) {
-      // Le serveur a refusé : on remet l'ancienne valeur.
-      setEtablissements((liste) =>
-        liste.map((x) => (x.id === etab.id ? { ...x, niveau: niveauPrecedent } : x))
-      );
-      setErreur(err.message);
+    setMessage(null);
+    const actuel = etab.niveau || "";
+    setNiveauxEnAttente((n) => {
+      const copie = { ...n };
+      if (niveau === actuel) delete copie[etab.id];
+      else copie[etab.id] = niveau;
+      return copie;
+    });
+  }
+
+  function annulerNiveaux() {
+    setNiveauxEnAttente({});
+    setErreur(null);
+  }
+
+  async function enregistrerNiveaux() {
+    const ids = Object.keys(niveauxEnAttente);
+    if (ids.length === 0) return;
+    setErreur(null);
+    setMessage(null);
+    setNiveauxEnCours(true);
+    let reussis = 0;
+    const echecs = [];
+    const restants = {};
+    for (const id of ids) {
+      try {
+        await appelApi(
+          "/admin/etablissements/" + id,
+          { method: "PATCH", body: JSON.stringify({ niveau: niveauxEnAttente[id] || null }) },
+          token
+        );
+        reussis += 1;
+      } catch (err) {
+        echecs.push(err.message || "Erreur");
+        restants[id] = niveauxEnAttente[id];
+      }
     }
+    setNiveauxEnAttente(restants);
+    await chargerTout({ silencieux: true });
+    if (reussis > 0) setMessage(reussis + " niveau(x) enregistré(s).");
+    if (echecs.length > 0) setErreur(echecs.length + " niveau(x) n'ont pas pu être enregistrés : " + echecs[0]);
+    setNiveauxEnCours(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function creerUtilisateur(ev) {
@@ -1058,6 +1089,19 @@ export default function AdminPanel({ onRetour }) {
             </div>
           </div>
 
+          {Object.keys(niveauxEnAttente).length > 0 && (
+            <div className="admin-reconciliation">
+              <button type="button" className="admin-bouton" onClick={enregistrerNiveaux} disabled={niveauxEnCours}>
+                {niveauxEnCours
+                  ? "Enregistrement..."
+                  : "Enregistrer les niveaux (" + Object.keys(niveauxEnAttente).length + " modification(s))"}
+              </button>
+              <button type="button" className="admin-lien-action" onClick={annulerNiveaux} disabled={niveauxEnCours}>
+                Annuler
+              </button>
+            </div>
+          )}
+
           <table className="admin-table">
             <thead>
               <tr>
@@ -1119,8 +1163,9 @@ export default function AdminPanel({ onRetour }) {
                       <td>
                         {e.type === "FORMATION_SANITAIRE" ? (
                           <select
-                            value={e.niveau || ""}
-                            onChange={(ev) => changerNiveauEtablissement(e, ev.target.value)}
+                            value={niveauxEnAttente[e.id] !== undefined ? niveauxEnAttente[e.id] : (e.niveau || "")}
+                            onChange={(ev) => choisirNiveau(e, ev.target.value)}
+                            style={niveauxEnAttente[e.id] !== undefined ? { outline: "2px solid #e08a00" } : undefined}
                           >
                             <option value="">—</option>
                             {Object.entries(LIBELLES_NIVEAU_FOSA).map(([val, lib]) => (
@@ -1493,12 +1538,49 @@ export default function AdminPanel({ onRetour }) {
               </select>
             </div>
             <div className="admin-champ">
-              <label>Niveau</label>
-              <select value={filtreLotNiveau} onChange={(e) => setFiltreLotNiveau(e.target.value)}>
-                <option value="">Tous</option>
-                {Object.entries(LIBELLE_NIVEAU_STOCK).map(([val, lib]) => (
-                  <option key={val} value={val}>{lib}</option>
+              <label>DRS (région)</label>
+              <select
+                value={filtreLotDrs}
+                onChange={(e) => {
+                  setFiltreLotDrs(e.target.value);
+                  setFiltreLotMoughataa("");
+                  setFiltreLotFosa("");
+                }}
+              >
+                <option value="">Toutes</option>
+                {drsListe.map((d) => (
+                  <option key={d.id} value={d.nom}>{d.nom}</option>
                 ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>Moughataa</label>
+              <select value={filtreLotMoughataa} onChange={(e) => {
+                setFiltreLotMoughataa(e.target.value);
+                setFiltreLotFosa("");
+              }}>
+                <option value="">Toutes</option>
+                {moughataas
+                  .filter((m) => !filtreLotDrs || m.drs?.nom === filtreLotDrs)
+                  .map((m) => (
+                    <option key={m.id} value={m.nom}>{m.nom}</option>
+                  ))}
+              </select>
+            </div>
+            <div className="admin-champ">
+              <label>GAS/Formation sanitaire</label>
+              <select
+                value={filtreLotFosa}
+                onChange={(e) => setFiltreLotFosa(e.target.value)}
+                disabled={!filtreLotMoughataa}
+              >
+                <option value="">{filtreLotMoughataa ? "Toutes" : "Choisir d'abord une Moughataa"}</option>
+                {etablissements
+                  .filter((x) => (x.type === "FORMATION_SANITAIRE" || x.type === "GAS_MOUGHATAA") && x.moughataa?.nom === filtreLotMoughataa)
+                  .sort((a, b) => (a.type === "GAS_MOUGHATAA" ? 0 : 1) - (b.type === "GAS_MOUGHATAA" ? 0 : 1) || String(a.nom).localeCompare(String(b.nom)))
+                  .map((x) => (
+                    <option key={x.id} value={x.id}>{x.type === "GAS_MOUGHATAA" ? x.nom + " (GAS)" : x.nom}</option>
+                  ))}
               </select>
             </div>
             <div className="admin-champ">
@@ -1526,6 +1608,9 @@ export default function AdminPanel({ onRetour }) {
               {lots
                 .filter((l) => !filtreLotProduit || l.produitId === filtreLotProduit)
                 .filter((l) => !filtreLotNiveau || l.etablissement?.type === filtreLotNiveau)
+                .filter((l) => !filtreLotDrs || (l.etablissement?.drs?.nom || l.etablissement?.moughataa?.drs?.nom) === filtreLotDrs)
+                .filter((l) => !filtreLotMoughataa || l.etablissement?.moughataa?.nom === filtreLotMoughataa)
+                .filter((l) => !filtreLotFosa || l.etablissement?.id === filtreLotFosa)
                 .filter((l) => !filtreLotDateDebut || new Date(l.datePeremption) >= new Date(filtreLotDateDebut))
                 .filter((l) => !filtreLotDateFin || new Date(l.datePeremption) <= new Date(filtreLotDateFin + "T23:59:59"))
                 .map((l) => (
