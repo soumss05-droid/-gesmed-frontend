@@ -156,6 +156,7 @@ export default function Dashboard({
   onJournalEquipe,
   onChangerMotDePasse,
   onMesServices,
+  onConfigurationOffre, // config offre
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -332,6 +333,7 @@ export default function Dashboard({
       titre: "Offre de service",
       actions: [
         { roles: ["FORMATION_SANITAIRE"], icone: "liste", libelle: "Mes services", onClick: onMesServices },
+        { roles: ["ADMIN", "GAS_PROGRAMME_NATIONAL"], icone: "reglage", libelle: "Configuration de l'offre", onClick: onConfigurationOffre }, // config offre
       ],
     },
     {
@@ -366,7 +368,7 @@ export default function Dashboard({
         <h1>Tableau de bord</h1>
         <p className="dashboard-main__subtitle">Vue adaptée à ton rôle : {libelleRole}.</p>
 
-        {chargement ? (
+        {chargement && !(utilisateur.role === "ADMIN" && sections.length > 0) ? (
           <p className="dashboard-main__vide">Chargement des données...</p>
         ) : (
           <div className="dashboard-grid">
@@ -379,7 +381,7 @@ export default function Dashboard({
                   key={section.titre}
                   onClick={cible || undefined}
                 >
-                  <span className="dashboard-card__valeur">{section.valeur}</span>
+                  <span className="dashboard-card__valeur">{chargement ? "..." : section.valeur}</span>
                   <span className="dashboard-card__titre">{section.titre}</span>
                   <span className="dashboard-card__description">{section.description}</span>
                 </Composant>

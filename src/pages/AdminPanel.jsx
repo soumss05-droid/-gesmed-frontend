@@ -12,6 +12,15 @@ const LIBELLES_TYPE_ETAB = {
   FORMATION_SANITAIRE: "Formation sanitaire",
 };
 
+const LIBELLES_NIVEAU_FOSA = {
+  HOPITAL: "Hôpital",
+  CS_MOUGHATAA: "CS de Moughataa",
+  CS_SECONDAIRE: "CS secondaire",
+  PS_PRINCIPAL: "PS principal",
+  PS_SECONDAIRE: "PS secondaire",
+  UPEC_COMMUNAUTAIRE: "UPEC communautaire",
+};
+
 const LIBELLES_ROLE = {
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
   GESTIONNAIRE_DRS: "Gestionnaire DRS",
@@ -267,6 +276,31 @@ export default function AdminPanel({ onRetour }) {
       );
       chargerTout();
     } catch (err) {
+      setErreur(err.message);
+    }
+  }
+
+  // Change le niveau (Hôpital, CS de Moughataa, etc.) d'une formation sanitaire
+  // directement depuis le tableau. Une valeur vide retire le niveau.
+  async function changerNiveauEtablissement(etab, niveau) {
+    setErreur(null);
+    const niveauPrecedent = etab.niveau || null;
+    const niveauNouveau = niveau || null;
+    // Mise à jour immédiate de la ligne, sans recharger la page.
+    setEtablissements((liste) =>
+      liste.map((x) => (x.id === etab.id ? { ...x, niveau: niveauNouveau } : x))
+    );
+    try {
+      await appelApi(
+        `/admin/etablissements/${etab.id}`,
+        { method: "PATCH", body: JSON.stringify({ niveau: niveauNouveau }) },
+        token
+      );
+    } catch (err) {
+      // Le serveur a refusé : on remet l'ancienne valeur.
+      setEtablissements((liste) =>
+        liste.map((x) => (x.id === etab.id ? { ...x, niveau: niveauPrecedent } : x))
+      );
       setErreur(err.message);
     }
   }
@@ -1030,6 +1064,7 @@ export default function AdminPanel({ onRetour }) {
                 <th>Nom</th>
                 <th>Type</th>
                 <th>Programme</th>
+                <th>Niveau</th>
                 <th>Approvisionnement direct</th>
                 <th>Statut</th>
                 <th></th>
@@ -1068,6 +1103,7 @@ export default function AdminPanel({ onRetour }) {
                           "—"
                         )}
                       </td>
+                      <td>{LIBELLES_NIVEAU_FOSA[e.niveau] || "—"}</td>
                       <td>—</td>
                       <td>{e.actif ? "Actif" : "Désactivé"}</td>
                       <td>
@@ -1080,6 +1116,21 @@ export default function AdminPanel({ onRetour }) {
                       <td>{e.nom}</td>
                       <td>{LIBELLES_TYPE_ETAB[e.type] || e.type}</td>
                       <td>{e.programme?.nom || "—"}</td>
+                      <td>
+                        {e.type === "FORMATION_SANITAIRE" ? (
+                          <select
+                            value={e.niveau || ""}
+                            onChange={(ev) => changerNiveauEtablissement(e, ev.target.value)}
+                          >
+                            <option value="">—</option>
+                            {Object.entries(LIBELLES_NIVEAU_FOSA).map(([val, lib]) => (
+                              <option key={val} value={val}>{lib}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td>
                         {TYPES_ELIGIBLES_APPRO_DIRECT.includes(e.type) ? (
                           <button
