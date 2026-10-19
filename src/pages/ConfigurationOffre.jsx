@@ -106,6 +106,15 @@ function cibleValide(texte) {
 // ---------------------------------------------------------------------------
 // Écran « Éligibilité » d'un service : choix des FOSA qui doivent l'offrir.
 // ---------------------------------------------------------------------------
+const NIVEAUX_FOSA = [
+  ["HOPITAL", "Hôpitaux"],
+  ["CS_MOUGHATAA", "CS de Moughataa"],
+  ["CS_SECONDAIRE", "CS secondaires"],
+  ["PS_PRINCIPAL", "PS principaux"],
+  ["PS_SECONDAIRE", "PS secondaires"],
+  ["UPEC_COMMUNAUTAIRE", "UPEC communautaires"],
+];
+
 function EligibiliteService({ service, nbFosa, nouveau, onRetour, onEnregistre }) {
   const [fosas, setFosas] = useState([]);
   const [selection, setSelection] = useState(new Set());
@@ -163,6 +172,15 @@ function EligibiliteService({ service, nbFosa, nouveau, onRetour, onEnregistre }
     });
   }
 
+  function cocherNiveau(niveau) {
+    setMessage(null);
+    setSelection((s) => {
+      const copie = new Set(s);
+      visibles.filter((f) => f.niveau === niveau).forEach((f) => copie.add(f.id));
+      return copie;
+    });
+  }
+
   function toutDecocher() {
     setMessage(null);
     setSelection((s) => {
@@ -189,6 +207,13 @@ function EligibiliteService({ service, nbFosa, nouveau, onRetour, onEnregistre }
       setEnCours(false);
     }
   }
+
+  const nbParNiveau = {};
+  let nbSansNiveau = 0;
+  visibles.forEach((f) => {
+    if (f.niveau) nbParNiveau[f.niveau] = (nbParNiveau[f.niveau] || 0) + 1;
+    else nbSansNiveau += 1;
+  });
 
   let drsAffichee = null;
   let moughataaAffichee = null;
@@ -230,6 +255,27 @@ function EligibiliteService({ service, nbFosa, nouveau, onRetour, onEnregistre }
             <button type="button" style={styleBoutonLien} onClick={toutCocher}>Tout cocher</button>
             <button type="button" style={styleBoutonLien} onClick={toutDecocher}>Tout décocher</button>
           </div>
+
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", margin: "0 0 12px" }}>
+            <span>Cocher par niveau :</span>
+            {NIVEAUX_FOSA.map(([val, lib]) => (
+              <button
+                key={val}
+                type="button"
+                style={styleBoutonLien}
+                onClick={() => cocherNiveau(val)}
+                disabled={!nbParNiveau[val]}
+              >
+                {lib} ({nbParNiveau[val] || 0})
+              </button>
+            ))}
+          </div>
+          {nbSansNiveau > 0 && (
+            <p style={{ opacity: 0.8 }}>
+              {nbSansNiveau} formation(s) sanitaire(s) sans niveau renseigné : renseignez-le dans
+              Administration, onglet Établissements.
+            </p>
+          )}
 
           <p>
             <strong>{selection.size}</strong> formation(s) sanitaire(s) cochée(s) sur {fosas.length}.
