@@ -74,5 +74,115 @@
   margin-bottom: 8px;
 }
 
+.suivi-numero {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #12302c;
+}
+
 .suivi-badge {
-  display:
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.suivi-badge-vert {
+  background: #e2f6e2;
+  color: #1b7a1b;
+}
+
+.suivi-badge-rouge {
+  background: #fdecea;
+  color: #b3492f;
+}
+
+.suivi-badge-dore {
+  background: #fbf3dc;
+  color: #a37c1f;
+}
+
+.suivi-badge-neutre {
+  background: #ece9dc;
+  color: #6b7873;
+}
+
+.suivi-date {
+  color: #6b7873;
+  font-size: 0.85rem;
+}
+
+.suivi-niveau {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  color: #1c2b28;
+}
+
+.suivi-relance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.suivi-bouton-relance {
+  background: #12302c;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.suivi-bouton-relance:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.suivi-relance-message {
+  font-size: 0.85rem;
+}
+
+.suivi-relance-ok {
+  color: #1b7a1b;
+}
+
+.suivi-relance-erreur {
+  color: #b3492f;
+}
+
+.suivi-justification {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: #f6f4ec;
+  border-left: 3px solid #dedcd0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #1c2b28;
+  white-space: pre-wrap;
+}
+
+.suivi-lignes {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 0.92rem;
+  color: #1c2b28;
+}
+
+.suivi-lignes li {
+  margin-bottom: 4px;
+}
+
+.suivi-enfants {
+  margin-top: 12px;
+}
+
+.suivi-enfants-titre {
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #6b7873;
+}
