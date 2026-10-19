@@ -156,6 +156,7 @@ export default function Dashboard({
   onJournalEquipe,
   onChangerMotDePasse,
   onMesServices,
+  onCouvertureOffre, // couverture offre
   onConfigurationOffre, // config offre
 }) {
   const { utilisateur } = session;
@@ -333,6 +334,7 @@ export default function Dashboard({
       titre: "Offre de service",
       actions: [
         { roles: ["FORMATION_SANITAIRE"], icone: "liste", libelle: "Mes services", onClick: onMesServices },
+        { roles: ["ADMIN", "AUDITEUR", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA"], icone: "liste", libelle: "Couverture de l'offre", onClick: onCouvertureOffre }, // couverture offre
         { roles: ["ADMIN", "GAS_PROGRAMME_NATIONAL"], icone: "reglage", libelle: "Configuration de l'offre", onClick: onConfigurationOffre }, // config offre
       ],
     },

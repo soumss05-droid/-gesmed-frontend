@@ -20,6 +20,7 @@ import EquipeDrs from "./pages/EquipeDrs";
 import JournalEquipe from "./pages/JournalEquipe";
 import ChangerMotDePasse from "./pages/ChangerMotDePasse";
 import MesServices from "./pages/MesServices";
+import CouvertureOffre from "./pages/CouvertureOffre"; // couverture offre
 import ConfigurationOffre from "./pages/ConfigurationOffre"; // config offre
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
   if (vue === "journal-equipe") return <JournalEquipe onRetour={() => setVue("dashboard")} />;
   if (vue === "mot-de-passe") return <ChangerMotDePasse onRetour={() => setVue("dashboard")} />;
   if (vue === "mes-services") return <MesServices onRetour={() => setVue("dashboard")} />;
+  if (vue === "couverture-offre") return <CouvertureOffre onRetour={() => setVue("dashboard")} />; // couverture offre
   if (vue === "configuration-offre") return <ConfigurationOffre onRetour={() => setVue("dashboard")} />; // config offre
 
   return (
@@ -84,6 +86,7 @@ function App() {
       onJournalEquipe={() => setVue("journal-equipe")}
       onChangerMotDePasse={() => setVue("mot-de-passe")}
       onMesServices={() => setVue("mes-services")}
+      onCouvertureOffre={() => setVue("couverture-offre")} // couverture offre
       onConfigurationOffre={() => setVue("configuration-offre")} // config offre
     />
   );
