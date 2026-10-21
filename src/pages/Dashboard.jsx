@@ -370,7 +370,7 @@ export default function Dashboard({
         <h1>Tableau de bord</h1>
         <p className="dashboard-main__subtitle">Vue adaptée à ton rôle : {libelleRole}.</p>
 
-        {chargement && !(utilisateur.role === "ADMIN" && sections.length > 0) ? (
+        {chargement && sections.length === 0 ? (
           <p className="dashboard-main__vide">Chargement des données...</p>
         ) : (
           <div className="dashboard-grid">

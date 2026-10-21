@@ -231,14 +231,14 @@ export default function EnregistrerDispensation({ session, onRetour }) {
             Enregistre ce que ton établissement donne : produit, quantité et bénéficiaire.
           </p>
 
-          {chargementProduits && <p>Chargement du catalogue produits...</p>}
+          
 
-          {!chargementProduits && (
+          {(
             <form className="dispensation-form" onSubmit={envoyerDispensation}>
               <label className="dispensation-label">
                 Produit
-                <select value={produitId} onChange={(e) => setProduitId(e.target.value)}>
-                  <option value="">Choisir un produit…</option>
+                <select value={produitId} onChange={(e) => setProduitId(e.target.value)} disabled={chargementProduits}>
+                  <option value="">{chargementProduits ? "Chargement du catalogue\u2026" : "Choisir un produit\u2026"}</option>
                   {produits.map((p) => (
                     <option key={p.id} value={p.id}>{p.nom}</option>
                   ))}
