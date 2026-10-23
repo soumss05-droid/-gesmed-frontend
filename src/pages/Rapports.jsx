@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./Rapports.css";
+import FicheSituation from "./FicheSituation";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -278,7 +279,7 @@ function GraphiqueCroisement({ lignes, svgRef }) {
 }
 
 export default function Rapports({ session, onRetour }) {
-  const [onglet, setOnglet] = useState("apercu");
+  const [onglet, setOnglet] = useState("fiche");
   const estAdmin = session?.utilisateur?.role === "ADMIN";
   const estCamec = session?.utilisateur?.role === "GESTIONNAIRE_CAMEC";
 
@@ -613,14 +614,17 @@ export default function Rapports({ session, onRetour }) {
       {erreur && <p className="rapports-erreur" role="alert">{erreur}</p>}
 
       <div className="rapports-onglets">
-        <button className={onglet === "apercu" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("apercu")}>
+        <button className={onglet === "fiche" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("fiche")}>
+          Fiche de situation
+        </button>
+        <button style={{ display: "none" }} className={onglet === "apercu" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("apercu")}>
           Vue d'ensemble
         </button>
-        <button className={onglet === "graphiques" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("graphiques")}>
+        <button style={{ display: "none" }} className={onglet === "graphiques" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("graphiques")}>
           Graphiques
         </button>
         <button className={onglet === "mouvements" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("mouvements")}>
-          Mouvements
+          Journal des mouvements
         </button>
         <button className={onglet === "kanban" ? "rapports-onglet-actif" : "rapports-onglet"} onClick={() => setOnglet("kanban")}>
           Kanban
@@ -632,7 +636,9 @@ export default function Rapports({ session, onRetour }) {
         )}
       </div>
 
-      {chargement ? (
+      {onglet === "fiche" ? (
+        <FicheSituation session={session} />
+      ) : chargement ? (
         <p>Chargement...</p>
       ) : !kpis ? (
         <p className="rapports-erreur" role="alert">

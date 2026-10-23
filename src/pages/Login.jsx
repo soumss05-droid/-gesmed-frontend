@@ -42,6 +42,13 @@ export default function Login({ onLoginSuccess }) {
     e.preventDefault();
     setError(null);
 
+    // Chrome peut remplir les champs sans prevenir React : on lit les valeurs affichees
+    const champs = e.currentTarget.elements;
+    const identifiant = champs.identifiant ? champs.identifiant.value : "";
+    const motDePasse = champs.motDePasse ? champs.motDePasse.value : "";
+    setIdentifiant(identifiant);
+    setMotDePasse(motDePasse);
+
     if (!identifiant.trim() || !motDePasse) {
       setError("Renseigne ton identifiant et ton mot de passe.");
       return;
@@ -141,6 +148,7 @@ export default function Login({ onLoginSuccess }) {
             <input
               type="text"
               autoComplete="username"
+              name="identifiant"
               value={identifiant}
               onChange={(e) => setIdentifiant(e.target.value)}
               disabled={loading || !!etablissements}
@@ -153,6 +161,7 @@ export default function Login({ onLoginSuccess }) {
               <input
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
+                name="motDePasse"
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 disabled={loading || !!etablissements}

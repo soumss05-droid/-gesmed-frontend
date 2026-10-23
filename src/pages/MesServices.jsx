@@ -59,6 +59,82 @@ function styleChoix(actif, couleur) {
   };
 }
 
+const LIBELLES_STATUT = {
+  EN_ATTENTE: { texte: "En attente de validation du Médecin chef", couleur: "#9a5b00" },
+  VALIDE: { texte: "Validé par le Médecin chef", couleur: "#1f7a3d" },
+  CORRIGE: { texte: "Corrigé par le Médecin chef", couleur: "#b3261e" },
+};
+
+function formaterPct(valeur) {
+  if (valeur === null || valeur === undefined) return "—";
+  return String(valeur).replace(".", ",") + " %";
+}
+
+function InfoService({ service }) {
+  const statut = service.statut ? LIBELLES_STATUT[service.statut] : null;
+  return (
+    <>
+      <small style={{ opacity: 0.7, display: "block" }}>
+        Poids : {service.poids}
+        {!service.eligible ? " — non éligible : ne compte pas dans le score" : ""}
+      </small>
+      {statut && (
+        <small style={{ color: statut.couleur, fontWeight: 600, display: "block" }}>
+          {statut.texte}
+          {service.statut === "CORRIGE" ? " : valeur officielle " + (service.officiel ? "Oui" : "Non") : ""}
+        </small>
+      )}
+    </>
+  );
+}
+
+function CarteScores({ scores }) {
+  if (!scores) return null;
+  const lignes = [
+    { cle: "officiel", titre: "Score officiel", precision: "validé par le Médecin chef", s: scores.officiel },
+    { cle: "provisoire", titre: "Score provisoire", precision: "avec vos réponses en attente", s: scores.provisoire },
+  ];
+  const th = { padding: "6px 8px", textAlign: "right", fontSize: "0.85rem", fontWeight: 600, opacity: 0.8 };
+  const td = { padding: "8px", textAlign: "right", borderTop: "1px solid #e2e2e2" };
+  return (
+    <div style={{ border: "1px solid #c9c9c9", borderRadius: "8px", padding: "12px 16px", margin: "12px 0 20px" }}>
+      <strong>Score de ma formation sanitaire</strong>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "8px" }}>
+          <thead>
+            <tr>
+              <th style={{ ...th, textAlign: "left" }}></th>
+              <th style={th}>Services éligibles</th>
+              <th style={th}>Tous les services</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lignes.map((l) => (
+              <tr key={l.cle}>
+                <td style={{ ...td, textAlign: "left" }}>
+                  <strong>{l.titre}</strong>
+                  <small style={{ display: "block", opacity: 0.7 }}>{l.precision}</small>
+                </td>
+                <td style={td}>
+                  <strong>{formaterPct(l.s.couvertureEligibles)}</strong>
+                  <small style={{ display: "block", opacity: 0.7 }}>{l.s.points} / {l.s.pointsEligibles} points</small>
+                </td>
+                <td style={td}>
+                  <strong>{formaterPct(l.s.couvertureTotale)}</strong>
+                  <small style={{ display: "block", opacity: 0.7 }}>{l.s.points} / {l.s.pointsTotal} points</small>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <small style={{ opacity: 0.75, display: "block", marginTop: "6px" }}>
+        Chaque service compte selon son poids. Seuls les services pour lesquels votre structure est éligible comptent dans le score.
+      </small>
+    </div>
+  );
+}
+
 export default function MesServices({ onRetour }) {
   const [donnees, setDonnees] = useState(null);
   const [reponses, setReponses] = useState({});
@@ -125,6 +201,7 @@ export default function MesServices({ onRetour }) {
       if (!res.ok) throw new Error(data.erreur || "Impossible d'enregistrer les services.");
       setInitial({ ...reponses });
       setMessage(data.message || "Services enregistrés.");
+      await charger();
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
     } finally {
@@ -150,6 +227,8 @@ export default function MesServices({ onRetour }) {
             Indiquez pour chaque service si votre structure l'offre actuellement.
           </p>
 
+          <CarteScores scores={donnees.scores} />
+
           {donnees.programmes.map((programme) => (
             <section key={programme.code} style={{ marginBottom: "28px" }}>
               <h2 style={{ textAlign: "left" }}>{programme.nom}</h2>
@@ -173,6 +252,7 @@ export default function MesServices({ onRetour }) {
                             {LIBELLES_DEPENDANCE[service.dependance]}
                           </small>
                         )}
+                        <InfoService service={service} />
                         {service.misAJourLe && (
                           <small style={{ opacity: 0.7, display: "block" }}>
                             Mis à jour le {new Date(service.misAJourLe).toLocaleDateString("fr-FR")}

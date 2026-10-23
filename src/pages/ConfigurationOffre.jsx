@@ -32,7 +32,7 @@ async function appeler(chemin, options = {}) {
 // Grille commune à l'en-tête et aux lignes des services.
 const GRILLE_SERVICE = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) 110px 110px 80px 200px",
+  gridTemplateColumns: "minmax(0, 1fr) 110px 90px 110px 80px 200px",
   alignItems: "center",
   columnGap: "12px",
   textAlign: "left",
@@ -95,6 +95,10 @@ const styleEtiquette = {
 };
 
 const COULEUR_ALERTE = "#b3561e";
+
+function poidsValide(texte) {
+  return /^[1-5]$/.test(String(texte ?? ""));
+}
 
 function cibleValide(texte) {
   if (texte === "") return true;
@@ -339,6 +343,7 @@ function EligibiliteService({ service, nbFosa, nouveau, onRetour, onEnregistre }
 export default function ConfigurationOffre({ onRetour }) {
   const [donnees, setDonnees] = useState(null);
   const [cibles, setCibles] = useState({});
+  const [poids, setPoids] = useState({});
   const [actifs, setActifs] = useState({});
   const [initial, setInitial] = useState({});
   const [chargement, setChargement] = useState(true);
@@ -368,7 +373,7 @@ export default function ConfigurationOffre({ onRetour }) {
             const texte = s.ciblePct === null || s.ciblePct === undefined ? "" : String(s.ciblePct);
             c[s.id] = texte;
             a[s.id] = s.actif;
-            i[s.id] = { cible: texte, actif: s.actif };
+            i[s.id] = { cible: texte, actif: s.actif, poids: String(s.poids ?? 1) };
           }
         }
       }
@@ -376,6 +381,7 @@ export default function ConfigurationOffre({ onRetour }) {
       setCibles(c);
       setActifs(a);
       setInitial(i);
+      setPoids(Object.fromEntries(Object.entries(i).map(([cle, valeur]) => [cle, valeur.poids])));
     } catch (err) {
       setErreur(err.message || "Connexion instable, réessayez.");
     } finally {
@@ -390,12 +396,12 @@ export default function ConfigurationOffre({ onRetour }) {
   const modifies = useMemo(
     () =>
       Object.keys(cibles).filter(
-        (id) => initial[id] && (cibles[id] !== initial[id].cible || actifs[id] !== initial[id].actif)
+        (id) => initial[id] && (cibles[id] !== initial[id].cible || actifs[id] !== initial[id].actif || poids[id] !== initial[id].poids)
       ),
-    [cibles, actifs, initial]
+    [cibles, actifs, poids, initial]
   );
 
-  const aDesErreurs = modifies.some((id) => !cibleValide(cibles[id]));
+  const aDesErreurs = modifies.some((id) => !cibleValide(cibles[id]) || !poidsValide(poids[id]));
 
   async function enregistrer() {
     setEnCours(true);
@@ -410,6 +416,7 @@ export default function ConfigurationOffre({ onRetour }) {
           body: JSON.stringify({
             ciblePct: cibles[id] === "" ? null : Number(cibles[id]),
             actif: actifs[id],
+            poids: Number(poids[id]),
           }),
         });
         reussis += 1;
@@ -642,6 +649,7 @@ export default function ConfigurationOffre({ onRetour }) {
                 <div style={styleEntete}>
                   <div>Service</div>
                   <div>Cible (%)</div>
+                  <div>Poids (1-5)</div>
                   <div>Éligibles</div>
                   <div>Actif</div>
                   <div></div>
@@ -676,6 +684,20 @@ export default function ConfigurationOffre({ onRetour }) {
                               setCibles((c) => ({ ...c, [service.id]: e.target.value.trim() }));
                             }}
                             style={{ ...styleChampCible, borderColor: invalide ? "#b3261e" : "#b5b5b5" }}
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="1"
+                            value={poids[service.id] ?? ""}
+                            onChange={(e) => {
+                              setMessage(null);
+                              setPoids((p) => ({ ...p, [service.id]: e.target.value.trim() }));
+                            }}
+                            title={"Poids du service : de 1 (faible) \u00e0 5 (tr\u00e8s important)"}
+                            style={{ ...styleChampCible, width: "60px", borderColor: poidsValide(poids[service.id]) ? "#b5b5b5" : "#b3261e" }}
                           />
                         </div>
                         <div>
