@@ -7,10 +7,12 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const LIBELLES_TYPE_ETAB = {
   CAMEC: "CAMEC",
   GAS_PROGRAMME_NATIONAL: "GAS Programme national",
-  GAS_DRS: "GAS DRS",
+  GAS_DRS: "GAS Wilaya",
   GAS_MOUGHATAA: "GAS Moughataa",
   FORMATION_SANITAIRE: "Formation sanitaire",
 };
+
+const LIBELLES_TYPE_ETAB_AFFICHAGE = { ...LIBELLES_TYPE_ETAB, WILAYA: "Wilaya" };
 
 const LIBELLES_NIVEAU_FOSA = {
   HOPITAL: "Hôpital",
@@ -23,8 +25,8 @@ const LIBELLES_NIVEAU_FOSA = {
 
 const LIBELLES_ROLE = {
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
-  GESTIONNAIRE_DRS: "Gestionnaire DRS",
-  DIRECTEUR_DRS: "Directeur DRS",
+  GESTIONNAIRE_DRS: "GAS Wilaya",
+  DIRECTEUR_DRS: "DRS",
   GAS_MOUGHATAA: "Agent GAS Moughataa",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",
   GAS_PROGRAMME_NATIONAL: "Agent GAS Programme national",
@@ -44,7 +46,7 @@ const LIBELLES_TYPE_NOTIF = {
 // l'écran "Stock du réseau", pour rester cohérent d'un écran à l'autre.
 const LIBELLE_NIVEAU_STOCK = {
   CAMEC: "CAMEC",
-  GAS_DRS: "Région (DRS)",
+  GAS_DRS: "Wilaya (dépôt)",
   GAS_MOUGHATAA: "Moughataa",
   FORMATION_SANITAIRE: "Formation sanitaire",
   GAS_PROGRAMME_NATIONAL: "GAS Programme national",
@@ -396,7 +398,7 @@ export default function AdminPanel({ onRetour }) {
     setMessage(null);
     try {
       await appelApi("/admin/drs", { method: "POST", body: JSON.stringify(formDrs) }, token);
-      setMessage(`DRS "${formDrs.nom}" créée avec succès.`);
+      setMessage(`Wilaya "${formDrs.nom}" créée avec succès.`);
       setFormDrs({ nom: "", code: "" });
       chargerTout();
     } catch (err) {
@@ -421,11 +423,11 @@ export default function AdminPanel({ onRetour }) {
   }
 
   async function supprimerDrsAction(d) {
-    if (!window.confirm(`Supprimer définitivement la DRS "${d.nom}" ? Impossible si des établissements y sont encore rattachés.`)) return;
+    if (!window.confirm(`Supprimer définitivement la wilaya "${d.nom}" ? Impossible si des établissements y sont encore rattachés.`)) return;
     setErreur(null);
     try {
       await appelApi(`/admin/drs/${d.id}`, { method: "DELETE" }, token);
-      setMessage(`DRS "${d.nom}" supprimée.`);
+      setMessage(`Wilaya "${d.nom}" supprimée.`);
       chargerTout();
     } catch (err) {
       setErreur(err.message);
@@ -437,7 +439,7 @@ export default function AdminPanel({ onRetour }) {
     setErreur(null);
     setMessage(null);
     if (!formMoughataa.drsId) {
-      setErreur("Choisis une DRS pour cette Moughataa.");
+      setErreur("Choisis une wilaya pour cette Moughataa.");
       return;
     }
     try {
@@ -688,7 +690,7 @@ export default function AdminPanel({ onRetour }) {
           className={onglet === "regions" ? "admin-onglet-actif" : "admin-onglet"}
           onClick={() => setOnglet("regions")}
         >
-          Régions
+          Wilayas
         </button>
         <button
           className={onglet === "etablissements" ? "admin-onglet-actif" : "admin-onglet"}
@@ -727,7 +729,7 @@ export default function AdminPanel({ onRetour }) {
       ) : onglet === "regions" ? (
         <>
           <form className="admin-formulaire" onSubmit={creerDrs}>
-            <h2>Créer une DRS</h2>
+            <h2>Créer une wilaya</h2>
             <div className="admin-grille">
               <div className="admin-champ">
                 <label>Nom</label>
@@ -748,7 +750,7 @@ export default function AdminPanel({ onRetour }) {
                 />
               </div>
             </div>
-            <button type="submit" className="admin-bouton">Créer la DRS</button>
+            <button type="submit" className="admin-bouton">Créer la wilaya</button>
           </form>
 
           <ImportStructures type="drs" token={token} onTermine={() => chargerTout({ silencieux: true })} />
@@ -817,7 +819,7 @@ export default function AdminPanel({ onRetour }) {
                 />
               </div>
               <div className="admin-champ">
-                <label>DRS</label>
+                <label>Wilaya</label>
                 <select
                   value={formMoughataa.drsId}
                   onChange={(e) => setFormMoughataa((f) => ({ ...f, drsId: e.target.value }))}
@@ -836,7 +838,7 @@ export default function AdminPanel({ onRetour }) {
             <thead>
               <tr>
                 <th>Nom</th>
-                <th>DRS</th>
+                <th>Wilaya</th>
                 <th></th>
               </tr>
             </thead>
@@ -918,7 +920,7 @@ export default function AdminPanel({ onRetour }) {
               </div>
               {formEtab.type === "GAS_DRS" && (
                 <div className="admin-champ">
-                  <label>DRS</label>
+                  <label>Wilaya</label>
                   <select
                     value={formEtab.drsId}
                     onChange={(e) => setFormEtab((f) => ({ ...f, drsId: e.target.value }))}
@@ -998,7 +1000,7 @@ export default function AdminPanel({ onRetour }) {
             <h2>Importer des formations sanitaires en masse</h2>
             <p className="admin-reconciliation-note">
               Fichier Excel (.xlsx) ou CSV avec les colonnes : <strong>Nom FOSA</strong>, <strong>Moughataa</strong>
-              {" "}(nom exact tel que créé dans Régions), <strong>Responsable</strong> (nom complet),{" "}
+              {" "}(nom exact tel que créé dans Wilayas), <strong>Responsable</strong> (nom complet),{" "}
               <strong>Telephone</strong> (optionnel), <strong>Identifiant</strong> (optionnel — généré automatiquement
               si vide). Un compte et un mot de passe sont créés pour chaque ligne valide.
             </p>
@@ -1062,7 +1064,7 @@ export default function AdminPanel({ onRetour }) {
               </select>
             </div>
             <div className="admin-champ">
-              <label>DRS</label>
+              <label>Wilaya</label>
               <select
                 value={filtreEtabDrs}
                 onChange={(e) => {
@@ -1078,7 +1080,7 @@ export default function AdminPanel({ onRetour }) {
               </select>
             </div>
             <div className="admin-champ">
-              <label>GAS DRS et Moughataa</label>
+              <label>GAS Wilaya et Moughataa</label>
               <select
                 value={filtreEtabMoughataa}
                 onChange={(e) => {
@@ -1089,7 +1091,7 @@ export default function AdminPanel({ onRetour }) {
                 <option value="">Toutes</option>
                 {filtreEtabDrs && (
                   <option value="__GAS_DRS__">
-                    {etablissements.find((x) => x.type === "GAS_DRS" && x.drs?.nom === filtreEtabDrs)?.nom || "GAS DRS"}
+                    {etablissements.find((x) => x.type === "GAS_DRS" && x.drs?.nom === filtreEtabDrs)?.nom || "GAS Wilaya"}
                   </option>
                 )}
                 {moughataas
@@ -1161,7 +1163,7 @@ export default function AdminPanel({ onRetour }) {
                           onChange={(ev) => setEditionEtabForm((f) => ({ ...f, nom: ev.target.value }))}
                         />
                       </td>
-                      <td>{LIBELLES_TYPE_ETAB[e.type] || e.type}</td>
+                      <td>{LIBELLES_TYPE_ETAB_AFFICHAGE[e.type] || e.type}</td>
                       <td>
                         {e.type === "GAS_PROGRAMME_NATIONAL" ? (
                           <select
@@ -1188,7 +1190,7 @@ export default function AdminPanel({ onRetour }) {
                   ) : (
                     <>
                       <td>{e.nom}</td>
-                      <td>{LIBELLES_TYPE_ETAB[e.type] || e.type}</td>
+                      <td>{LIBELLES_TYPE_ETAB_AFFICHAGE[e.type] || e.type}</td>
                       <td>{e.programme?.nom || "—"}</td>
                       <td>
                         {e.type === "FORMATION_SANITAIRE" ? (
@@ -1568,7 +1570,7 @@ export default function AdminPanel({ onRetour }) {
               </select>
             </div>
             <div className="admin-champ">
-              <label>DRS (région)</label>
+              <label>Wilaya</label>
               <select
                 value={filtreLotDrs}
                 onChange={(e) => {
@@ -1681,7 +1683,7 @@ export default function AdminPanel({ onRetour }) {
                   <option value="">—</option>
                   {etablissementsVerrouillables.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.nom} ({LIBELLES_TYPE_ETAB[e.type] || e.type})
+                      {e.nom} ({LIBELLES_TYPE_ETAB_AFFICHAGE[e.type] || e.type})
                     </option>
                   ))}
                 </select>
@@ -1707,7 +1709,7 @@ export default function AdminPanel({ onRetour }) {
               {Object.entries(verrousParEtablissement).map(([etablissementId, groupe]) => (
                 <tr key={etablissementId}>
                   <td>{groupe.etablissement?.nom || "—"}</td>
-                  <td>{LIBELLES_TYPE_ETAB[groupe.etablissement?.type] || groupe.etablissement?.type || "—"}</td>
+                  <td>{LIBELLES_TYPE_ETAB_AFFICHAGE[groupe.etablissement?.type] || groupe.etablissement?.type || "—"}</td>
                   <td>
                     {groupe.lignes.some((v) => v.programmeId === null)
                       ? "Total"

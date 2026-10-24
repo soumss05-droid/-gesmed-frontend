@@ -101,7 +101,7 @@ export default function JournalEquipe({ onRetour }) {
     <div className="admin-page">
       <header className="admin-header">
         <button className="admin-retour" onClick={onRetour}>← Retour</button>
-        <h1>Activité des DRS{nonLus > 0 ? ` — ${nonLus} nouveau(x)` : ""}</h1>
+        <h1>Activité des GAS Wilaya{nonLus > 0 ? ` — ${nonLus} nouveau(x)` : ""}</h1>
       </header>
 
       {erreur && <p className="admin-erreur" role="alert">{erreur}</p>}
@@ -124,7 +124,7 @@ export default function JournalEquipe({ onRetour }) {
           <thead>
             <tr>
               <th>Date</th>
-              <th>DRS</th>
+              <th>Wilaya</th>
               <th>Créé par</th>
               <th>Action</th>
               <th>Compte</th>

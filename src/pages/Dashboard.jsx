@@ -8,7 +8,7 @@ const LIBELLES_ROLE = {
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
   GAS_PROGRAMME_NATIONAL: "Agent GAS Programme national",
   GESTIONNAIRE_DRS: "Gestionnaire DRS",
-  DIRECTEUR_DRS: "Directeur DRS",
+  DIRECTEUR_DRS: "DRS",
   GAS_MOUGHATAA: "Agent GAS Moughataa",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",
   FORMATION_SANITAIRE: "Agent formation sanitaire",
@@ -158,6 +158,7 @@ export default function Dashboard({
   onMesServices,
   onCouvertureOffre, // couverture offre
   onConfigurationOffre, // config offre
+  onDestructions,
 }) {
   const { utilisateur } = session;
   const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
@@ -165,6 +166,7 @@ export default function Dashboard({
   const [chargement, setChargement] = useState(
     ROLES_AVEC_STOCK.includes(utilisateur.role) ||
       utilisateur.role === "ADMIN" ||
+      utilisateur.role === "DIRECTEUR_DRS" ||
       utilisateur.role === "GAS_PROGRAMME_NATIONAL"
   );
 
@@ -274,9 +276,27 @@ export default function Dashboard({
       }
     }
 
+    async function chargerKpisDrs() {
+      try {
+        const res = await fetch(`${API_URL}/stocks/reseau`, { headers: { Authorization: `Bearer ${token}` } });
+        const base = SECTIONS_PAR_ROLE.DIRECTEUR_DRS.map((s) => ({ ...s }));
+        if (res.ok) {
+          const reseau = await res.json();
+          base[0].valeur = String(reseau.length);
+          base[0].description = "Établissements suivis dans ta wilaya";
+        }
+        setSections(base);
+      } catch (erreur) {
+        console.error(erreur);
+      } finally {
+        setChargement(false);
+      }
+    }
+
     if (ROLES_AVEC_STOCK.includes(utilisateur.role)) chargerStocks();
     else if (utilisateur.role === "ADMIN") chargerKpisAdmin();
     else if (utilisateur.role === "GAS_PROGRAMME_NATIONAL") chargerKpisGasProgramme();
+    else if (utilisateur.role === "DIRECTEUR_DRS") chargerKpisDrs();
     else setChargement(false);
   }, [utilisateur.role]);
 
@@ -324,6 +344,7 @@ export default function Dashboard({
         { roles: ["GESTIONNAIRE_CAMEC", "ADMIN"], icone: "camion", libelle: "Rentrée des produits", onClick: onRentreeCamec },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "FORMATION_SANITAIRE"], icone: "camion", libelle: "Saisie initiale de stock", onClick: onRentreeCamec },
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
+        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE", "ADMIN"], icone: "liste", libelle: "Destructions", onClick: onDestructions },
         { roles: ["FORMATION_SANITAIRE"], icone: "boite", libelle: "Enregistrer une dispensation", onClick: onDispensation },
         { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
         { roles: ["GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "balance", libelle: "Écarts en attente", onClick: onEcarts },

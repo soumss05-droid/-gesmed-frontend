@@ -18,12 +18,14 @@ const LIBELLES_TYPE = {
   REJETEE_POUR_CORRECTION: "Rejetée — à corriger",
   RUPTURE_STOCK: "Rupture de stock",
   RELANCE: "Relance",
+  DESTRUCTION_AUTORISEE: "Destruction autorisée",
+  DESTRUCTION_REJETEE: "Destruction rejetée",
 };
 
 function classeType(type) {
-  if (type === "REJETEE_POUR_CORRECTION" || type === "RUPTURE_STOCK") return "notif-badge-rouge";
+  if (type === "REJETEE_POUR_CORRECTION" || type === "RUPTURE_STOCK" || type === "DESTRUCTION_REJETEE") return "notif-badge-rouge";
   if (type === "MODIFIEE" || type === "SCINDEE") return "notif-badge-dore";
-  if (type === "RELANCE") return "notif-badge-bleu";
+  if (type === "RELANCE" || type === "DESTRUCTION_AUTORISEE") return "notif-badge-bleu";
   return "notif-badge-vert"; // VALIDEE
 }
 

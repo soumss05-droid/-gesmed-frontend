@@ -266,9 +266,9 @@ export default function CouvertureOffre({ onRetour }) {
           )}
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", borderBottom: "1px solid #c9c9c9", marginBottom: "16px" }}>
-            <Onglet actif={onglet === "national"} onClick={() => setOnglet("national")}>National</Onglet>
-            <Onglet actif={onglet === "drs"} onClick={() => setOnglet("drs")}>Par DRS</Onglet>
-            <Onglet actif={onglet === "moughataa"} onClick={() => setOnglet("moughataa")}>Par Moughataa</Onglet>
+            <Onglet actif={onglet === "national"} onClick={() => setOnglet("national")}>{donnees.portee.niveau === "DRS" ? "Ma wilaya" : donnees.portee.niveau === "MOUGHATAA" ? "Ma Moughataa" : "National"}</Onglet>
+            {donnees.portee.niveau === "NATIONAL" && (<Onglet actif={onglet === "drs"} onClick={() => setOnglet("drs")}>Par Wilaya</Onglet>)}
+            {donnees.portee.niveau !== "MOUGHATAA" && (<Onglet actif={onglet === "moughataa"} onClick={() => setOnglet("moughataa")}>Par Moughataa</Onglet>)}
             <Onglet actif={onglet === "fosa"} onClick={() => setOnglet("fosa")}>Par FOSA</Onglet>
           </div>
 
@@ -314,7 +314,7 @@ export default function CouvertureOffre({ onRetour }) {
             <>
               {selecteurService}
               <TableauZones
-                titreColonne="DRS"
+                titreColonne="Wilaya"
                 lignes={service.parDrs}
                 total={service.national}
                 cible={service.ciblePct}
@@ -325,15 +325,17 @@ export default function CouvertureOffre({ onRetour }) {
           {services.length > 0 && onglet === "moughataa" && service && (
             <>
               {selecteurService}
-              <label style={{ display: "block", marginBottom: "12px" }}>
-                DRS :{" "}
+              {listeDrs.length > 1 && (
+<label style={{ display: "block", marginBottom: "12px" }}>
+                Wilaya :{" "}
                 <select value={filtreDrs} onChange={(e) => setFiltreDrs(e.target.value)} style={styleChamp}>
-                  <option value="">Toutes les DRS</option>
+                  <option value="">Toutes les wilayas</option>
                   {listeDrs.map((d) => (
                     <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
               </label>
+)}
               <TableauZones
                 titreColonne="Moughataa"
                 lignes={lignesMoughataa}
@@ -346,7 +348,8 @@ export default function CouvertureOffre({ onRetour }) {
           {services.length > 0 && onglet === "fosa" && (
             <>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "12px" }}>
-                <select
+                {listeDrs.length > 1 && (
+<select
                   value={filtreDrs}
                   onChange={(e) => {
                     setFiltreDrs(e.target.value);
@@ -354,11 +357,12 @@ export default function CouvertureOffre({ onRetour }) {
                   }}
                   style={styleChamp}
                 >
-                  <option value="">Toutes les DRS</option>
+                  <option value="">Toutes les wilayas</option>
                   {listeDrs.map((d) => (
                     <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
+)}
                 <select value={filtreMoughataa} onChange={(e) => setFiltreMoughataa(e.target.value)} style={styleChamp}>
                   <option value="">Toutes les Moughataa</option>
                   {listeMoughataas.map((m) => (

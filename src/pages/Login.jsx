@@ -122,7 +122,7 @@ export default function Login({ onLoginSuccess }) {
           <g className="circuit-node" transform="translate(300, 220)">
             <circle r="7" />
             <text x="18" y="5" textAnchor="end" x2="-18">
-              GAS DRS
+              GAS Wilaya
             </text>
           </g>
           <g className="circuit-node" transform="translate(60, 220)">

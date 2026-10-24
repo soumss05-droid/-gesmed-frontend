@@ -1,0 +1,255 @@
+.destr-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  color: #1c2733;
+  box-sizing: border-box;
+}
+
+.destr-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.destr-header h1 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: #1f4e79;
+}
+
+.destr-retour {
+  border: 1px solid #b8c4d0;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.destr-retour:hover {
+  background: #eef3f8;
+}
+
+.destr-intro {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #55616d;
+  line-height: 1.4;
+}
+
+.destr-onglets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.destr-onglet,
+.destr-onglet-actif {
+  border: 1px solid #b8c4d0;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.destr-onglet-actif {
+  background: #1f4e79;
+  border-color: #1f4e79;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.destr-message {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #e6f3ea;
+  color: #1f5e3a;
+  font-size: 0.9rem;
+}
+
+.destr-erreur {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fbeae6;
+  color: #8f2f19;
+  font-size: 0.9rem;
+}
+
+.destr-vide {
+  padding: 18px;
+  text-align: center;
+  color: #55616d;
+  border: 1px dashed #c4ced8;
+  border-radius: 6px;
+}
+
+.destr-table-wrap {
+  overflow-x: auto;
+}
+
+.destr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.destr-table th {
+  text-align: left;
+  background: #1f4e79;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.destr-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #dde3e9;
+  vertical-align: top;
+}
+
+.destr-table tbody tr:nth-child(even) {
+  background: #f6f8fa;
+}
+
+.destr-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.destr-statut {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.destr-statut--en_attente {
+  background: #fdf1d9;
+  color: #7a5a14;
+}
+
+.destr-statut--validee {
+  background: #e1f1e7;
+  color: #1f5e3a;
+}
+
+.destr-statut--rejetee {
+  background: #fbe3dd;
+  color: #8f2f19;
+}
+
+.destr-decision {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 190px;
+}
+
+.destr-decision input {
+  padding: 5px 7px;
+  border: 1px solid #b8c4d0;
+  border-radius: 5px;
+  font-size: 0.84rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.destr-boutons {
+  display: flex;
+  gap: 6px;
+}
+
+.destr-valider,
+.destr-rejeter {
+  flex: 1;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.destr-valider {
+  background: #2f7a4f;
+}
+
+.destr-rejeter {
+  background: #b3492f;
+}
+
+.destr-valider:disabled,
+.destr-rejeter:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.destr-petit {
+  color: #55616d;
+  font-size: 0.8rem;
+}
+.destr-statut--autorisee {
+  background: #dfeaf7;
+  color: #1f4e79;
+}
+.destr-cause {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.destr-cause--perime {
+  background: #eceff2;
+  color: #44505c;
+}
+
+.destr-cause--avarie {
+  background: #fbe3dd;
+  color: #8f2f19;
+}
+
+.destr-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 600px;
+  padding: 14px;
+  border: 1px solid #dde3e9;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.destr-form label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.destr-form select,
+.destr-form input {
+  padding: 7px 9px;
+  border: 1px solid #b8c4d0;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.destr-envoyer {
+  flex: none;
+  margin-top: 8px;
+  padding: 9px 12px;
+}

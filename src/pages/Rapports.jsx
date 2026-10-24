@@ -32,7 +32,7 @@ const LIBELLES_STATUT_REQ = {
 
 const LIBELLE_NIVEAU = {
   CAMEC: "CAMEC",
-  GAS_DRS: "Région (DRS)",
+  GAS_DRS: "Wilaya",
   GAS_MOUGHATAA: "Moughataa",
   FORMATION_SANITAIRE: "Formation sanitaire",
   GAS_PROGRAMME_NATIONAL: "GAS Programme national",
@@ -297,13 +297,13 @@ export default function Rapports({ session, onRetour }) {
 
   const regroupementsDisponibles = estAdmin
     ? [
-        { valeur: "drs", libelle: "Par DRS" },
+        { valeur: "drs", libelle: "Par Wilaya" },
         { valeur: "moughataa", libelle: "Par Moughataa" },
         { valeur: "formationsanitaire", libelle: "Par formation sanitaire" },
       ]
     : peutCroiserProgramme
     ? [
-        { valeur: "drs", libelle: "Par DRS" },
+        { valeur: "drs", libelle: "Par Wilaya" },
         { valeur: "moughataa", libelle: "Par Moughataa" },
       ]
     : peutCroiserRegion
@@ -727,14 +727,14 @@ export default function Rapports({ session, onRetour }) {
                       titre: "Rapport SYGIMS — Stock par produit (croisement)",
                       sousTitre: `Regroupement : ${
                         croisementNiveau.regroupement === "drs"
-                          ? "par DRS"
+                          ? "par wilaya"
                           : croisementNiveau.regroupement === "moughataa"
                           ? "par Moughataa"
                           : "par formation sanitaire"
                       } — Stock total : ${croisementNiveau.total}`,
                       colonnes: [
                         croisementNiveau.regroupement === "drs"
-                          ? "DRS"
+                          ? "Wilaya"
                           : croisementNiveau.regroupement === "moughataa"
                           ? "Moughataa"
                           : "Établissement",
@@ -820,7 +820,7 @@ export default function Rapports({ session, onRetour }) {
                       <tr>
                         <th>
                           {croisementNiveau.regroupement === "drs"
-                            ? "DRS"
+                            ? "Wilaya"
                             : croisementNiveau.regroupement === "moughataa"
                             ? "Moughataa"
                             : "Établissement"}

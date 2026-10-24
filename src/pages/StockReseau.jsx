@@ -16,7 +16,7 @@ const LIBELLE_STATUT = {
 
 const LIBELLE_NIVEAU = {
   CAMEC: "CAMEC",
-  GAS_DRS: "Dépôt DRS",
+  GAS_DRS: "Dépôt de la wilaya",
   GAS_MOUGHATAA: "Moughataa",
   FORMATION_SANITAIRE: "Formation sanitaire",
   GAS_PROGRAMME_NATIONAL: "GAS Programme national",
