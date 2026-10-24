@@ -25,7 +25,7 @@ const LIBELLES_NIVEAU_FOSA = {
 
 const LIBELLES_ROLE = {
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
-  GESTIONNAIRE_DRS: "GAS Wilaya",
+  GESTIONNAIRE_DRS: "SAMEC Régional",
   DIRECTEUR_DRS: "DRS",
   GAS_MOUGHATAA: "Agent GAS Moughataa",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",

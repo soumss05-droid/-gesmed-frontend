@@ -13,7 +13,8 @@ const PERIODES = [
 
 const LIBELLE_NIVEAU = {
   CAMEC: "CAMEC",
-  GAS_DRS: "Région (DRS)",
+  GAS_DRS: "Dépôt régional",
+  WILAYA: "Wilaya",
   GAS_MOUGHATAA: "Moughataa",
   FORMATION_SANITAIRE: "Formation sanitaire",
   GAS_PROGRAMME_NATIONAL: "GAS Programme national",
@@ -403,7 +404,7 @@ export default function FicheSituation({ session }) {
 
           <div className="fiche-titre">
             <h1>Fiche de situation</h1>
-            <p className="fiche-titre-structure">{fiche.entete.structure} — {niveauLibelle}</p>
+            <p className="fiche-titre-structure">{fiche.entete.structure}{fiche.entete.niveau === "WILAYA" ? null : <> — {niveauLibelle}</>}</p>
             <p className="fiche-titre-meta">
               Période du {dateCourte(fiche.entete.debut)} au {dateCourte(fiche.entete.fin)} · Édité le {dateHeure(fiche.entete.editeLe)}
             </p>

@@ -7,7 +7,7 @@ const LIBELLE_CIBLE_PAR_ROLE = {
   GAS_MOUGHATAA: "formations sanitaires de ta moughataa",
   GESTIONNAIRE_DRS: "GAS Moughataa de ta wilaya",
   DIRECTEUR_DRS: "GAS Moughataa de ta wilaya",
-  GAS_PROGRAMME_NATIONAL: "GAS Wilaya du pays, pour les produits de ton programme",
+  GAS_PROGRAMME_NATIONAL: "SAMEC Régionaux du pays, pour les produits de ton programme",
 };
 
 async function appelApi(chemin, options, token) {

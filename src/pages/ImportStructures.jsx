@@ -4,7 +4,7 @@ import "./AdminPanel.css";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const LIBELLES_ROLE_COMPTE = {
-  GESTIONNAIRE_DRS: "GAS DRS",
+  GESTIONNAIRE_DRS: "SAMEC Régional",
   DIRECTEUR_DRS: "DRS",
   GAS_MOUGHATAA: "GAS Moughataa",
   MEDECIN_CHEF_MOUGHATAA: "MCM",

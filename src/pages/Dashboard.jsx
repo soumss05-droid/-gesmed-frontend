@@ -7,7 +7,7 @@ const LIBELLES_ROLE = {
   ADMIN: "Administrateur",
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
   GAS_PROGRAMME_NATIONAL: "Agent GAS Programme national",
-  GESTIONNAIRE_DRS: "Gestionnaire DRS",
+  GESTIONNAIRE_DRS: "SAMEC Régional",
   DIRECTEUR_DRS: "DRS",
   GAS_MOUGHATAA: "Agent GAS Moughataa",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",
@@ -42,7 +42,7 @@ const SECTIONS_PAR_ROLE = {
   ],
   GAS_PROGRAMME_NATIONAL: [
     { titre: "Réquisitions à valider", valeur: "—", description: "En attente de ton niveau" },
-    { titre: "GAS DRS coordonnés", valeur: "—", description: "Établissements sous ta supervision" },
+    { titre: "SAMEC Régionaux coordonnés", valeur: "—", description: "Établissements sous ta supervision" },
     { titre: "Écarts signalés", valeur: "—", description: "En attente de décision" },
   ],
   GESTIONNAIRE_DRS: [

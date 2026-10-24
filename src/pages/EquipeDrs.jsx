@@ -180,7 +180,7 @@ export default function EquipeDrs({ onRetour }) {
     <div className="admin-page">
       <header className="admin-header">
         <button className="admin-retour" onClick={onRetour}>← Retour</button>
-        <h1>Mon équipe{perimetre?.drs ? ` — ${perimetre.drs.nom}` : ""}</h1>
+        <h1>{perimetre?.drs ? `SAMEC de la wilaya de ${perimetre.drs.nom.replace(/^DRS\s+/i, "")}` : "Mon équipe"}</h1>
       </header>
 
       {erreur && <p className="admin-erreur" role="alert">{erreur}</p>}
