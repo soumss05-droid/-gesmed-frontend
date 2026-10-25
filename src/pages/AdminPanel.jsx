@@ -8,7 +8,7 @@ const LIBELLES_TYPE_ETAB = {
   CAMEC: "CAMEC",
   GAS_PROGRAMME_NATIONAL: "GAS Programme national",
   GAS_DRS: "GAS Wilaya",
-  GAS_MOUGHATAA: "GAS Moughataa",
+  GAS_MOUGHATAA: "SASSM",
   FORMATION_SANITAIRE: "Formation sanitaire",
 };
 
@@ -27,7 +27,7 @@ const LIBELLES_ROLE = {
   GESTIONNAIRE_CAMEC: "Gestionnaire CAMEC",
   GESTIONNAIRE_DRS: "SAMEC Régional",
   DIRECTEUR_DRS: "DRS",
-  GAS_MOUGHATAA: "Agent GAS Moughataa",
+  GAS_MOUGHATAA: "Agent SASSM",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",
   GAS_PROGRAMME_NATIONAL: "Agent GAS Programme national",
   FORMATION_SANITAIRE: "Agent formation sanitaire",
@@ -1102,7 +1102,7 @@ export default function AdminPanel({ onRetour }) {
               </select>
             </div>
             <div className="admin-champ">
-              <label>GAS Moughataa/FOSA</label>
+              <label>SASSM/FOSA</label>
               <select
                 value={filtreEtabNiveau}
                 onChange={(e) => setFiltreEtabNiveau(e.target.value)}
@@ -1671,7 +1671,7 @@ export default function AdminPanel({ onRetour }) {
             <p className="admin-reconciliation-note">
               Verrou total et immédiat sur /stocks/entree pour l'établissement choisi (CAMEC exclue : elle est
               toujours libre). Pour verrouiller une zone entière d'un coup, ce sont les gestionnaires de zone
-              (GAS Moughataa, DRS, Programme national) qui le font depuis leur propre tableau de bord.
+              (SASSM, DRS, Programme national) qui le font depuis leur propre tableau de bord.
             </p>
             <div className="admin-grille">
               <div className="admin-champ">

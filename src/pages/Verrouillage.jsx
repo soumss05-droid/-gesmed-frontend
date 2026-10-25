@@ -5,8 +5,8 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const LIBELLE_CIBLE_PAR_ROLE = {
   GAS_MOUGHATAA: "formations sanitaires de ta moughataa",
-  GESTIONNAIRE_DRS: "GAS Moughataa de ta wilaya",
-  DIRECTEUR_DRS: "GAS Moughataa de ta wilaya",
+  GESTIONNAIRE_DRS: "SASSM de ta wilaya",
+  DIRECTEUR_DRS: "SASSM de ta wilaya",
   GAS_PROGRAMME_NATIONAL: "SAMEC Régionaux du pays, pour les produits de ton programme",
 };
 

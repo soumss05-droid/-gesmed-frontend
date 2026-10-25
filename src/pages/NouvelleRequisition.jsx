@@ -134,7 +134,7 @@ export default function NouvelleRequisition({ onRetour }) {
         <div className="requisition-confirmation">
           <h1>Réquisition envoyée</h1>
           <p>
-            {numeroCree ? `Réquisition N°${numeroCree} — elle` : "Elle"} a été transmise au GAS Moughataa pour validation.
+            {numeroCree ? `Réquisition N°${numeroCree} — elle` : "Elle"} a été transmise au SASSM pour validation.
           </p>
           <p className="requisition-suggestion">
             Note ce numéro pour la retrouver plus tard via « Rechercher un dossier ».

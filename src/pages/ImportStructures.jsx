@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const LIBELLES_ROLE_COMPTE = {
   GESTIONNAIRE_DRS: "SAMEC Régional",
   DIRECTEUR_DRS: "DRS",
-  GAS_MOUGHATAA: "GAS Moughataa",
+  GAS_MOUGHATAA: "SASSM",
   MEDECIN_CHEF_MOUGHATAA: "MCM",
 };
 

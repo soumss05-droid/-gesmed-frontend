@@ -4,7 +4,7 @@ import "./AdminPanel.css";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const LIBELLES_ROLE = {
-  GAS_MOUGHATAA: "GAS Moughataa",
+  GAS_MOUGHATAA: "SASSM",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa (MCM)",
   FORMATION_SANITAIRE: "Responsable de formation sanitaire",
 };

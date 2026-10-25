@@ -9,7 +9,7 @@ const LIBELLES_ROLE = {
   GAS_PROGRAMME_NATIONAL: "Agent GAS Programme national",
   GESTIONNAIRE_DRS: "SAMEC Régional",
   DIRECTEUR_DRS: "DRS",
-  GAS_MOUGHATAA: "Agent GAS Moughataa",
+  GAS_MOUGHATAA: "Agent SASSM",
   MEDECIN_CHEF_MOUGHATAA: "Médecin Chef de Moughataa",
   FORMATION_SANITAIRE: "Agent formation sanitaire",
   AUDITEUR: "Auditeur",
@@ -47,7 +47,7 @@ const SECTIONS_PAR_ROLE = {
   ],
   GESTIONNAIRE_DRS: [
     { titre: "Produits suivis", valeur: "—", description: "Niveau de stock actuel" },
-    { titre: "Réquisitions à traiter", valeur: "—", description: "GAS Moughataa rattachés" },
+    { titre: "Réquisitions à traiter", valeur: "—", description: "SASSM rattachés" },
     { titre: "Alertes seuils", valeur: "—", description: "Ruptures et surstocks" },
   ],
   DIRECTEUR_DRS: [
