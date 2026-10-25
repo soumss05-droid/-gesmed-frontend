@@ -240,3 +240,280 @@
     padding: 2.5rem 1.75rem;
   }
 }
+
+/* --- Logo et schema des cinq niveaux (ajoute le 25/10/2026) --- */
+.login-panel__logo {
+  background: #fbfcfc;
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  margin: 0 auto 1.4rem;
+  max-width: 380px;
+}
+
+.login-panel__logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.login-niveaux-bloc {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+.login-niveaux {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  position: relative;
+  display: grid;
+  gap: 0.7rem;
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-niveaux::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  background: var(--panel-line);
+}
+
+.login-niveau {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.login-niveau__point {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--sand);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e0b676;
+}
+
+.login-niveau--depart .login-niveau__point {
+  background: var(--sand);
+  color: #1a1405;
+}
+
+.login-niveau__carte {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  min-width: 0;
+}
+
+.login-niveau__carte b {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #f0f2ed;
+}
+
+.login-niveau__carte span {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  color: #cdd8d1;
+  line-height: 1.35;
+}
+
+.login-legende {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0;
+  font-size: 0.78rem;
+  color: #cdd8d1;
+}
+
+.login-legende i {
+  font-style: normal;
+  font-weight: 600;
+  color: #e0b676;
+  margin-right: 0.3rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-niveaux__impulsion {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e0b676;
+    box-shadow: 0 0 0 5px rgba(224, 182, 118, 0.18);
+    z-index: 2;
+    animation: login-descend 5s ease-in-out infinite;
+  }
+
+  @keyframes login-descend {
+    0% { top: 10px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: calc(100% - 22px); opacity: 0; }
+  }
+}
+
+/* --- logo sans fond (ajoute le 25/10/2026) --- */
+/* Le z-index de la marque creerait un groupe isole et empecherait le melange avec le fond du panneau. */
+.login-panel__brand {
+  z-index: auto;
+}
+
+.login-panel__logo {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.login-panel__logo img {
+  filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.4);
+  mix-blend-mode: screen;
+}
+
+/* --- harmonie logo (ajoute le 25/10/2026) --- */
+/* Textes en blanc comme SYG, noms des niveaux en turquoise comme IMS, formulaire marine et turquoise. */
+.login-panel__tagline {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.login-niveau__carte b {
+  color: #14e1e0;
+}
+
+.login-niveau__carte span {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.login-legende {
+  color: #ffffff;
+}
+
+.login-screen {
+  background: #f3f7f7;
+}
+
+.login-form h1 {
+  color: #022d50;
+}
+
+.login-field input:focus-visible,
+.login-field select:focus-visible {
+  outline: 2px solid #05847f;
+}
+
+.login-field__toggle {
+  color: #05847f;
+}
+
+.login-submit {
+  background: #022d50;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: #05847f;
+}
+
+/* --- centrage cartes (ajoute le 25/10/2026) --- */
+/* Les cartes occupent toute la largeur, centrees comme le logo ; la chaine de numeros passe a gauche. */
+.login-niveau {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.login-niveaux::before {
+  left: -30px;
+  top: 26px;
+  bottom: 26px;
+}
+
+.login-niveau__point {
+  position: absolute;
+  left: -46px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-niveaux__impulsion {
+    left: -36px;
+    top: 20px;
+  }
+
+  @keyframes login-descend {
+    0% { top: 20px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: calc(100% - 32px); opacity: 0; }
+  }
+}
+
+/* --- sans commentaires (ajoute le 25/10/2026) --- */
+/* Les descriptions sous les noms des niveaux sont masquees ; la chaine de numeros est recalee sur des cartes plus basses. */
+.login-niveau__carte span {
+  display: none;
+}
+
+.login-niveaux::before {
+  top: 20px;
+  bottom: 20px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-niveaux__impulsion {
+    top: 14px;
+  }
+
+  @keyframes login-descend {
+    0% { top: 14px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: calc(100% - 26px); opacity: 0; }
+  }
+}
+
+/* --- carte validation (ajoute le 25/10/2026) --- */
+/* Le GAS Programme valide sans garder de stock : contour en pointillé, pastille en pointillé, etiquette. */
+.login-niveau--validation .login-niveau__carte {
+  background: transparent;
+  border: 1.5px dashed #14e1e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.login-niveau--validation .login-niveau__point {
+  background: var(--panel);
+  border: 2px dashed #14e1e0;
+  color: #14e1e0;
+}
+
+.login-niveau__etiquette {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  white-space: nowrap;
+}

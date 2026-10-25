@@ -87,7 +87,7 @@ export default function Login({ onLoginSuccess }) {
     <div className="login-screen">
       <aside className="login-panel" aria-hidden="true">
         <div className="login-panel__brand">
-          <span className="login-panel__mark">SYGIMS</span>
+          <div className="login-panel__logo"><img src="/logo-sygims.png" alt="SYGIMS, Médicaments, Stocks, Traçabilité" /></div>
           <p className="login-panel__tagline">
             Suivi des médicaments, de la centrale d'achat
             <br />
@@ -95,45 +95,17 @@ export default function Login({ onLoginSuccess }) {
           </p>
         </div>
 
-        <svg
-          className="login-panel__circuit"
-          viewBox="0 0 360 420"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M 60 40 L 60 130 L 180 130 L 180 220 L 300 220 L 300 310 L 180 310 L 180 380"
-            className="circuit-line"
-            fill="none"
-          />
-          <path
-            d="M 180 220 L 60 220 L 60 380"
-            className="circuit-line circuit-line--branch"
-            fill="none"
-          />
-
-          <g className="circuit-node" transform="translate(60, 40)">
-            <circle r="7" />
-            <text x="18" y="5">CAMEC centrale</text>
-          </g>
-          <g className="circuit-node" transform="translate(180, 130)">
-            <circle r="7" />
-            <text x="18" y="5">GAS Programme national</text>
-          </g>
-          <g className="circuit-node" transform="translate(300, 220)">
-            <circle r="7" />
-            <text x="18" y="5" textAnchor="end" x2="-18">
-              SAMEC Régional
-            </text>
-          </g>
-          <g className="circuit-node" transform="translate(60, 220)">
-            <circle r="7" />
-            <text x="18" y="5">SASSM</text>
-          </g>
-          <g className="circuit-node circuit-node--end" transform="translate(180, 310)">
-            <circle r="7" />
-            <text x="18" y="5">Formation sanitaire</text>
-          </g>
-        </svg>
+        <div className="login-panel__circuit login-niveaux-bloc">
+          <ol className="login-niveaux">
+            <span className="login-niveaux__impulsion" aria-hidden="true" />
+            <li className="login-niveau login-niveau--depart"><span className="login-niveau__point">1</span><div className="login-niveau__carte"><b>CAMEC centrale</b><span>Garde le stock central et expédie</span></div></li>
+            <li className="login-niveau login-niveau--validation"><span className="login-niveau__point">2</span><div className="login-niveau__carte"><b>GAS Programme</b><em className="login-niveau__etiquette">valide</em><span>Décide et contrôle, sans stock</span></div></li>
+            <li className="login-niveau"><span className="login-niveau__point">3</span><div className="login-niveau__carte"><b>SAMEC Régional</b><span>Valide et approvisionne la wilaya</span></div></li>
+            <li className="login-niveau"><span className="login-niveau__point">4</span><div className="login-niveau__carte"><b>SASSM Moughataa</b><span>Valide et approvisionne la moughataa</span></div></li>
+            <li className="login-niveau"><span className="login-niveau__point">5</span><div className="login-niveau__carte"><b>Formation sanitaire</b><span>Commande et dispense les produits</span></div></li>
+          </ol>
+          <p className="login-legende"><span><i>↓</i>Les produits descendent</span><span><i>↑</i>La réquisition monte</span></p>
+        </div>
       </aside>
 
       <main className="login-main">
