@@ -35,3 +35,4 @@ perf-mcm-ecran.cjs
 renommer-carte.cjs
 telecharger-limites.cjs
 scripts/
+.env
