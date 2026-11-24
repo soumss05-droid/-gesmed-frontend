@@ -37,23 +37,27 @@ function App() {
   const [vueAffichee, setVueAffichee] = useState("dashboard");
   const [vueCible, setVueCible] = useState("dashboard");
   const [ouvertureInitialeFaite, setOuvertureInitialeFaite] = useState(false);
+  const [changementObligatoire, setChangementObligatoire] = useState(false);
 
   function handleLoginSuccess(data) {
     setSession(data);
-    setVueAffichee("dashboard");
-    setVueCible("dashboard");
+    const doitChanger = Boolean(data && data.utilisateur && data.utilisateur.doitChangerMotDePasse);
+    setChangementObligatoire(doitChanger);
+    setVueAffichee(doitChanger ? "mot-de-passe" : "dashboard");
+    setVueCible(doitChanger ? "mot-de-passe" : "dashboard");
     setOuvertureInitialeFaite(false);
   }
 
   function handleLogout() {
     localStorage.removeItem("SYGIMS_token");
     setSession(null);
+    setChangementObligatoire(false);
     setVueAffichee("dashboard");
     setVueCible("dashboard");
     setOuvertureInitialeFaite(false);
   }
 
-  const ouvrir = (vue) => setVueCible(vue);
+  const ouvrir = (vue) => { if (changementObligatoire) return; setVueCible(vue); };
   const retour = () => ouvrir("dashboard");
 
   function rendre(vue) {
@@ -75,7 +79,7 @@ function App() {
     if (vue === "verrouillage") return <Verrouillage session={session} onRetour={retour} />;
     if (vue === "equipe") return <EquipeDrs onRetour={retour} />;
     if (vue === "journal-equipe") return <JournalEquipe onRetour={retour} />;
-    if (vue === "mot-de-passe") return <ChangerMotDePasse onRetour={retour} />;
+    if (vue === "mot-de-passe") return <ChangerMotDePasse onRetour={retour} obligatoire={changementObligatoire} onTermine={() => { setChangementObligatoire(false); setVueCible("dashboard"); }} onDeconnexion={handleLogout} />;
     if (vue === "mes-services") return <MesServices onRetour={retour} />;
     if (vue === "destructions") return <Destructions session={session} onRetour={retour} />;
     if (vue === "couverture-offre") return <CouvertureOffre onRetour={retour} />; // couverture offre

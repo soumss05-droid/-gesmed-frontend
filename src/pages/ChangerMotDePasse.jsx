@@ -11,7 +11,7 @@ function lireToken() {
   }
 }
 
-export default function ChangerMotDePasse({ onRetour }) {
+export default function ChangerMotDePasse({ onRetour, obligatoire = false, onTermine, onDeconnexion }) {
   const [ancien, setAncien] = useState("");
   const [nouveau, setNouveau] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -55,6 +55,7 @@ export default function ChangerMotDePasse({ onRetour }) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.erreur || "Connexion instable, réessaie.");
+      if (obligatoire && onTermine) { onTermine(); return; }
       setMessage("Mot de passe modifié. Utilise-le à ta prochaine connexion.");
       setAncien("");
       setNouveau("");
@@ -71,9 +72,16 @@ export default function ChangerMotDePasse({ onRetour }) {
   return (
     <div className="admin-page">
       <header className="admin-header">
-        <button className="admin-retour" onClick={onRetour}>← Retour</button>
+        <button className="admin-retour" onClick={onRetour} style={obligatoire ? { display: "none" } : undefined}>← Retour</button>
         <h1>Changer mon mot de passe</h1>
       </header>
+
+      {obligatoire && (
+        <div className="admin-message" role="status">
+          <p>Pour votre sécurité, vous devez choisir un nouveau mot de passe avant de continuer. Saisissez le mot de passe temporaire reçu comme ancien mot de passe.</p>
+          <button className="admin-retour" type="button" onClick={onDeconnexion}>Se déconnecter</button>
+        </div>
+      )}
 
       {erreur && <p className="admin-erreur" role="alert">{erreur}</p>}
       {message && (
