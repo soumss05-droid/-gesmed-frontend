@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sauvegardes et fichiers temporaires de travail
+*.avant-*
+*.sauvegarde-*
+*.copie-*
+original_*
+eligibilite-extrait.txt
+brancher-carte.cjs
+fond-esri.cjs
+perf-mcm-ecran.cjs
+renommer-carte.cjs
+telecharger-limites.cjs
+scripts/

@@ -1,0 +1,35 @@
+/* Montants du panier de dispensation : detail par ligne et total. */
+
+.disp-ligne-nom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.disp-ligne-detail {
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+}
+
+.disp-ligne-detail.disp-ligne-manque {
+  color: #b91c1c;
+}
+
+.disp-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #111827;
+}
+
+.disp-total strong {
+  font-size: 18px;
+  color: #166534;
+}

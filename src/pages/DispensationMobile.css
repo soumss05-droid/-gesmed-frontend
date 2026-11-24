@@ -1,0 +1,111 @@
+/* Ecran de dispensation : adaptation tablette et telephone. */
+
+.disp-barre-panier,
+.disp-retour-produits {
+  display: none;
+}
+
+/* Tablette : zones tactiles un peu plus grandes, deux colonnes conservees. */
+@media (min-width: 801px) and (max-width: 1024px) {
+  .disp-produit {
+    padding: 12px;
+  }
+
+  .disp-cat {
+    padding: 8px 12px;
+  }
+
+  .disp-retirer {
+    height: 40px;
+  }
+}
+
+/* Telephone : colonnes l'une sous l'autre, barre de panier fixe en bas. */
+@media (max-width: 800px) {
+  .disp-barre-panier {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 900;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 12px;
+    background: #166534;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  }
+
+  .disp-grille {
+    padding-bottom: 84px;
+  }
+
+  .disp-recherche {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .disp-cat {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .disp-liste {
+    max-height: 50vh;
+  }
+
+  .disp-produit {
+    padding: 14px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+
+  .disp-ligne {
+    grid-template-columns: 1fr 80px 44px;
+  }
+
+  .disp-ligne input {
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  .disp-retirer {
+    height: 44px;
+  }
+
+  .disp-panier select,
+  .disp-panier input {
+    font-size: 16px;
+  }
+
+  .disp-retour-produits {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 1px solid #93c5fd;
+    border-radius: 8px;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+}
+
+@media print {
+  .disp-barre-panier,
+  .disp-retour-produits {
+    display: none;
+  }
+}

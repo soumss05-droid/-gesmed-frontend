@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./AdminPanel.css";
 import ImportStructures from "./ImportStructures.jsx";
+import MargesBenefice from "./MargesBenefice.jsx";
+import ProduitsAdmin from "./ProduitsAdmin.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -21,6 +23,7 @@ const LIBELLES_NIVEAU_FOSA = {
   PS_PRINCIPAL: "PS principal",
   PS_SECONDAIRE: "PS secondaire",
   UPEC_COMMUNAUTAIRE: "UPEC communautaire",
+  AUTRE: "Autre (cabinet, clinique)",
 };
 
 const LIBELLES_ROLE = {
@@ -485,6 +488,8 @@ export default function AdminPanel({ onRetour }) {
     setEditionEtabForm({
       nom: e.nom,
       adresse: e.adresse || "",
+      latitude: e.latitude === null || e.latitude === undefined ? "" : String(e.latitude),
+      longitude: e.longitude === null || e.longitude === undefined ? "" : String(e.longitude),
       drsId: e.drsId || "",
       moughataaId: e.moughataaId || "",
       programmeId: e.programmeId || "",
@@ -722,6 +727,26 @@ export default function AdminPanel({ onRetour }) {
         >
           Verrouillage
         </button>
+        <button
+          className={onglet === "marges" ? "admin-onglet-actif" : "admin-onglet"}
+          onClick={() => setOnglet("marges")}
+        >
+          Marges
+        </button>
+        <button
+          className={onglet === "produits" ? "admin-onglet-actif" : "admin-onglet"}
+          onClick={() => setOnglet("produits")}
+        >
+          Produits
+        </button>
+      </div>
+
+      {/* Marges et Produits sont montes des l'ouverture (caches) : leurs donnees sont deja chargees au clic. */}
+      <div style={{ display: onglet === "produits" ? "block" : "none" }}>
+        <ProduitsAdmin token={token} />
+      </div>
+      <div style={{ display: onglet === "marges" ? "block" : "none" }}>
+        <MargesBenefice token={token} />
       </div>
 
       {chargement ? (
@@ -1143,6 +1168,7 @@ export default function AdminPanel({ onRetour }) {
                 <th>Niveau</th>
                 <th>Approvisionnement direct</th>
                 <th>Statut</th>
+                <th>GPS</th>
                 <th></th>
               </tr>
             </thead>
@@ -1183,6 +1209,10 @@ export default function AdminPanel({ onRetour }) {
                       <td>—</td>
                       <td>{e.actif ? "Actif" : "Désactivé"}</td>
                       <td>
+                        <input type="text" inputMode="decimal" placeholder="Latitude" style={{ width: "90px" }} value={editionEtabForm.latitude ?? ""} onChange={(ev) => setEditionEtabForm((f) => ({ ...f, latitude: ev.target.value }))} />
+                        <input type="text" inputMode="decimal" placeholder="Longitude" style={{ width: "90px" }} value={editionEtabForm.longitude ?? ""} onChange={(ev) => setEditionEtabForm((f) => ({ ...f, longitude: ev.target.value }))} />
+                      </td>
+                      <td>
                         <button className="admin-lien-action" onClick={() => enregistrerEditionEtab(e.id)}>Enregistrer</button>
                         <button className="admin-lien-action" onClick={() => setEditionEtabId(null)}>Annuler</button>
                       </td>
@@ -1221,6 +1251,16 @@ export default function AdminPanel({ onRetour }) {
                         )}
                       </td>
                       <td>{e.actif ? "Actif" : "Désactivé"}</td>
+                      <td>
+                        {e.latitude !== null && e.latitude !== undefined && e.longitude !== null && e.longitude !== undefined ? (
+                          <>
+                            {Number(e.latitude).toFixed(4)}, {Number(e.longitude).toFixed(4)}{" "}
+                            <a href={"https://www.google.com/maps?q=" + e.latitude + "," + e.longitude} target="_blank" rel="noopener noreferrer">Carte</a>
+                          </>
+                        ) : (
+                          "\u2014"
+                        )}
+                      </td>
                       <td>
                         <button className="admin-lien-action" onClick={() => demarrerEditionEtab(e)}>Modifier</button>
                         <button className="admin-lien-action" onClick={() => basculerActifEtablissement(e)}>
@@ -1664,6 +1704,8 @@ export default function AdminPanel({ onRetour }) {
             </tbody>
           </table>
         </>
+      ) : onglet === "produits" || onglet === "marges" ? (
+        null
       ) : (
         <>
           <form className="admin-formulaire" onSubmit={verrouillerEtablissementAction}>

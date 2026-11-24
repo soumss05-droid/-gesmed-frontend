@@ -20,6 +20,19 @@ const champVide = {
 // système de verrouillage (voir Verrouillage.jsx / verrouillage.controller.js).
 const ROLES_RENTREE_CAMEC = ["GESTIONNAIRE_CAMEC", "ADMIN"];
 
+// Tri alphabétique des produits (sans tenir compte des accents ni des majuscules).
+function comparerProduits(a, b) {
+  return String(a.nom || "").localeCompare(String(b.nom || ""), "fr", { sensitivity: "base" });
+}
+
+// Pour la recherche : sans accents ni majuscules.
+function normaliser(texte) {
+  return String(texte || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export default function EnregistrerRentreeCamec({ session, onRetour }) {
   const role = session?.utilisateur?.role;
   const estSaisieInitiale = role && !ROLES_RENTREE_CAMEC.includes(role);
@@ -34,6 +47,10 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
 
   const [form, setForm] = useState(champVide);
   const [erreursChamps, setErreursChamps] = useState({});
+
+  const [filtreProgramme, setFiltreProgramme] = useState("");
+  const [filtreCategorie, setFiltreCategorie] = useState("");
+  const [rechercheProduit, setRechercheProduit] = useState("");
 
   const [afficherNouveauProduit, setAfficherNouveauProduit] = useState(false);
   const [nouveauProduit, setNouveauProduit] = useState({
@@ -98,6 +115,10 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
     if (!form.datePeremption) e.datePeremption = "La date de péremption est requise.";
     if (!form.quantite || Number(form.quantite) <= 0) e.quantite = "Indique une quantité supérieure à 0.";
     if (!form.dateReception) e.dateReception = "La date de réception est requise.";
+    // Le prix doit être renseigné ; 0 reste valide (produit reçu en don, par exemple).
+    if (String(form.prixUnitaire).trim() === "" || !Number.isFinite(Number(form.prixUnitaire)) || Number(form.prixUnitaire) < 0) {
+      e.prixUnitaire = "Indique le prix unitaire (0 si gratuit).";
+    }
     return e;
   }
 
@@ -139,7 +160,7 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.erreur || "La création du produit a échoué.");
 
-      setProduits((prev) => [...prev, data]);
+      setProduits((prev) => [...prev, { ...data, programmeId: data.programmeId ?? nouveauProduit.programmeId }]);
       majChamp("produitId", data.id);
       setAfficherNouveauProduit(false);
       setNouveauProduit({ nom: "", forme: "", unite: "", programmeId: "" });
@@ -173,7 +194,7 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
           quantite: Number(form.quantite),
           dateReception: form.dateReception,
           fournisseur: form.fournisseur || undefined,
-          prixUnitaire: form.prixUnitaire ? Number(form.prixUnitaire) : undefined,
+          prixUnitaire: Number(form.prixUnitaire),
           note: form.note || undefined,
         }),
       });
@@ -194,6 +215,58 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
   }
 
   const similaires = nomsSimilaires(nouveauProduit.nom);
+
+  // Produits proposés dans la liste : filtre par programme et recherche par
+  // nom. Le produit déjà choisi reste toujours présent pour ne pas perdre la
+  // sélection quand on change de filtre.
+  // Categories proposees dans le filtre : celles du programme choisi (ou de tous).
+  const categoriesDisponibles = Array.from(
+    new Set(
+      produits
+        .filter((p) => !filtreProgramme || p.programmeId === filtreProgramme)
+        .map((p) => p.categorie)
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, "fr"));
+
+  const termeProduit = normaliser(rechercheProduit.trim());
+  const produitsFiltres = produits.filter((p) => {
+    if (p.id === form.produitId) return true;
+    if (filtreProgramme && p.programmeId !== filtreProgramme) return false;
+    if (filtreCategorie && (p.categorie || "") !== filtreCategorie) return false;
+    if (termeProduit && !normaliser(`${p.nom} ${p.forme || ""}`).includes(termeProduit)) return false;
+    return true;
+  });
+
+  // Produits regroupés par programme pour la liste déroulante. Les produits
+  // dont le programme est inconnu vont dans "Autres produits" ; si aucun
+  // programme n'est reconnu, la liste reste plate comme avant.
+  const groupesProduits = programmes
+    .flatMap((prog) => {
+      const duProgramme = produitsFiltres.filter((p) => p.programmeId === prog.id).sort(comparerProduits);
+      const categories = Array.from(new Set(duProgramme.map((p) => p.categorie || ""))).sort((a, b) => {
+        if (a === "") return 1;
+        if (b === "") return -1;
+        return a.localeCompare(b, "fr");
+      });
+      return categories.map((cat) => ({
+        id: prog.id + "|" + cat,
+        nom: cat ? prog.nom + " — " + cat : prog.nom,
+        items: duProgramme.filter((p) => (p.categorie || "") === cat),
+      }));
+    })
+    .filter((g) => g.items.length > 0);
+  const produitsSansGroupe = produitsFiltres
+    .filter((p) => !programmes.some((prog) => prog.id === p.programmeId))
+    .sort(comparerProduits);
+
+  function optionProduit(p) {
+    return (
+      <option key={p.id} value={p.id}>
+        {p.nom} {p.forme ? `— ${p.forme}` : ""}
+      </option>
+    );
+  }
 
   return (
     <div className="rentree-page">
@@ -217,6 +290,52 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
       ) : (
         <form className="rentree-formulaire" onSubmit={enregistrerRentree}>
           <div className="rentree-champ">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "8px" }}>
+              <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                <label>Programme</label>
+                <select
+                  value={filtreProgramme}
+                  onChange={(e) => {
+                    setFiltreProgramme(e.target.value);
+                    setFiltreCategorie("");
+                  }}
+                  aria-label="Filtrer les produits par programme"
+                >
+                  <option value="">Tous les programmes</option>
+                  {programmes.map((prog) => (
+                    <option key={prog.id} value={prog.id}>{prog.nom}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                <label>Catégorie</label>
+                <select
+                  value={filtreCategorie}
+                  onChange={(e) => setFiltreCategorie(e.target.value)}
+                  aria-label="Filtrer les produits par catégorie"
+                >
+                  <option value="">Toutes les catégories</option>
+                  {categoriesDisponibles.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                <label>Rechercher un produit</label>
+                <input
+                  type="search"
+                  name="recherche-produit"
+                  autoComplete="off"
+                  placeholder="ex. tdr, arte..."
+                  value={rechercheProduit}
+                  onChange={(e) => setRechercheProduit(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.preventDefault();
+                  }}
+                />
+              </div>
+            </div>
+
             <label>
               Produit <span className="rentree-obligatoire">*</span>
             </label>
@@ -226,12 +345,27 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
               className={erreursChamps.produitId ? "rentree-input-erreur" : ""}
             >
               <option value="">-- Sélectionner un produit --</option>
-              {produits.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nom} {p.forme ? `— ${p.forme}` : ""}
-                </option>
-              ))}
+              {produitsFiltres.length === 0 && <option disabled>Aucun produit ne correspond</option>}
+              {groupesProduits.length === 0
+                ? produitsSansGroupe.map(optionProduit)
+                : (
+                  <>
+                    {groupesProduits.map((g) => (
+                      <optgroup key={g.id} label={g.nom}>
+                        {g.items.map(optionProduit)}
+                      </optgroup>
+                    ))}
+                    {produitsSansGroupe.length > 0 && (
+                      <optgroup label="Autres produits">
+                        {produitsSansGroupe.map(optionProduit)}
+                      </optgroup>
+                    )}
+                  </>
+                )}
             </select>
+            <small style={{ display: "block", marginTop: "4px" }}>
+              {produitsFiltres.length} produit(s) affiché(s) sur {produits.length}
+            </small>
             {erreursChamps.produitId && <p className="rentree-erreur-champ">{erreursChamps.produitId}</p>}
 
             <button
@@ -377,15 +511,19 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
             </div>
 
             <div className="rentree-champ">
-              <label>Prix unitaire (MRU)</label>
+              <label>
+                Prix unitaire (MRU) <span className="rentree-obligatoire">*</span>
+              </label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={form.prixUnitaire}
                 onChange={(e) => majChamp("prixUnitaire", e.target.value)}
-                placeholder="Optionnel"
+                placeholder="ex. 1500 (0 si gratuit)"
+                className={erreursChamps.prixUnitaire ? "rentree-input-erreur" : ""}
               />
+              {erreursChamps.prixUnitaire && <p className="rentree-erreur-champ">{erreursChamps.prixUnitaire}</p>}
             </div>
           </div>
 

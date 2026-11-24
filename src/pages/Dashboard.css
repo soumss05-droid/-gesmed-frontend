@@ -184,3 +184,31 @@
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(18, 48, 44, 0.1);
 }
+
+/* identite-centree : nom et role centres l'un par rapport a l'autre */
+.dashboard-header__identity {
+  align-items: center;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .dashboard-header__identity {
+    align-items: center;
+  }
+}
+
+/* identite-milieu-page : nom et role au milieu de l'en-tete (ecrans larges) */
+@media (min-width: 900px) {
+  .dashboard-header {
+    position: relative;
+  }
+
+  .dashboard-header__identity {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    text-align: center;
+  }
+}

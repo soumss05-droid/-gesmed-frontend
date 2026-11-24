@@ -117,6 +117,7 @@ const NIVEAUX_FOSA = [
   ["PS_PRINCIPAL", "PS principaux"],
   ["PS_SECONDAIRE", "PS secondaires"],
   ["UPEC_COMMUNAUTAIRE", "UPEC communautaires"],
+  ["AUTRE", "Autres (cabinets, cliniques)"],
 ];
 
 function EligibiliteService({ service, nbFosa, nouveau, onRetour, onEnregistre }) {

@@ -102,12 +102,26 @@ function BarresVerticales({ points, cle, couleur, pas }) {
   if (points.length === 0 || total === 0) {
     return <p className="fiche-vide">Aucun mouvement sur la période.</p>;
   }
-  const pasEtiquette = Math.ceil(points.length / 8);
+  const pasEtiquette = Math.ceil(points.length / 5);
+  const valeurCompacte = (n) => {
+    if (n >= 1000000) return (Math.round(n / 100000) / 10).toString().replace(".", ",") + " M";
+    if (n >= 10000) return (Math.round(n / 100) / 10).toString().replace(".", ",") + " k";
+    return nombre(n);
+  };
+  const visibles = points.map((p) => p[cle] > 0);
+  if (points.length > 10) {
+    for (let k = 1; k < points.length; k++) {
+      if (visibles[k] && visibles[k - 1]) {
+        if (points[k][cle] >= points[k - 1][cle]) visibles[k - 1] = false;
+        else visibles[k] = false;
+      }
+    }
+  }
   return (
     <div className="fiche-barres-v">
       {points.map((p, i) => (
-        <div className="fiche-barre-v-col" key={p.periode}>
-          <span className="fiche-barre-v-valeur">{p[cle] > 0 ? nombre(p[cle]) : ""}</span>
+        <div className="fiche-barre-v-col" key={p.periode} title={p[cle] > 0 ? nombre(p[cle]) : undefined}>
+          <span className="fiche-barre-v-valeur">{visibles[i] ? valeurCompacte(p[cle]) : ""}</span>
           <div className="fiche-barre-v-zone">
             <div className="fiche-barre-v" style={{ height: (p[cle] / max) * 100 + "%", background: couleur }} />
           </div>
@@ -305,7 +319,7 @@ export default function FicheSituation({ session }) {
     const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
       .map((n) => (n.tagName === 'LINK' ? '<link rel="stylesheet" href="' + n.href + '">' : n.outerHTML))
       .join('\n');
-    const titre = 'Fiche de situation - ' + fiche.entete.structure;
+    const titre = 'Fiche de situation - ' + String(fiche.entete.structure || "").replace(/^GAS\s+(Moughataa)/i, "$1");
 
     const cadre = document.createElement('iframe');
     cadre.style.position = 'fixed';
@@ -323,7 +337,7 @@ export default function FicheSituation({ session }) {
         styles +
         '<style>html,body{background:#fff !important;margin:0;padding:0;height:auto !important;overflow:visible !important;}' +
         '.fiche-feuille{box-shadow:none;border:none;border-radius:0;padding:0;max-width:none;margin:0;}</style>' +
-        '</head><body><div class="fiche-page">' +
+        '</head><body><div id="zone-impression-temporaire" class="fiche-page">' +
         feuille.outerHTML +
         '</div></body></html>'
     );
@@ -404,7 +418,7 @@ export default function FicheSituation({ session }) {
 
           <div className="fiche-titre">
             <h1>Fiche de situation</h1>
-            <p className="fiche-titre-structure">{fiche.entete.structure}{fiche.entete.niveau === "WILAYA" ? null : <> — {niveauLibelle}</>}</p>
+            <p className="fiche-titre-structure">{String(fiche.entete.structure || "").replace(/^GAS\s+(Moughataa)/i, "$1")}{fiche.entete.niveau === "WILAYA" || String(fiche.entete.structure || "").toLowerCase().includes(String(niveauLibelle || "").toLowerCase()) ? null : <> — {niveauLibelle}</>}</p>
             <p className="fiche-titre-meta">
               Période du {dateCourte(fiche.entete.debut)} au {dateCourte(fiche.entete.fin)} · Édité le {dateHeure(fiche.entete.editeLe)}
             </p>

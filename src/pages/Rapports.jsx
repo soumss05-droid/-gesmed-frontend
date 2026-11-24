@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./Rapports.css";
-import FicheSituation from "./FicheSituation";
+import FicheOuverture from "./FicheOuverture";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -637,7 +637,7 @@ export default function Rapports({ session, onRetour }) {
       </div>
 
       {onglet === "fiche" ? (
-        <FicheSituation session={session} />
+        <FicheOuverture session={session} />
       ) : chargement ? (
         <p>Chargement...</p>
       ) : !kpis ? (

@@ -457,6 +457,11 @@
 @media print {
   @page { size: A4; margin: 12mm; }
 
+  /* entete-impression-3-colonnes : garder la mise en page de l'ecran a l'impression */
+  .fiche-entete-officiel { grid-template-columns: 1fr 1fr 1fr !important; }
+  .fiche-entete-col--centre { text-align: center !important; }
+  .fiche-entete-col--droite { text-align: right !important; }
+
   body:has(.fiche-page) .rapports-header,
   body:has(.fiche-page) .rapports-onglets,
   .fiche-outils {
@@ -695,4 +700,15 @@ th.fiche-num {
   margin-left: 0;
   margin-right: 0;
   padding: 0;
+}
+
+/* barres-lisibles : evite le chevauchement des valeurs et des mois */
+.fiche-barre-v-valeur,
+.fiche-barre-v-etiquette {
+  overflow: visible;
+  text-align: center;
+}
+
+.fiche-barre-v-valeur {
+  font-size: 0.72rem;
 }

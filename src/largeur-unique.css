@@ -1,0 +1,67 @@
+/* Largeurs des pages : deux niveaux (Large et Etroit). La page de connexion et la Fiche de situation gardent leur style propre.
+   Pour revenir en arriere : retirer l'import de ce fichier dans App.jsx. */
+
+/* LARGE : tableaux, listes, tableaux de bord */
+.admin-page,
+.dashboard-main,
+.reappro-page,
+.destr-page,
+.ecarts-page,
+.inventaire-page,
+.rapports-page,
+.recherche-page,
+.reseau-page,
+.suivi-page,
+.verrouillage-page {
+  max-width: 1000px !important;
+  width: 100%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* ETROIT : formulaires et listes courtes (720 px = largeur utile d'une feuille A4 en portrait) */
+.rentree-page,
+.dispensation-page,
+.reception-page,
+.requisition-page,
+.validation-page,
+.notif-page,
+.admin-page.page-etroite {
+  max-width: 720px !important;
+  width: 100%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* IMPRESSION : marge de feuille de 12 mm (comme la Fiche de situation) et contenu adapte a la largeur imprimable */
+@page {
+  margin: 12mm;
+}
+
+@media print {
+  .admin-page,
+  .dashboard-main,
+  .reappro-page,
+  .destr-page,
+  .ecarts-page,
+  .inventaire-page,
+  .rapports-page,
+  .recherche-page,
+  .reseau-page,
+  .suivi-page,
+  .verrouillage-page,
+  .rentree-page,
+  .dispensation-page,
+  .reception-page,
+  .requisition-page,
+  .validation-page,
+  .notif-page,
+  .admin-page.page-etroite {
+    max-width: 100% !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

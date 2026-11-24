@@ -27,6 +27,20 @@ function heuresEcoulees(depuis) {
   return (Date.now() - new Date(depuis).getTime()) / (1000 * 60 * 60);
 }
 
+function texteLivraisonPrevue(requisition) {
+  const axe = requisition.axe;
+  if (!axe || requisition.statut !== "VALIDEE") return null;
+  if (!axe.prochainDepartPrevu) return "Exp\u00e9dition par l'axe " + axe.nom + " : date de d\u00e9part \u00e0 planifier.";
+  const depart = new Date(axe.prochainDepartPrevu);
+  const options = { day: "2-digit", month: "long", year: "numeric" };
+  let texte = "Livraison pr\u00e9vue par l'axe " + axe.nom + " : d\u00e9part le " + depart.toLocaleDateString("fr-FR", options);
+  if (axe.dureeLivraisonJours) {
+    const fin = new Date(depart.getTime() + axe.dureeLivraisonJours * 86400000);
+    texte += ", fin de tourn\u00e9e vers le " + fin.toLocaleDateString("fr-FR", options);
+  }
+  return texte + ".";
+}
+
 function CarteRequisition({ requisition, estFille = false, onRelancer, relanceEtat }) {
   const peutRelancer =
     requisition.statut === "EN_ATTENTE" &&
@@ -54,6 +68,12 @@ function CarteRequisition({ requisition, estFille = false, onRelancer, relanceEt
         Niveau actuel : <strong>{requisition.niveauActuel?.nom || "—"}</strong>
       </p>
 
+      {texteLivraisonPrevue(requisition) && (
+        <p className="suivi-niveau">
+          <strong>{texteLivraisonPrevue(requisition)}</strong>
+        </p>
+      )}
+
       {peutRelancer && (
         <div className="suivi-relance">
           <button
@@ -78,7 +98,7 @@ function CarteRequisition({ requisition, estFille = false, onRelancer, relanceEt
       <ul className="suivi-lignes">
         {requisition.lignes.map((l) => (
           <li key={l.id}>
-            {l.produit.nom} — demandé {l.quantiteDemandee}, validé {l.quantiteValidee}
+            {typeof l.produit === "string" ? l.produit : l.produit && l.produit.nom} — {requisition.statut === "EN_ATTENTE" || requisition.statut === "BROUILLON" ? "demandé " + l.quantiteDemandee : "validé " + l.quantiteValidee}
           </li>
         ))}
       </ul>

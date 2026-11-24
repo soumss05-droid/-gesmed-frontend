@@ -1,5 +1,7 @@
+import "./DashboardDispensation.css";
 import { useEffect, useState } from "react";
 import "./Dashboard.css";
+import { useLangue, SelecteurLangue } from "../i18n.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -139,6 +141,7 @@ export default function Dashboard({
   onLogout,
   onNouvelleRequisition,
   onValidationRequisitions,
+  onAnnulationsAValider,
   onStockReseau,
   onDispensation,
   onReception,
@@ -157,11 +160,21 @@ export default function Dashboard({
   onChangerMotDePasse,
   onMesServices,
   onCouvertureOffre, // couverture offre
+  onExpeditionsAxes, // expeditions axes
+  onMonAxe, // mon axe
   onConfigurationOffre, // config offre
+  onCarteStock, // carte stock
   onDestructions,
 }) {
   const { utilisateur } = session;
-  const libelleRole = LIBELLES_ROLE[utilisateur.role] || utilisateur.role;
+  const { t, dir } = useLangue();
+  // Traduit la valeur d'une carte : "5 j" garde le nombre et traduit l'unite.
+  const traduireValeur = (v) => {
+    if (typeof v !== "string") return v;
+    if (/^\d+ j$/.test(v)) return v.slice(0, -2) + " " + t("j");
+    return t(v);
+  };
+  const libelleRole = t(LIBELLES_ROLE[utilisateur.role] || utilisateur.role);
   const [sections, setSections] = useState(SECTIONS_PAR_ROLE[utilisateur.role] || []);
   const [chargement, setChargement] = useState(
     ROLES_AVEC_STOCK.includes(utilisateur.role) ||
@@ -200,6 +213,14 @@ export default function Dashboard({
           }
         }
         if (utilisateur.role === "GESTIONNAIRE_CAMEC") {
+          try {
+            const resEnvoyes = await fetch(`${API_URL}/distribution/envoyes/en-attente`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (resEnvoyes.ok) base[2].valeur = String((await resEnvoyes.json()).total);
+          } catch {
+            // Reste a un tiret si l'appel echoue : pas bloquant pour le reste de l'ecran.
+          }
           try {
             const resAValider = await fetch(`${API_URL}/requisitions/a-valider`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -332,6 +353,9 @@ export default function Dashboard({
         { roles: ["FORMATION_SANITAIRE"], icone: "plus", libelle: "Nouvelle réquisition", onClick: onNouvelleRequisition },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "liste", libelle: "Réquisitions à valider", onClick: onValidationRequisitions },
         { roles: ["GESTIONNAIRE_CAMEC"], icone: "liste", libelle: "Réquisitions à livrer", onClick: onValidationRequisitions },
+        { roles: ["GESTIONNAIRE_CAMEC"], icone: "camion", libelle: "Expéditions par axe", onClick: onExpeditionsAxes },
+        { roles: ["GESTIONNAIRE_DRS", "DIRECTEUR_DRS"], icone: "camion", libelle: "Mon axe de livraison", onClick: onMonAxe },
+        { roles: ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA", "ADMIN"], icone: "liste", libelle: "Annulations \u00e0 valider", onClick: onAnnulationsAValider },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "chariot", libelle: "Commander un réapprovisionnement", onClick: onReapprovisionnement },
         { roles: peutSuivreRequisitions ? [utilisateur.role] : [], icone: "document", libelle: "Suivi de mes réquisitions", onClick: onSuiviRequisitions },
         { roles: TOUS_LES_ROLES, icone: "loupe", libelle: "Rechercher un dossier", onClick: onRechercheDossier },
@@ -341,11 +365,12 @@ export default function Dashboard({
       titre: "Stock",
       actions: [
         { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS", "MEDECIN_CHEF_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
+        { roles: ["GAS_PROGRAMME_NATIONAL", "ADMIN", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA"], icone: "graphique", libelle: "Carte des services", onClick: onCarteStock },
         { roles: ["GESTIONNAIRE_CAMEC", "ADMIN"], icone: "camion", libelle: "Rentrée des produits", onClick: onRentreeCamec },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "FORMATION_SANITAIRE"], icone: "camion", libelle: "Saisie initiale de stock", onClick: onRentreeCamec },
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
         { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE", "ADMIN"], icone: "liste", libelle: "Destructions", onClick: onDestructions },
-        { roles: ["FORMATION_SANITAIRE"], icone: "boite", libelle: "Enregistrer une dispensation", onClick: onDispensation },
+        // L'action Dispensation (formation sanitaire) est affichee en grande carte en haut du tableau de bord.
         { roles: ["FORMATION_SANITAIRE", "GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "camion", libelle: "Bordereaux à confirmer", onClick: onReception },
         { roles: ["GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "balance", libelle: "Écarts en attente", onClick: onEcarts },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "cadenas", libelle: "Verrouiller ma zone", onClick: onVerrouillage },
@@ -373,7 +398,7 @@ export default function Dashboard({
   ];
 
   return (
-    <div className="dashboard">
+    <div className="dashboard" dir={dir}>
       <header className="dashboard-header">
         <span className="dashboard-header__brand">SYGIMS</span>
         <div className="dashboard-header__user">
@@ -383,16 +408,17 @@ export default function Dashboard({
               {utilisateur.etablissement ? `${libelleRole} — ${utilisateur.etablissement}` : libelleRole}
             </span>
           </div>
-          <button className="dashboard-header__logout" onClick={onLogout}>Déconnexion</button>
+          <SelecteurLangue />
+          <button className="dashboard-header__logout" onClick={onLogout}>{t("Déconnexion")}</button>
         </div>
       </header>
 
       <main className="dashboard-main">
-        <h1>Tableau de bord</h1>
-        <p className="dashboard-main__subtitle">Vue adaptée à ton rôle : {libelleRole}.</p>
+        {!chargement && <h1>{t("Tableau de bord")}</h1>}
+        {!chargement && <p className="dashboard-main__subtitle">{t("Vue adaptée à ton rôle :")} {libelleRole}.</p>}
 
-        {chargement && sections.length === 0 ? (
-          <p className="dashboard-main__vide">Chargement des données...</p>
+        {chargement ? (
+          <p className="dashboard-main__vide">{t("Chargement des données...")}</p>
         ) : (
           <div className="dashboard-grid">
             {sections.map((section, index) => {
@@ -404,26 +430,35 @@ export default function Dashboard({
                   key={section.titre}
                   onClick={cible || undefined}
                 >
-                  <span className="dashboard-card__valeur">{chargement ? "..." : section.valeur}</span>
-                  <span className="dashboard-card__titre">{section.titre}</span>
-                  <span className="dashboard-card__description">{section.description}</span>
+                  <span className="dashboard-card__valeur">{traduireValeur(section.valeur)}</span>
+                  <span className="dashboard-card__titre">{t(section.titre)}</span>
+                  <span className="dashboard-card__description">{t(section.description)}</span>
                 </Composant>
               );
             })}
           </div>
         )}
 
-        {categories.map((cat) => {
+        {!chargement && utilisateur.role === "FORMATION_SANITAIRE" && (
+          <button type="button" className="dashboard-dispensation-hero" onClick={onDispensation}>
+            <span className="dashboard-dispensation-hero__icone"><Icone nom="plus" /></span>
+            <span className="dashboard-dispensation-hero__texte">
+              <span className="dashboard-dispensation-hero__titre">{t("Nouvelle dispensation")}</span>
+              <span className="dashboard-dispensation-hero__sous-titre">{t("Enregistrer ce que vous donnez aujourd'hui")}</span>
+            </span>
+          </button>
+        )}
+        {!chargement && categories.map((cat) => {
           const actionsVisibles = cat.actions.filter((a) => a.roles.includes(utilisateur.role));
           if (actionsVisibles.length === 0) return null;
           return (
             <section className="dashboard-categorie" key={cat.titre}>
-              <h2 className="dashboard-categorie__titre">{cat.titre}</h2>
+              <h2 className="dashboard-categorie__titre">{t(cat.titre)}</h2>
               <div className="dashboard-categorie__actions">
                 {actionsVisibles.map((a) => (
                   <button key={a.libelle} className="dashboard-bouton-action" onClick={a.onClick}>
                     <Icone nom={a.icone} />
-                    {a.libelle}
+                    {t(a.libelle)}
                   </button>
                 ))}
               </div>
@@ -432,7 +467,7 @@ export default function Dashboard({
         })}
 
         {!chargement && sections.length === 0 && (
-          <p className="dashboard-main__vide">Aucun contenu défini pour ce rôle pour l'instant.</p>
+          <p className="dashboard-main__vide">{t("Aucun contenu défini pour ce rôle pour l'instant.")}</p>
         )}
       </main>
     </div>

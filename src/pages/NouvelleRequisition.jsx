@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./NouvelleRequisition.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -86,6 +86,62 @@ export default function NouvelleRequisition({ onRetour }) {
 
   const aUneQuantiteNonRecommandee = lignes.some(ligneEstNonRecommandee);
 
+  // ---- Choix rapide des produits : recherche par premieres lettres + cases a cocher ----
+  const [recherche, setRecherche] = useState("");
+
+  function normaliser(texte) {
+    return String(texte || "")
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase();
+  }
+
+  const groupes = useMemo(() => {
+    const mots = normaliser(recherche).split(/[^a-z0-9]+/).filter(Boolean);
+    const affiches =
+      mots.length === 0
+        ? produits
+        : produits.filter((p) => {
+            const motsProduit = normaliser(p.nom).split(/[^a-z0-9]+/).filter(Boolean);
+            return mots.every((m) => motsProduit.some((mp) => mp.startsWith(m)));
+          });
+    const parCategorie = new Map();
+    for (const p of affiches) {
+      const cle = p.categorie || "";
+      if (!parCategorie.has(cle)) parCategorie.set(cle, []);
+      parCategorie.get(cle).push(p);
+    }
+    return [...parCategorie.entries()];
+  }, [produits, recherche]);
+
+  const selectionnes = new Set(lignes.map((l) => l.produitId).filter(Boolean));
+  const nbSelection = selectionnes.size;
+
+  function lignePourProduit(produitId) {
+    const suggestion = suggestions[produitId];
+    return {
+      produitId,
+      quantiteDemandee: suggestion && suggestion.quantiteSuggeree > 0 ? String(suggestion.quantiteSuggeree) : "",
+    };
+  }
+
+  function basculerProduit(produitId) {
+    setLignes((prev) => {
+      if (prev.some((l) => l.produitId === produitId)) {
+        const reste = prev.filter((l) => l.produitId !== produitId);
+        return reste.length > 0 ? reste : [ligneVide()];
+      }
+      const indexVide = prev.findIndex((l) => !l.produitId);
+      const nouvelle = lignePourProduit(produitId);
+      if (indexVide >= 0) {
+        return prev.map((l, i) =>
+          i === indexVide ? { ...nouvelle, quantiteDemandee: l.quantiteDemandee || nouvelle.quantiteDemandee } : l
+        );
+      }
+      return [...prev, nouvelle];
+    });
+  }
+
   async function envoyerRequisition(e) {
     e.preventDefault();
     setErreur(null);
@@ -158,6 +214,38 @@ export default function NouvelleRequisition({ onRetour }) {
 
       {!chargementProduits && (
         <form className="requisition-form" onSubmit={envoyerRequisition}>
+          <div className="requisition-choix">
+            <div className="requisition-choix-entete">
+              <input
+                type="search"
+                className="requisition-recherche"
+                placeholder="Rechercher un produit (premi&egrave;res lettres)&hellip;"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                autoComplete="off"
+              />
+              <span className="requisition-choix-compteur">{nbSelection} s&eacute;lectionn&eacute;(s)</span>
+            </div>
+            <div className="requisition-choix-liste">
+              {groupes.length === 0 && <p className="requisition-choix-vide">Aucun produit ne correspond.</p>}
+              {groupes.map(([categorie, liste]) => (
+                <div key={categorie || "sans-categorie"}>
+                  {categorie && <p className="requisition-choix-categorie">{categorie}</p>}
+                  {liste.map((p) => (
+                    <label
+                      className={"requisition-choix-ligne" + (selectionnes.has(p.id) ? " requisition-choix-ligne--coche" : "")}
+                      key={p.id}
+                    >
+                      <input type="checkbox" checked={selectionnes.has(p.id)} onChange={() => basculerProduit(p.id)} />
+                      <span>{p.nom}</span>
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          {nbSelection > 0 && <p className="requisition-suggestion">Produits de la commande :</p>}
+
           {lignes.map((ligne, index) => {
             const suggestion = suggestions[ligne.produitId];
             const nonRecommandee = ligneEstNonRecommandee(ligne);
@@ -167,7 +255,7 @@ export default function NouvelleRequisition({ onRetour }) {
                   <select value={ligne.produitId} onChange={(e) => modifierLigne(index, "produitId", e.target.value)}>
                     <option value="">Choisir un produit…</option>
                     {produits.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nom}</option>
+                      <option key={p.id} value={p.id} disabled={lignes.some((autre, j) => j !== index && autre.produitId === p.id)}>{p.nom}</option>
                     ))}
                   </select>
 

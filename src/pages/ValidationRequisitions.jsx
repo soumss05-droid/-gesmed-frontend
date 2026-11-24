@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./ValidationRequisitions.css";
+import "./ValidationMotif.css";
 import BoutonsExport from "../components/BoutonsExport";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -20,9 +21,20 @@ export default function ValidationRequisitions({ session, onRetour }) {
   const [erreur, setErreur] = useState(null);
   const [message, setMessage] = useState(null);
   const [enCours, setEnCours] = useState(null);
+  const [axes, setAxes] = useState([]);
+  const [axeChoisi, setAxeChoisi] = useState({});
+
+  // Axe propose selon la wilaya du demandeur (le CAMEC peut le changer ; "" = livrer directement).
+  function axeEffectif(r) {
+    if (axeChoisi[r.id] !== undefined) return axeChoisi[r.id];
+    if (!r.drsDemandeurId) return "";
+    const trouve = axes.find((a) => Array.isArray(a.drs) && a.drs.some((d) => d.id === r.drsDemandeurId));
+    return trouve ? trouve.id : "";
+  }
 
   const estCamec = session?.utilisateur?.role === "GESTIONNAIRE_CAMEC";
   const peutRejeter = session?.utilisateur?.role === "GAS_PROGRAMME_NATIONAL";
+  const estProgramme = peutRejeter;
 
   async function chargerDonnees() {
     setChargement(true);
@@ -59,6 +71,20 @@ export default function ValidationRequisitions({ session, onRetour }) {
     chargerDonnees();
   }, []);
 
+  // CAMEC : charge les axes d'expedition (le choix d'un axe reste facultatif).
+  useEffect(() => {
+    if (!estCamec) return;
+    (async () => {
+      try {
+        const token = localStorage.getItem("SYGIMS_token");
+        const res = await fetch(`${API_URL}/distribution/axes`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) setAxes(await res.json());
+      } catch (err) {
+        // Silencieux : sans axes, la CAMEC livre directement comme avant.
+      }
+    })();
+  }, [estCamec]);
+
   function modifierQuantite(requisitionId, ligneId, valeur) {
     setRequisitions((prev) =>
       prev.map((r) =>
@@ -87,6 +113,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
           quantiteValidee: Number(l.quantiteValidee),
         })),
       };
+      if (estCamec && decision === "valider" && axeEffectif(requisition)) body.axeId = axeEffectif(requisition);
       const res = await fetch(`${API_URL}/requisitions/${requisition.id}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -96,7 +123,9 @@ export default function ValidationRequisitions({ session, onRetour }) {
       if (!res.ok) throw new Error(data.erreur || "La décision n'a pas pu être enregistrée.");
 
       if (decision === "valider") {
-        if (data.partiel) {
+        if (data.associeAAxe) {
+          setMessage("Commande associ\u00e9e \u00e0 l'axe " + (data.axe ? data.axe.nom : "") + " : elle sera exp\u00e9di\u00e9e au d\u00e9part de l'axe.");
+        } else if (data.partiel) {
           setMessage(
             data.escalade === false
               ? "Livrée partiellement depuis votre stock — le reste n'a pas pu être fourni pour l'instant."
@@ -155,15 +184,30 @@ export default function ValidationRequisitions({ session, onRetour }) {
                 </span>
               </div>
 
-              {r.justification && <p className="validation-justification">« {r.justification} »</p>}
+              {(() => {
+                const horsSuggestion = estProgramme ? [] : r.lignesEditees.filter((l) => Number(l.quantiteNormale ?? 0) === 0);
+                const motif = (r.justification || "").trim();
+                if (!motif) return null;
+                return (
+                  <div className={"validation-motif" + (horsSuggestion.length > 0 ? " validation-motif--alerte" : "")}>
+                    <div className="validation-motif__titre">{"Motif de la commande donn\u00e9 par le demandeur"}</div>
+                    <div className="validation-motif__texte">{motif}</div>
+                    {horsSuggestion.length > 0 && (
+                      <div className="validation-motif__alerte">
+                        {"\u26a0 Suggestion \u00e0 0 pour : " + horsSuggestion.map((l) => l.produit).join(", ")}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <table className="validation-table">
                 <thead>
                   <tr>
                     <th>Produit</th>
                     <th>Demandé</th>
-                    <th>Disponible ici</th>
-                    <th>Suggéré*</th>
+                    {!estProgramme && <th>Disponible ici</th>}
+                    {!estProgramme && <th>Suggéré*</th>}
                     <th>Validé</th>
                   </tr>
                 </thead>
@@ -189,12 +233,12 @@ export default function ValidationRequisitions({ session, onRetour }) {
                           )}
                         </td>
                         <td>{ligne.quantiteDemandee}</td>
-                        <td className={disponible >= ligne.quantiteValidee ? "validation-dispo-ok" : "validation-dispo-partiel"}>
+                        {!estProgramme && (<td className={disponible >= ligne.quantiteValidee ? "validation-dispo-ok" : "validation-dispo-partiel"}>
                           {disponible}
-                        </td>
-                        <td style={alerte ? { color: "#b3492f", fontWeight: "bold" } : undefined}>
+                        </td>)}
+                        {!estProgramme && (<td style={alerte ? { color: "#b3492f", fontWeight: "bold" } : undefined}>
                           {ligne.quantiteNormale ?? "—"}
-                        </td>
+                        </td>)}
                         <td>
                           <input
                             type="number"
@@ -209,11 +253,28 @@ export default function ValidationRequisitions({ session, onRetour }) {
                   })}
                 </tbody>
               </table>
-              <p style={{ fontSize: "0.78rem", color: "#6b7873", marginTop: 4 }}>
+              {!estProgramme && (<p style={{ fontSize: "0.78rem", color: "#6b7873", marginTop: 4 }}>
                 * Quantité normalement nécessaire pour le demandeur, calculée à partir de sa consommation réelle (CMM/DMM) et de son stock disponible.
-              </p>
+              </p>)}
 
               <BoutonsExport cibleId={idCarte} nomFichier={`requisition-${r.numero || r.id}`} />
+
+              {estCamec && axes.length > 0 && (
+                <div className="no-print" style={{ margin: "8px 0" }}>
+                  <label>
+                    {"Exp\u00e9dition : "}
+                    <select
+                      value={axeEffectif(r)}
+                      onChange={(e) => setAxeChoisi((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                    >
+                      <option value="">{"Livrer directement"}</option>
+                      {axes.map((a) => (
+                        <option key={a.id} value={a.id}>{"Associer \u00e0 l'axe " + a.nom}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
 
               <div className="validation-actions no-print">
                 {peutRejeter && (
@@ -230,7 +291,7 @@ export default function ValidationRequisitions({ session, onRetour }) {
                   disabled={enCours === r.id}
                   onClick={() => envoyerDecision(r, "valider")}
                 >
-                  {enCours === r.id ? "..." : estCamec ? "Livrer" : "Valider"}
+                  {enCours === r.id ? "..." : estCamec ? (axeEffectif(r) ? "Associer \u00e0 l'axe" : "Livrer") : "Valider"}
                 </button>
               </div>
             </div>

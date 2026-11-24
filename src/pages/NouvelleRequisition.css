@@ -21,3 +21,86 @@
   font-size: 0.8rem;
   color: #a37c1f;
 }
+
+/* choix-produits-requisition : recherche + cases a cocher */
+.requisition-choix {
+  border: 1px solid #d5dbe1;
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.requisition-choix-entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #e5e9ed;
+  background: #f6f8fa;
+}
+
+.requisition-choix .requisition-recherche {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #c5ccd3;
+  border-radius: 8px;
+}
+
+.requisition-choix-compteur {
+  white-space: nowrap;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f5f8b;
+}
+
+.requisition-choix-liste {
+  max-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.requisition-choix-categorie {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #55616d;
+  background: #eef2f5;
+  position: sticky;
+  top: 0;
+}
+
+.requisition-choix-ligne {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f2f4;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.requisition-choix .requisition-choix-ligne input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  flex: none;
+}
+
+.requisition-choix-ligne--coche {
+  background: #eaf5ee;
+  font-weight: 600;
+}
+
+.requisition-choix-vide {
+  margin: 0;
+  padding: 14px;
+  color: #55616d;
+}
