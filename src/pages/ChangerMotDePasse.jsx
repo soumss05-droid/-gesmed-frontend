@@ -90,7 +90,7 @@ export default function ChangerMotDePasse({ onRetour, obligatoire = false, onTer
         </div>
       )}
 
-      <form className="admin-formulaire" onSubmit={envoyer}>
+      <form className="admin-formulaire admin-formulaire--mdp" onSubmit={envoyer}>
         <div className="admin-grille">
           <div className="admin-champ">
             <label>Ancien mot de passe</label>

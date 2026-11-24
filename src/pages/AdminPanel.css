@@ -207,3 +207,22 @@
 .admin-reconciliation .admin-table {
   margin-top: 14px;
 }
+
+/* Page Changer mon mot de passe : contour vert, comme le panneau de connexion */
+.admin-formulaire--mdp .admin-champ label {
+  color: #12333a;
+  font-weight: 600;
+}
+
+.admin-formulaire--mdp .admin-champ input {
+  border: 2px solid #12333a;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #ffffff;
+}
+
+.admin-formulaire--mdp .admin-champ input:focus {
+  outline: none;
+  border-color: #12333a;
+  box-shadow: 0 0 0 4px rgba(18, 51, 58, 0.25);
+}
