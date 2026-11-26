@@ -174,7 +174,16 @@ export default function Dashboard({
     if (/^\d+ j$/.test(v)) return v.slice(0, -2) + " " + t("j");
     return t(v);
   };
-  const libelleRole = t(LIBELLES_ROLE[utilisateur.role] || utilisateur.role);
+  const programmeCoord = (() => {
+  if (utilisateur.role !== "GAS_PROGRAMME_NATIONAL" || !utilisateur.etablissement) return null;
+  const n = utilisateur.etablissement.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (n.includes("tubercul")) return "PNLTL";
+  if (n.includes("palud")) return "PNLP";
+  if (n.includes("reproduction") || /\bsr\b/.test(n)) return "PNSR";
+  if (n.includes("sida") || n.includes("hepat")) return "PNLS";
+  return null;
+})();
+const libelleRole = programmeCoord ? t("Coordinateur") + " " + programmeCoord : t(LIBELLES_ROLE[utilisateur.role] || utilisateur.role);
   const [sections, setSections] = useState(SECTIONS_PAR_ROLE[utilisateur.role] || []);
   const [chargement, setChargement] = useState(
     ROLES_AVEC_STOCK.includes(utilisateur.role) ||
