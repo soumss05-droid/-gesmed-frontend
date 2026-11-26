@@ -352,7 +352,7 @@ export default function Dashboard({
       actions: [
         { roles: ["FORMATION_SANITAIRE"], icone: "plus", libelle: "Nouvelle réquisition", onClick: onNouvelleRequisition },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "liste", libelle: "Réquisitions à valider", onClick: onValidationRequisitions },
-        { roles: ["GESTIONNAIRE_CAMEC"], icone: "liste", libelle: "Réquisitions à livrer", onClick: onValidationRequisitions },
+        { roles: ["GESTIONNAIRE_CAMEC", ...(utilisateur.etablissement === "CAMEC central" ? ["AUDITEUR"] : [])], icone: "liste", libelle: "Réquisitions à livrer", onClick: onValidationRequisitions },
         { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "camion", libelle: "Expéditions par axe", onClick: onExpeditionsAxes },
         { roles: ["GESTIONNAIRE_DRS", "DIRECTEUR_DRS"], icone: "camion", libelle: "Mon axe de livraison", onClick: onMonAxe },
         { roles: ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA", "ADMIN"], icone: "liste", libelle: "Annulations \u00e0 valider", onClick: onAnnulationsAValider },
