@@ -3,7 +3,8 @@ import "./Ecarts.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-export default function Ecarts({ onRetour }) {
+export default function Ecarts({ onRetour, session }) {
+  const masquerSiAuditeur = session?.utilisateur?.role === "AUDITEUR" ? { display: "none" } : undefined;
   const [onglet, setOnglet] = useState("bl");
   const [ecartsBl, setEcartsBl] = useState([]);
   const [ecartsInventaire, setEcartsInventaire] = useState([]);
@@ -109,6 +110,7 @@ export default function Ecarts({ onRetour }) {
       </p>
 
       {erreur && <p className="ecarts-erreur" role="alert">{erreur}</p>}
+      {session?.utilisateur?.role === "AUDITEUR" && <p className="ecarts-meta">{"Consultation seule : la d\u00e9cision revient au GAS programme national."}</p>}
       {message && <p className="ecarts-message">{message}</p>}
 
       <div className="ecarts-onglets">
@@ -142,13 +144,13 @@ export default function Ecarts({ onRetour }) {
                   </strong>
                 </p>
                 <textarea
-                  className="ecarts-motif"
+                  className="ecarts-motif" style={masquerSiAuditeur}
                   placeholder="Motif de la décision (obligatoire)..."
                   value={motifs[e.id] || ""}
                   onChange={(ev) => majMotif(e.id, ev.target.value)}
                   rows={2}
                 />
-                <div className="ecarts-actions">
+                <div className="ecarts-actions" style={masquerSiAuditeur}>
                   <button
                     className="ecarts-bouton-maintenir"
                     disabled={enCours === e.id}
@@ -189,13 +191,13 @@ export default function Ecarts({ onRetour }) {
                 {new Date(e.inventaire?.dateInventaire).toLocaleDateString("fr-FR")}
               </p>
               <textarea
-                className="ecarts-motif"
+                className="ecarts-motif" style={masquerSiAuditeur}
                 placeholder="Motif de la décision (obligatoire)..."
                 value={motifs[e.id] || ""}
                 onChange={(ev) => majMotif(e.id, ev.target.value)}
                 rows={2}
               />
-              <div className="ecarts-actions">
+              <div className="ecarts-actions" style={masquerSiAuditeur}>
                 <button
                   className="ecarts-bouton-maintenir"
                   disabled={enCours === e.id}

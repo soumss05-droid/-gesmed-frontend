@@ -74,7 +74,7 @@ function App() {
     if (vue === "suivi-requisitions") return <SuiviRequisitions onRetour={retour} />;
     if (vue === "admin") return <AdminPanel onRetour={retour} />;
     if (vue === "rapports") return <Rapports session={session} onRetour={retour} />;
-    if (vue === "ecarts") return <Ecarts onRetour={retour} />;
+    if (vue === "ecarts") return <Ecarts onRetour={retour} session={session} />;
     if (vue === "recherche-dossier") return <RechercheDossier onRetour={retour} />;
     if (vue === "verrouillage") return <Verrouillage session={session} onRetour={retour} />;
     if (vue === "equipe") return <EquipeDrs onRetour={retour} />;

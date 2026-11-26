@@ -36,7 +36,8 @@ function normaliser(texte) {
 export default function EnregistrerRentreeCamec({ session, onRetour }) {
   const role = session?.utilisateur?.role;
   const estSaisieInitiale = role && !ROLES_RENTREE_CAMEC.includes(role);
-  const titre = estSaisieInitiale ? "Saisie initiale de stock" : "Rentrée de produits — CAMEC";
+  const saisieALaCamec = role === "GAS_PROGRAMME_NATIONAL" || role === "AUDITEUR";
+  const titre = saisieALaCamec ? "Saisie initiale de stock \u2014 CAMEC" : estSaisieInitiale ? "Saisie initiale de stock" : "Rentrée de produits — CAMEC";
 
   const [produits, setProduits] = useState([]);
   const [programmes, setProgrammes] = useState([]);
@@ -275,7 +276,13 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
         <h1>{titre}</h1>
       </header>
 
-      {estSaisieInitiale && (
+      {saisieALaCamec && (
+        <p className="rentree-note-saisie-initiale">
+          {"Cette saisie enregistre le stock initial de la CAMEC."}
+          {role === "GAS_PROGRAMME_NATIONAL" ? " Seuls les produits de votre programme sont accept\u00e9s." : ""}
+        </p>
+      )}
+      {estSaisieInitiale && !saisieALaCamec && (
         <p className="rentree-note-saisie-initiale">
           Cette saisie sert à initialiser le stock de ton établissement. Une fois la dotation de départ terminée,
           ta zone pourra être verrouillée : les entrées suivantes passeront alors par le circuit réquisition / bordereau de livraison.
@@ -371,6 +378,7 @@ export default function EnregistrerRentreeCamec({ session, onRetour }) {
             <button
               type="button"
               className="rentree-lien-nouveau-produit"
+              style={estSaisieInitiale ? { display: "none" } : undefined}
               onClick={() => setAfficherNouveauProduit((v) => !v)}
             >
               {afficherNouveauProduit ? "Annuler la création" : "Produit introuvable ? + Créer un nouveau produit"}

@@ -353,7 +353,7 @@ export default function Dashboard({
         { roles: ["FORMATION_SANITAIRE"], icone: "plus", libelle: "Nouvelle réquisition", onClick: onNouvelleRequisition },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "GAS_PROGRAMME_NATIONAL"], icone: "liste", libelle: "Réquisitions à valider", onClick: onValidationRequisitions },
         { roles: ["GESTIONNAIRE_CAMEC"], icone: "liste", libelle: "Réquisitions à livrer", onClick: onValidationRequisitions },
-        { roles: ["GESTIONNAIRE_CAMEC"], icone: "camion", libelle: "Expéditions par axe", onClick: onExpeditionsAxes },
+        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "camion", libelle: "Expéditions par axe", onClick: onExpeditionsAxes },
         { roles: ["GESTIONNAIRE_DRS", "DIRECTEUR_DRS"], icone: "camion", libelle: "Mon axe de livraison", onClick: onMonAxe },
         { roles: ["GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA", "ADMIN"], icone: "liste", libelle: "Annulations \u00e0 valider", onClick: onAnnulationsAValider },
         { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS"], icone: "chariot", libelle: "Commander un réapprovisionnement", onClick: onReapprovisionnement },
@@ -364,10 +364,10 @@ export default function Dashboard({
     {
       titre: "Stock",
       actions: [
-        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS", "MEDECIN_CHEF_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
+        { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "DIRECTEUR_DRS", "MEDECIN_CHEF_MOUGHATAA", "FORMATION_SANITAIRE", "AUDITEUR"], icone: "boite", libelle: "Stock du réseau", onClick: onStockReseau },
         { roles: ["GAS_PROGRAMME_NATIONAL", "ADMIN", "GESTIONNAIRE_DRS", "DIRECTEUR_DRS", "GAS_MOUGHATAA", "MEDECIN_CHEF_MOUGHATAA"], icone: "graphique", libelle: "Carte des services", onClick: onCarteStock },
         { roles: ["GESTIONNAIRE_CAMEC", "ADMIN"], icone: "camion", libelle: "Rentrée des produits", onClick: onRentreeCamec },
-        { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "FORMATION_SANITAIRE"], icone: "camion", libelle: "Saisie initiale de stock", onClick: onRentreeCamec },
+        { roles: ["GAS_MOUGHATAA", "GESTIONNAIRE_DRS", "FORMATION_SANITAIRE", "GAS_PROGRAMME_NATIONAL", "AUDITEUR"], icone: "camion", libelle: "Saisie initiale de stock", onClick: onRentreeCamec },
         { roles: ["GESTIONNAIRE_CAMEC", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE"], icone: "liste", libelle: "Inventaire physique", onClick: onInventairePhysique },
         { roles: ["GESTIONNAIRE_CAMEC", "GAS_PROGRAMME_NATIONAL", "GESTIONNAIRE_DRS", "GAS_MOUGHATAA", "FORMATION_SANITAIRE", "ADMIN"], icone: "liste", libelle: "Destructions", onClick: onDestructions },
         // L'action Dispensation (formation sanitaire) est affichee en grande carte en haut du tableau de bord.
