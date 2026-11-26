@@ -240,6 +240,8 @@ export default function StockReseau({ onRetour }) {
   const [seulementRuptures, setSeulementRuptures] = useState(false);
   const [etablissementsOuverts, setEtablissementsOuverts] = useState({});
   const [filtreNiveau, setFiltreNiveau] = useState("");
+  const [filtreProduit, setFiltreProduit] = useState("");
+  const [masquerVides, setMasquerVides] = useState(true);
   const [menuExportOuvert, setMenuExportOuvert] = useState(false);
   const menuExportRef = useRef(null);
 
@@ -423,13 +425,19 @@ export default function StockReseau({ onRetour }) {
       .map((etab) => ({
         ...etab,
         stocks: etab.stocks.filter((s) => {
-          const correspondNom = !rechercheMin || s.produit.toLowerCase().includes(rechercheMin);
+          const correspondNom = (!rechercheMin || s.produit.toLowerCase().includes(rechercheMin)) && (!filtreProduit || s.produit === filtreProduit);
           const correspondStatut = !seulementRuptures || s.statut === "RUPTURE" || s.statut === "SOUS_SEUIL";
           return correspondNom && correspondStatut;
         }),
       }))
-      .filter((etab) => etab.stocks.length > 0 || (!rechercheMin && !seulementRuptures));
-  }, [donnees, recherche, seulementRuptures, filtreNiveau]);
+      .filter((etab) => etab.stocks.length > 0 || (!masquerVides && !rechercheMin && !seulementRuptures && !filtreProduit));
+  }, [donnees, recherche, seulementRuptures, filtreNiveau, filtreProduit, masquerVides]);
+
+  const produitsDisponibles = useMemo(() => {
+    const noms = new Set();
+    donnees.forEach((e) => e.stocks.forEach((s) => noms.add(s.produit)));
+    return Array.from(noms).sort((a, b) => String(a).localeCompare(String(b), "fr"));
+  }, [donnees]);
 
   const filtresActuels = {
     niveau: filtreNiveau,
@@ -579,6 +587,15 @@ export default function StockReseau({ onRetour }) {
 
           {niveauxDisponibles.length > 1 && (
             <div className="reseau-filtres reseau-filtres-cascade">
+              <select value={filtreProduit} onChange={(e) => setFiltreProduit(e.target.value)}>
+                <option value="">Tous les produits</option>
+                {produitsDisponibles.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              <label className="reseau-case">
+                <input type="checkbox" checked={masquerVides} onChange={(e) => setMasquerVides(e.target.checked)} /> Masquer les établissements sans stock
+              </label>
               <select value={filtreNiveau} onChange={(e) => setFiltreNiveau(e.target.value)}>
                 <option value="">Tous les niveaux</option>
                 {niveauxDisponibles.map((t) => (
@@ -590,7 +607,7 @@ export default function StockReseau({ onRetour }) {
 
           {cmm.length > 0 && (
             <details className="reseau-carte reseau-cmm">
-              <summary>CMM — période glissante (consommation réelle du réseau)</summary>
+              <summary>CMM — Consommation mensuelle moyenne</summary>
               <table className="reseau-table">
                 <thead>
                   <tr>
