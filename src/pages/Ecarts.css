@@ -3,8 +3,8 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 24px 20px 60px;
-  background: #eef0e7;
-  color: #1c2b28;
+  background: #ffffff;
+  color: #000000;
 }
 
 .ecarts-header {
@@ -21,23 +21,23 @@
   padding: 6px 12px;
   cursor: pointer;
   font-size: 0.95rem;
-  color: #12302c;
+  color: #000000;
 }
 
 .ecarts-header h1 {
   font-size: 1.5rem;
   margin: 0;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .ecarts-sous-titre {
-  color: #6b7873;
+  color: #000000;
   font-size: 0.88rem;
   margin: 8px 0 20px;
 }
 
 .ecarts-erreur {
-  background: #fdecea;
+  background: #ffffff;
   color: #b3492f;
   border: 1px solid #f2c2b8;
   border-radius: 6px;
@@ -46,8 +46,8 @@
 }
 
 .ecarts-message {
-  background: #fbf4e6;
-  color: #1c2b28;
+  background: #ffffff;
+  color: #000000;
   border: 1px solid #c99a4b;
   border-radius: 6px;
   padding: 10px 14px;
@@ -67,17 +67,17 @@
   cursor: pointer;
   font-size: 0.9rem;
   background: #ffffff;
-  color: #6b7873;
+  color: #000000;
 }
 
 .ecarts-onglet-actif {
-  background: #12302c;
-  color: #f4f2ea;
+  background: #000000;
+  color: #ffffff;
   border-color: #12302c;
 }
 
 .ecarts-vide {
-  color: #6b7873;
+  color: #000000;
 }
 
 .ecarts-liste {
@@ -102,26 +102,26 @@
 
 .ecarts-carte-entete strong {
   font-size: 0.95rem;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .ecarts-badge {
   font-size: 0.78rem;
-  color: #6b7873;
-  background: #f5f4ee;
+  color: #000000;
+  background: #ffffff;
   padding: 3px 10px;
   border-radius: 999px;
 }
 
 .ecarts-detail {
   font-size: 0.88rem;
-  color: #1c2b28;
+  color: #000000;
   margin: 0 0 4px;
 }
 
 .ecarts-meta {
   font-size: 0.78rem;
-  color: #9aa39e;
+  color: #000000;
   margin: 0 0 10px;
 }
 
@@ -157,13 +157,13 @@
   border-radius: 6px;
   padding: 7px 16px;
   font-size: 0.85rem;
-  color: #6b7873;
+  color: #000000;
   cursor: pointer;
 }
 
 .ecarts-bouton-debloquer {
-  background: #12302c;
-  color: #f4f2ea;
+  background: #000000;
+  color: #ffffff;
   border: none;
   border-radius: 6px;
   padding: 7px 16px;

@@ -87,6 +87,8 @@ export default function EnregistrerDispensation({ session, onRetour }) {
   // Le détail ligne par ligne peut vite devenir très long : paginé, pour que
   // l'écran reste lisible même avec beaucoup de dispensations.
   const [pageDetailRapport, setPageDetailRapport] = useState(0);
+  const [filtreTypeRapport, setFiltreTypeRapport] = useState("");
+  const [filtreBeneficiaireRapport, setFiltreBeneficiaireRapport] = useState("");
 
   const nomEtablissement = session?.utilisateur?.etablissement || rapportDispensation?.etablissement || null;
   const nomAgent = session?.utilisateur?.nomComplet || null;
@@ -127,6 +129,8 @@ export default function EnregistrerDispensation({ session, onRetour }) {
       setRapportDispensation(data);
       chargerDemandesAnnulation();
       setPageDetailRapport(0);
+      setFiltreTypeRapport("");
+      setFiltreBeneficiaireRapport("");
     } catch (err) {
       setErreurRapport(tr(err.message || "Connexion instable, réessayez."));
     } finally {
@@ -407,15 +411,36 @@ export default function EnregistrerDispensation({ session, onRetour }) {
     setErreur(null);
   }
 
-  const totalPagesDetailRapport = rapportDispensation
-    ? Math.max(1, Math.ceil(rapportDispensation.lignes.length / LIGNES_PAR_PAGE_RAPPORT))
-    : 1;
+  // Filtres du detail du rapport : par type de beneficiaire et par beneficiaire (destination).
+  const typesRapport = useMemo(() => {
+    if (!rapportDispensation) return [];
+    return Array.from(new Set(rapportDispensation.lignes.map((l) => l.typeBeneficiaire).filter(Boolean)));
+  }, [rapportDispensation]);
+
+  const beneficiairesRapport = useMemo(() => {
+    if (!rapportDispensation) return [];
+    const noms = new Set();
+    for (const l of rapportDispensation.lignes) {
+      if (l.beneficiaire && (!filtreTypeRapport || l.typeBeneficiaire === filtreTypeRapport)) noms.add(l.beneficiaire);
+    }
+    return Array.from(noms).sort((a, b) => String(a).localeCompare(String(b), "fr"));
+  }, [rapportDispensation, filtreTypeRapport]);
+
+  const lignesRapportFiltrees = useMemo(() => {
+    if (!rapportDispensation) return [];
+    return rapportDispensation.lignes.filter(
+      (l) =>
+        (!filtreTypeRapport || l.typeBeneficiaire === filtreTypeRapport) &&
+        (!filtreBeneficiaireRapport || l.beneficiaire === filtreBeneficiaireRapport)
+    );
+  }, [rapportDispensation, filtreTypeRapport, filtreBeneficiaireRapport]);
+
+  const totalPagesDetailRapport = Math.max(1, Math.ceil(lignesRapportFiltrees.length / LIGNES_PAR_PAGE_RAPPORT));
 
   const lignesDetailRapportPage = useMemo(() => {
-    if (!rapportDispensation) return [];
     const debut = pageDetailRapport * LIGNES_PAR_PAGE_RAPPORT;
-    return rapportDispensation.lignes.slice(debut, debut + LIGNES_PAR_PAGE_RAPPORT);
-  }, [rapportDispensation, pageDetailRapport]);
+    return lignesRapportFiltrees.slice(debut, debut + LIGNES_PAR_PAGE_RAPPORT);
+  }, [lignesRapportFiltrees, pageDetailRapport]);
 
   const typeDerniereDispensation = derniereDispensation
     ? TYPES_BENEFICIAIRE.find((t) => t.valeur === derniereDispensation.typeBeneficiaire)
@@ -710,6 +735,56 @@ export default function EnregistrerDispensation({ session, onRetour }) {
 
         {rapportDispensation && (
           <>
+            {rapportDispensation.lignes.length > 0 && (
+              <div className="inventaire-rapport-controles no-print">
+                <label className="inventaire-champ-inline">
+                  {tr("Type")}
+                  <select
+                    value={filtreTypeRapport}
+                    onChange={(e) => {
+                      setFiltreTypeRapport(e.target.value);
+                      setFiltreBeneficiaireRapport("");
+                      setPageDetailRapport(0);
+                    }}
+                  >
+                    <option value="">{tr("Tous")}</option>
+                    {typesRapport.map((t) => (
+                      <option key={t} value={t}>{tr(LIBELLES_TYPE_BENEFICIAIRE[t] || t)}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="inventaire-champ-inline">
+                  {tr("Bénéficiaire")}
+                  <select
+                    value={filtreBeneficiaireRapport}
+                    onChange={(e) => {
+                      setFiltreBeneficiaireRapport(e.target.value);
+                      setPageDetailRapport(0);
+                    }}
+                  >
+                    <option value="">{tr("Tous")}</option>
+                    {beneficiairesRapport.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </label>
+                {(filtreTypeRapport || filtreBeneficiaireRapport) && (
+                  <button
+                    type="button"
+                    className="inventaire-bouton-secondaire"
+                    onClick={() => {
+                      setFiltreTypeRapport("");
+                      setFiltreBeneficiaireRapport("");
+                      setPageDetailRapport(0);
+                    }}
+                  >
+                    {tr("Réinitialiser")}
+                  </button>
+                )}
+                <span>{lignesRapportFiltrees.length} / {rapportDispensation.lignes.length}</span>
+              </div>
+            )}
+
             <div id="rapport-dispensation" className="zone-imprimable">
               <div className="inventaire-rapport-entete">
                 <h3>{tr("Rapport de dispensation")}</h3>

@@ -8,8 +8,8 @@
 .requisition-supprimer { background: none; border: none; cursor: pointer; color: #b00; }
 .requisition-ajouter { align-self: flex-start; background: none; border: 1px dashed #999; padding: 8px 12px; cursor: pointer; }
 .requisition-label { display: flex; flex-direction: column; gap: 4px; }
-.requisition-erreur { color: #b00020; background: #fde8e8; padding: 12px; border-radius: 6px; }
-.requisition-bouton { background: #0f2e2e; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
+.requisition-erreur { color: #b00020; background: #ffffff; padding: 12px; border-radius: 6px; }
+.requisition-bouton { background: #000000; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
 .requisition-confirmation { text-align: center; padding: 48px 24px; }
 
 .requisition-ligne-bloc {
@@ -19,7 +19,7 @@
 .requisition-suggestion {
   margin: 4px 0 0;
   font-size: 0.8rem;
-  color: #a37c1f;
+  color: #8a6914;
 }
 
 /* choix-produits-requisition : recherche + cases a cocher */
@@ -70,7 +70,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #55616d;
+  color: #000000;
   background: #eef2f5;
   position: sticky;
   top: 0;
@@ -102,5 +102,5 @@
 .requisition-choix-vide {
   margin: 0;
   padding: 14px;
-  color: #55616d;
+  color: #000000;
 }

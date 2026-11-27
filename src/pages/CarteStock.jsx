@@ -203,6 +203,7 @@ const CSS_CARTE = [
   ".zone-impression .only-print{display:block !important;}",
   ".zone-impression .gesmed-carte{height:420px !important;break-inside:avoid;}",
   ".zone-impression .leaflet-control-zoom{display:none !important;}",
+  ".zone-impression .leaflet-control-layers{display:none !important;}",
   ".zone-impression table{font-size:10px;}",
   ".zone-impression tr{break-inside:avoid;}",
   "}",
@@ -242,7 +243,69 @@ function ajouterZones(L, carte, geo, type) {
   });
 }
 
-function Carte({ points, cleAjuste }) {
+// Compare deux noms de zone sans tenir compte des accents, majuscules et espaces.
+function normaliserNom(s) {
+  return String(s === null || s === undefined ? "" : s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+// Equivalences connues entre l'ecriture de la base et celle du fichier de contours.
+const ALIAS_ZONES = {
+  nema: "moughataadenneama",
+  enneama: "moughataadenneama",
+  tidjikja: "tijigja",
+  aioun: "eayouneelatrous",
+  aiounelatrous: "eayouneelatrous",
+  aiounelatroun: "eayouneelatrous",
+};
+
+function distanceNoms(a, b) {
+  let prec = [];
+  for (let j = 0; j <= b.length; j++) prec.push(j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur.push(Math.min(prec[j] + 1, cur[j - 1] + 1, prec[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)));
+    }
+    prec = cur;
+  }
+  return prec[b.length];
+}
+
+// Renvoie le nom (normalise) de la zone du fichier de contours qui correspond au nom choisi.
+function trouverNomZone(features, nom) {
+  const cible = normaliserNom(nom);
+  if (!cible) return "";
+  const noms = [];
+  for (const f of features) {
+    const x = normaliserNom(f.properties ? f.properties.nom : "");
+    if (x && !noms.includes(x)) noms.push(x);
+  }
+  if (noms.includes(cible)) return cible;
+  if (ALIAS_ZONES[cible] && noms.includes(ALIAS_ZONES[cible])) return ALIAS_ZONES[cible];
+  const inclus = noms
+    .filter((x) => (x.length >= 4 && cible.includes(x)) || (cible.length >= 5 && x.includes(cible)))
+    .sort((a, b) => b.length - a.length);
+  if (inclus.length) return inclus[0];
+  let meilleur = "";
+  let dMin = 99;
+  let egalite = false;
+  for (const x of noms) {
+    const d = distanceNoms(cible, x);
+    if (d < dMin) {
+      dMin = d;
+      meilleur = x;
+      egalite = false;
+    } else if (d === dMin) egalite = true;
+  }
+  const seuil = cible.length >= 8 ? 2 : 1;
+  return !egalite && dMin <= seuil ? meilleur : "";
+}
+
+function Carte({ points, cleAjuste, selWilaya, selMoughataa, apiRef }) {
   const conteneur = useRef(null);
   const carteRef = useRef(null);
   const coucheRef = useRef(null);
@@ -251,6 +314,47 @@ function Carte({ points, cleAjuste }) {
   const cleRef = useRef(null);
   const [pret, setPret] = useState(false);
   const [indisponible, setIndisponible] = useState(false);
+  const geoRef = useRef(null);
+  const selRef = useRef(null);
+  const selCleRef = useRef("");
+  const vueRef = useRef(null);
+  const [geoPret, setGeoPret] = useState(false);
+
+  // Impression : redimensionne la carte et la recadre sur ce que l'utilisateur voyait.
+  function ajusterPourImpression() {
+    const carte = carteRef.current;
+    const L = typeof window !== "undefined" ? window.L : null;
+    if (!carte || !L) return;
+    if (!vueRef.current) vueRef.current = { centre: carte.getCenter(), zoom: carte.getZoom(), bornes: carte.getBounds() };
+    carte.invalidateSize({ animate: false });
+    carte.setMinZoom(carte.getBoundsZoom(L.latLngBounds(MR_LIMITES)));
+    carte.fitBounds(vueRef.current.bornes, { padding: [4, 4], animate: false });
+  }
+
+  // Attend que le cadre soit a la bonne taille et que les fonds de carte soient affiches.
+  function preparerImpression() {
+    return new Promise((resolve) => {
+      const el = conteneur.current;
+      if (!carteRef.current || !el) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        ajusterPourImpression();
+        const debut = Date.now();
+        const attendre = () => {
+          const total = el.querySelectorAll("img.leaflet-tile").length;
+          const restantes = el.querySelectorAll("img.leaflet-tile:not(.leaflet-tile-loaded)").length;
+          const duree = Date.now() - debut;
+          if ((total > 0 && restantes === 0) || (total === 0 && duree > 2000) || duree > 10000) setTimeout(resolve, 400);
+          else setTimeout(attendre, 250);
+        };
+        setTimeout(attendre, 300);
+      }));
+    });
+  }
+
+  if (apiRef) apiRef.current = { preparerImpression };
 
   function ajuster() {
     const carte = carteRef.current;
@@ -296,6 +400,9 @@ function Carte({ points, cleAjuste }) {
         carte.createPane("limites");
         carte.getPane("limites").style.zIndex = 380;
         carte.getPane("limites").style.pointerEvents = "none";
+        carte.createPane("selection");
+        carte.getPane("selection").style.zIndex = 370;
+        carte.getPane("selection").style.pointerEvents = "none";
         const optionsEsri = { maxNativeZoom: 16, maxZoom: 18, bounds: MR_LIMITES, attribution: "Tiles \u00a9 Esri \u2014 Esri, DeLorme, NAVTEQ, USGS, HERE" };
         const fondRelief = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", optionsEsri);
         const fondRues = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", optionsEsri);
@@ -344,6 +451,8 @@ function Carte({ points, cleAjuste }) {
             if (!vivant || carteRef.current !== carte) return;
             ajouterZones(L, carte, m, "moughataa");
             ajouterZones(L, carte, w, "wilaya");
+            geoRef.current = { w, m };
+            setGeoPret(true);
           })
           .catch(() => {});
         setPret(true);
@@ -358,6 +467,9 @@ function Carte({ points, cleAjuste }) {
         carteRef.current.remove();
         carteRef.current = null;
         coucheRef.current = null;
+        selRef.current = null;
+        selCleRef.current = "";
+        geoRef.current = null;
       }
     };
   }, []);
@@ -391,6 +503,78 @@ function Carte({ points, cleAjuste }) {
     ajuster();
   }, [pret, points, cleAjuste]);
 
+  // Zone choisie dans les filtres : en vert, le reste en gris, et la vue se recadre sur elle.
+  useEffect(() => {
+    const L = typeof window !== "undefined" ? window.L : null;
+    const carte = carteRef.current;
+    if (!pret || !geoPret || !L || !carte || !geoRef.current) return;
+    if (selRef.current) {
+      carte.removeLayer(selRef.current);
+      selRef.current = null;
+    }
+    if (!selWilaya && !selMoughataa) {
+      selCleRef.current = "";
+      return;
+    }
+    const parMoughataa = Boolean(selMoughataa);
+    const geo = parMoughataa ? geoRef.current.m : geoRef.current.w;
+    if (!geo || !Array.isArray(geo.features)) return;
+    const choisi = trouverNomZone(geo.features, parMoughataa ? selMoughataa : selWilaya);
+    if (!choisi) {
+      console.warn("Carte : aucune zone du fichier de contours ne correspond a " + (parMoughataa ? selMoughataa : selWilaya));
+      return;
+    }
+    const estCible = (f) => normaliserNom(f.properties ? f.properties.nom : "") === choisi;
+    const groupe = L.layerGroup();
+    L.geoJSON(geo, {
+      pane: "selection",
+      interactive: false,
+      filter: (f) => !estCible(f),
+      style: { stroke: false, fillColor: "#d1d5db", fillOpacity: 0.78 },
+    }).addTo(groupe);
+    const zone = L.geoJSON(geo, {
+      pane: "selection",
+      interactive: false,
+      filter: estCible,
+      style: { color: "#14532d", weight: 3, fillColor: "#7fc79a", fillOpacity: 0.4 },
+    }).addTo(groupe);
+    groupe.addTo(carte);
+    selRef.current = groupe;
+    const cle = (selWilaya || "") + "|" + (selMoughataa || "");
+    const bornes = zone.getBounds();
+    if (selCleRef.current !== cle && bornes.isValid()) {
+      selCleRef.current = cle;
+      carte.invalidateSize();
+      carte.fitBounds(bornes, { padding: [20, 20], maxZoom: 10 });
+    }
+  }, [pret, geoPret, selWilaya, selMoughataa]);
+
+  // Ctrl+P direct : la carte est preparee au mieux ; elle revient a sa vue apres l'impression.
+  useEffect(() => {
+    function avant() {
+      if (!carteRef.current) return;
+      document.documentElement.classList.add("impression-carte");
+      ajusterPourImpression();
+    }
+    function apres() {
+      setTimeout(() => {
+        const carte = carteRef.current;
+        if (!carte) return;
+        carte.invalidateSize({ animate: false });
+        if (vueRef.current) {
+          carte.setView(vueRef.current.centre, vueRef.current.zoom, { animate: false });
+          vueRef.current = null;
+        }
+      }, 200);
+    }
+    window.addEventListener("beforeprint", avant);
+    window.addEventListener("afterprint", apres);
+    return () => {
+      window.removeEventListener("beforeprint", avant);
+      window.removeEventListener("afterprint", apres);
+    };
+  }, []);
+
   if (indisponible) {
     return (
       <p style={{ padding: "12px", border: "1px dashed #b5b5b5", borderRadius: "8px" }}>
@@ -398,7 +582,7 @@ function Carte({ points, cleAjuste }) {
       </p>
     );
   }
-  return <div ref={conteneur} className="gesmed-carte" style={{ height: "560px", width: "100%", borderRadius: "8px", border: "1px solid #c9c9c9" }} />;
+  return <div ref={conteneur} className="gesmed-carte" style={{ height: "clamp(420px, 70vh, 720px)", width: "100%", borderRadius: "8px", border: "1px solid #c9c9c9" }} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -409,6 +593,7 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
   const [filtreWilaya, setFiltreWilaya] = useState("");
   const [filtreMoughataa, setFiltreMoughataa] = useState("");
   const [filtreType, setFiltreType] = useState("");
+  const carteApi = useRef(null);
 
   // Impression : la carte prend la largeur de la page, puis revient a la normale.
   useEffect(() => {
@@ -422,8 +607,9 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
 
   function imprimer() {
     document.documentElement.classList.add("impression-carte");
-    window.dispatchEvent(new Event("resize"));
-    setTimeout(() => window.print(), 1500);
+    const api = carteApi.current;
+    const attente = api && api.preparerImpression ? api.preparerImpression() : new Promise((r) => setTimeout(r, 1500));
+    attente.then(() => window.print());
   }
 
   const serviceIndispo = Boolean(couv) && !couv.data;
@@ -643,7 +829,13 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
 
           <h2 style={{ fontSize: "1.05rem", margin: "8px 0" }}>{`${service.programme.nom} \u2014 ${service.nom}`}</h2>
 
-          <Carte points={points} cleAjuste={service.id + "|" + filtreWilaya + "|" + filtreMoughataa + "|" + filtreType} />
+          <Carte
+            points={points}
+            cleAjuste={service.id + "|" + filtreWilaya + "|" + filtreMoughataa + "|" + filtreType}
+            selWilaya={filtreWilaya}
+            selMoughataa={filtreMoughataa}
+            apiRef={carteApi}
+          />
 
           <div style={{ margin: "10px 0 4px" }}>
             <div style={{ fontSize: "0.82rem", opacity: 0.75, marginBottom: "4px" }}>Forme = type de formation sanitaire</div>

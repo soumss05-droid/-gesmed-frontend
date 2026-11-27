@@ -4,7 +4,7 @@
   margin: 0 auto;
   padding: 28px 20px 60px;
   background: #f4f5f0;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .inventaire-header {
@@ -21,7 +21,7 @@
   padding: 8px 14px;
   cursor: pointer;
   font-size: 0.9rem;
-  color: #12302c;
+  color: #000000;
   box-shadow: 0 1px 2px rgba(28, 43, 40, 0.06);
   transition: background 0.15s ease, box-shadow 0.15s ease;
   flex-shrink: 0;
@@ -33,26 +33,26 @@
 }
 
 .inventaire-header h1 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   margin: 0 0 6px;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-sous-titre {
-  color: #6b7873;
+  color: #000000;
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
 .inventaire-sous-titre-carte {
-  color: #6b7873;
+  color: #000000;
   font-size: 0.88rem;
   margin: 0 0 12px;
 }
 
 .inventaire-erreur {
-  background: #fdecea;
+  background: #ffffff;
   color: #b3492f;
   border: 1px solid #f2c2b8;
   border-radius: 8px;
@@ -62,7 +62,7 @@
 
 .inventaire-message {
   background: #eef6f0;
-  color: #1c2b28;
+  color: #000000;
   border: 1px solid #b9dcc2;
   border-radius: 8px;
   padding: 10px 14px;
@@ -70,7 +70,7 @@
 }
 
 .inventaire-vide {
-  color: #8b958f;
+  color: #000000;
   font-size: 0.9rem;
 }
 
@@ -89,11 +89,11 @@
 .inventaire-carte h2 {
   font-size: 1.05rem;
   margin: 0 0 14px;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-sans-lot {
-  color: #9aa39e;
+  color: #000000;
   font-size: 0.85rem;
   margin-bottom: 12px;
 }
@@ -110,7 +110,7 @@
 
 .inventaire-table th {
   text-align: left;
-  color: #6b7873;
+  color: #000000;
   font-weight: 600;
   padding: 8px 10px;
   border-bottom: 2px solid #ebe9dd;
@@ -120,11 +120,11 @@
 .inventaire-table td {
   padding: 8px 10px;
   border-bottom: 1px solid #f0efe8;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .inventaire-table tbody tr:hover {
-  background: #fafaf5;
+  background: #ffffff;
 }
 
 .inventaire-table input {
@@ -133,7 +133,7 @@
   border: 1px solid #dedcd0;
   border-radius: 6px;
   background: #ffffff;
-  color: #1c2b28;
+  color: #000000;
 }
 
 /* Champs du formulaire "Déclarer un nouveau lot" (et du rapport de
@@ -156,7 +156,7 @@
   border: 1px solid #dedcd0;
   border-radius: 8px;
   background: #ffffff;
-  color: #1c2b28;
+  color: #000000;
   font-size: 0.9rem;
 }
 
@@ -175,7 +175,7 @@
 .inventaire-lots-ajoutes-titre {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1c2b28;
+  color: #000000;
   margin-bottom: 8px;
 }
 
@@ -183,7 +183,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fafaf5;
+  background: #ffffff;
   border: 1px solid #ebe9dd;
   border-radius: 8px;
   padding: 8px 12px;
@@ -200,7 +200,7 @@
   font-weight: 600;
   margin-bottom: 6px;
   font-size: 0.88rem;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .inventaire-champ textarea {
@@ -210,7 +210,7 @@
   border-radius: 8px;
   resize: none;
   background: #ffffff;
-  color: #1c2b28;
+  color: #000000;
   box-sizing: border-box;
   font: inherit;
 }
@@ -221,8 +221,8 @@
 }
 
 .inventaire-bouton {
-  background: #12302c;
-  color: #f4f2ea;
+  background: #000000;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   padding: 11px 22px;
@@ -233,7 +233,7 @@
 }
 
 .inventaire-bouton:hover:not(:disabled) {
-  background: #0b211e;
+  background: #000000;
 }
 
 .inventaire-bouton:active:not(:disabled) {
@@ -247,7 +247,7 @@
 
 .inventaire-bouton-secondaire {
   background: #ffffff;
-  color: #12302c;
+  color: #000000;
   border: 1px solid #c7d4cf;
   border-radius: 8px;
   padding: 9px 16px;
@@ -258,7 +258,7 @@
 }
 
 .inventaire-bouton-secondaire:hover:not(:disabled) {
-  background: #eef3f0;
+  background: #ffffff;
   border-color: #a9beb6;
 }
 
@@ -287,7 +287,7 @@
 .inventaire-onglets {
   display: flex;
   border-bottom: 1px solid #ebe9dd;
-  background: #fafaf5;
+  background: #ffffff;
 }
 
 .inventaire-onglet {
@@ -297,18 +297,18 @@
   padding: 16px 18px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #8b958f;
+  color: #000000;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .inventaire-onglet:hover {
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-onglet-actif {
-  color: #12302c;
+  color: #000000;
   border-bottom-color: #12302c;
 }
 
@@ -319,7 +319,7 @@
 .inventaire-lien-historique {
   background: none;
   border: none;
-  color: #12302c;
+  color: #000000;
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.88rem;
@@ -328,7 +328,7 @@
 }
 
 .inventaire-historique-carte {
-  background: #fafaf5;
+  background: #ffffff;
   border: 1px solid #ebe9dd;
   border-radius: 10px;
   padding: 14px 18px;
@@ -339,13 +339,13 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.88rem;
-  color: #6b7873;
+  color: #000000;
   margin-bottom: 6px;
 }
 
 .inventaire-historique-note {
   font-size: 0.85rem;
-  color: #6b7873;
+  color: #000000;
   margin: 0 0 8px;
 }
 
@@ -356,7 +356,7 @@
 }
 
 .inventaire-ecart-nul {
-  color: #a37c1f;
+  color: #8a6914;
   font-weight: 500;
 }
 
@@ -377,7 +377,7 @@
   gap: 4px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #000000;
 }
 
 .inventaire-champ-inline input[type="date"] {
@@ -428,18 +428,18 @@
 .inventaire-rapport-entete h3 {
   margin: 0 0 6px;
   font-size: 1.05rem;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-rapport-entete p {
   margin: 0 0 4px;
   font-size: 0.9rem;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .inventaire-rapport-entete-genere {
   font-size: 0.8rem !important;
-  color: #8b958f !important;
+  color: #000000 !important;
 }
 
 /* Rapport de dispensation : uniquement le détail ligne par ligne, paginé */
@@ -464,11 +464,11 @@
 }
 
 .inventaire-table-rapport thead tr {
-  background: #12302c;
+  background: #000000;
 }
 
 .inventaire-table-rapport th {
-  color: #f4f2ea;
+  color: #ffffff;
   font-weight: 600;
   border-bottom: none;
   padding: 12px 14px;
@@ -484,16 +484,16 @@
 }
 
 .inventaire-table-rapport tbody tr:hover {
-  background: #eef3f0;
+  background: #ffffff;
 }
 
 .inventaire-ligne-alternee {
-  background: #fafaf5;
+  background: #ffffff;
 }
 
 .inventaire-table-rapport td:nth-child(3) {
   font-weight: 600;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-table-rapport td:nth-child(4) {
@@ -507,7 +507,7 @@
   gap: 16px;
   margin-top: 12px;
   font-size: 0.88rem;
-  color: #6b7873;
+  color: #000000;
 }
 /* Regroupe "Comptage du stock", "Déclarer un nouveau lot" et "Note" en un
    seul bloc visuel continu, sans espace entre les cartes — et sert aussi de

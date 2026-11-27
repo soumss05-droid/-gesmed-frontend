@@ -1,5 +1,5 @@
 .validation-motif { margin: 8px 0 14px; padding: 10px 12px; border-radius: 8px; background: #eef6f1; border: 1px solid #b9d9c5; color: #1f3d2b; }
-.validation-motif--alerte { background: #fff4e0; border-color: #f0b35a; color: #5a3a00; }
+.validation-motif--alerte { background: #ffffff; border-color: #f0b35a; color: #5a3a00; }
 .validation-motif__titre { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
 .validation-motif__texte { font-size: 1rem; font-style: italic; white-space: pre-wrap; }
 .validation-motif__alerte { margin-top: 6px; font-size: 0.88rem; font-weight: 700; color: #b45309; }

@@ -15,11 +15,11 @@
   padding: 6px 12px;
   font-size: 0.85rem;
   cursor: pointer;
-  color: #12302c;
+  color: #000000;
 }
 
 .export-bouton:hover {
-  background: #f4f2ea;
+  background: #ffffff;
 }
 
 .export-menu {
@@ -43,10 +43,10 @@
   background: none;
   border: none;
   font-size: 0.85rem;
-  color: #12302c;
+  color: #000000;
   cursor: pointer;
 }
 
 .export-menu button:hover {
-  background: #f4f2ea;
+  background: #ffffff;
 }

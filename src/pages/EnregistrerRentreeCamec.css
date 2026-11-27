@@ -3,8 +3,8 @@
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 20px 60px;
-  background: #eef0e7;
-  color: #1c2b28;
+  background: #ffffff;
+  color: #000000;
 }
 
 .rentree-header {
@@ -21,22 +21,22 @@
   padding: 6px 12px;
   cursor: pointer;
   font-size: 0.95rem;
-  color: #12302c;
+  color: #000000;
 }
 
 .rentree-header h1 {
   font-size: 1.5rem;
   margin: 0;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .rentree-sous-titre {
-  color: #6b7873;
+  color: #000000;
   margin-bottom: 24px;
 }
 
 .rentree-erreur {
-  background: #fdecea;
+  background: #ffffff;
   color: #b3492f;
   border: 1px solid #f2c2b8;
   border-radius: 6px;
@@ -45,8 +45,8 @@
 }
 
 .rentree-message {
-  background: #fbf4e6;
-  color: #1c2b28;
+  background: #ffffff;
+  color: #000000;
   border: 1px solid #c99a4b;
   border-radius: 6px;
   padding: 10px 14px;
@@ -75,7 +75,7 @@
   font-weight: 500;
   margin-bottom: 6px;
   font-size: 0.9rem;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .rentree-obligatoire {
@@ -92,12 +92,12 @@
   font-size: 0.95rem;
   box-sizing: border-box;
   background: #ffffff;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .rentree-champ input::placeholder,
 .rentree-champ textarea::placeholder {
-  color: #9aa39e;
+  color: #000000;
 }
 
 .rentree-champ textarea {
@@ -122,8 +122,8 @@
 }
 
 .rentree-bouton {
-  background: #12302c;
-  color: #f4f2ea;
+  background: #000000;
+  color: #ffffff;
   border: none;
   border-radius: 6px;
   padding: 10px 20px;
@@ -142,7 +142,7 @@
   border-radius: 6px;
   padding: 10px 20px;
   font-size: 0.9rem;
-  color: #6b7873;
+  color: #000000;
   cursor: pointer;
 }
 
@@ -155,7 +155,7 @@
 .rentree-lien-nouveau-produit {
   background: none;
   border: none;
-  color: #12302c;
+  color: #000000;
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.82rem;
@@ -164,7 +164,7 @@
 }
 
 .rentree-panneau-nouveau-produit {
-  background: #fbf9f4;
+  background: #ffffff;
   border: 1px dashed #c99a4b;
   border-radius: 8px;
   padding: 16px 18px;
@@ -174,5 +174,5 @@
 .rentree-panneau-nouveau-produit h2 {
   font-size: 0.95rem;
   margin: 0 0 10px;
-  color: #1c2b28;
+  color: #000000;
 }

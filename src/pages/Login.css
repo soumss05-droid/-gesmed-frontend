@@ -1,12 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap");
 
 :root {
-  --ink: #1b2422;
-  --panel: #12333a;
+  --ink: #000000;
+  --panel: #000000;
   --panel-line: #2c5a5d;
   --sage: #4c7a73;
   --sand: #c08a3e;
-  --paper: #f0f2ed;
+  --paper: #ffffff;
   --paper-line: #d9ddd4;
   --error: #b23a2e;
 }
@@ -28,7 +28,7 @@
 
 .login-panel {
   background: var(--panel);
-  color: #f0f2ed;
+  color: #ffffff;
   padding: 3rem 3rem 2.5rem;
   display: flex;
   flex-direction: column;
@@ -59,7 +59,7 @@
   margin-right: auto;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: #cdd8d1;
+  color: #ffffff;
 }
 
 .login-panel__circuit {
@@ -116,7 +116,7 @@
 .login-form__subtitle {
   margin: 0 0 2rem;
   font-size: 0.9rem;
-  color: #55625d;
+  color: #000000;
   line-height: 1.5;
 }
 
@@ -129,7 +129,7 @@
 .login-field span {
   display: block;
   margin-bottom: 0.4rem;
-  color: #3a4642;
+  color: #000000;
 }
 
 .login-field input {
@@ -193,7 +193,7 @@
   padding: 0.6rem 0.75rem;
   font-size: 0.85rem;
   color: var(--error);
-  background: #fbeae8;
+  background: #ffffff;
   border: 1px solid #f0c7c2;
   border-radius: 4px;
 }
@@ -322,14 +322,14 @@
   display: block;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #f0f2ed;
+  color: #ffffff;
 }
 
 .login-niveau__carte span {
   display: block;
   margin-top: 0.1rem;
   font-size: 0.78rem;
-  color: #cdd8d1;
+  color: #ffffff;
   line-height: 1.35;
 }
 
@@ -340,7 +340,7 @@
   justify-content: center;
   margin: 0;
   font-size: 0.78rem;
-  color: #cdd8d1;
+  color: #ffffff;
 }
 
 .login-legende i {
@@ -427,7 +427,7 @@
 }
 
 .login-submit {
-  background: #022d50;
+  background: #000000;
 }
 
 .login-submit:hover:not(:disabled) {

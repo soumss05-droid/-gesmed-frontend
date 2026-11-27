@@ -52,7 +52,7 @@
 
 .fiche-feuille {
   background: #ffffff;
-  color: #1c2733;
+  color: #000000;
   max-width: 980px;
   margin: 0 auto 32px;
   padding: 28px 32px;
@@ -107,7 +107,7 @@
 .fiche-titre-meta {
   margin: 0;
   font-size: 0.85rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-section {
@@ -127,7 +127,7 @@
 .fiche-graphique h3 {
   font-size: 0.92rem;
   margin: 0 0 8px;
-  color: #1c2733;
+  color: #000000;
 }
 
 .fiche-sous-titre {
@@ -172,7 +172,7 @@
 
 .fiche-feu-valeur {
   font-size: 0.82rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-feu--vert { border-left-color: #2f7a4f; }
@@ -209,7 +209,7 @@
 
 .fiche-indicateur-titre {
   font-size: 0.8rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-indicateur-valeur {
@@ -220,7 +220,7 @@
 
 .fiche-indicateur-detail {
   font-size: 0.75rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-indicateur--vert { border-top: 4px solid #2f7a4f; }
@@ -230,13 +230,13 @@
 .fiche-legende {
   margin: 8px 0 0;
   font-size: 0.75rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-vide {
   margin: 4px 0;
   font-size: 0.88rem;
-  color: #55616d;
+  color: #000000;
   font-style: italic;
 }
 
@@ -292,7 +292,7 @@
   font-size: 0.65rem;
   height: 14px;
   white-space: nowrap;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-barres-h {
@@ -419,7 +419,7 @@
 
 .fiche-point-detail {
   font-size: 0.8rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-point--critique { border-left-color: #b3492f; }
@@ -519,7 +519,7 @@
 
 .fiche-indice-sur {
   font-size: 0.85rem;
-  color: #55616d;
+  color: #000000;
 }
 
 .fiche-indice--vert { border-color: #2f7a4f; }
@@ -636,7 +636,7 @@ th.fiche-num {
   font-weight: 700;
   height: 20px;
   line-height: 20px;
-  color: #1c2833;
+  color: #000000;
 }
 
 .fiche-barre-v-etiquette {
@@ -644,17 +644,17 @@ th.fiche-num {
   font-weight: 600;
   height: 20px;
   line-height: 20px;
-  color: #2c3a47;
+  color: #000000;
 }
 
 .fiche-barre-h-ligne {
   font-size: 0.88rem;
-  color: #1c2833;
+  color: #000000;
   gap: 10px;
 }
 
 .fiche-barre-h-nom {
-  color: #1c2833;
+  color: #000000;
   font-weight: 500;
 }
 
@@ -666,7 +666,7 @@ th.fiche-num {
 .fiche-barre-h-valeur {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #1c2833;
+  color: #000000;
 }
 
 /* alignement des cartes */

@@ -34,7 +34,7 @@
   padding: 10px 12px;
   font-size: 16px;
   font-family: inherit;
-  color: #111827;
+  color: #000000;
   background: #ffffff;
   border: 1px solid #93c5fd;
   border-radius: 8px;
@@ -48,7 +48,7 @@
 }
 
 .disp-recherche::placeholder {
-  color: #6b7280;
+  color: #000000;
 }
 
 /* ---------- Categories : pastilles bleues ---------- */
@@ -104,7 +104,7 @@
   border-left: 4px solid #2563eb;
   border-radius: 8px;
   background: #ffffff;
-  color: #111827;
+  color: #000000;
   font-family: inherit;
   cursor: pointer;
   font-size: 14px;
@@ -117,12 +117,12 @@
 
 .disp-produit.disp-produit-choisi {
   border-color: #86efac;
-  border-left-color: #16a34a;
+  border-left-color: #166534;
   background: #ecfdf5;
 }
 
 .disp-badge {
-  background: #16a34a;
+  background: #166534;
   color: #ffffff;
   border-radius: 999px;
   padding: 2px 9px;
@@ -131,7 +131,7 @@
 }
 
 .disp-vide {
-  color: #475569;
+  color: #000000;
   margin: 8px 0;
 }
 
@@ -167,14 +167,14 @@
 
 .disp-ligne-nom {
   font-size: 14px;
-  color: #111827;
+  color: #000000;
 }
 
 .disp-ligne input {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
-  color: #111827;
+  color: #000000;
   background: #ffffff;
   border: 1px solid #94a3b8;
   border-radius: 6px;
@@ -182,7 +182,7 @@
 
 .disp-retirer {
   border: 1px solid #fecaca;
-  background: #fef2f2;
+  background: #ffffff;
   color: #b91c1c;
   border-radius: 8px;
   cursor: pointer;
@@ -190,7 +190,7 @@
 }
 
 .disp-retirer:hover {
-  background: #fee2e2;
+  background: #ffffff;
 }
 
 @media print {

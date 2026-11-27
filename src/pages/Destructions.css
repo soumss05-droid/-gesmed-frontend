@@ -2,7 +2,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
-  color: #1c2733;
+  color: #000000;
   box-sizing: border-box;
 }
 
@@ -14,7 +14,7 @@
 }
 
 .destr-header h1 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   margin: 0;
   color: #1f4e79;
 }
@@ -35,7 +35,7 @@
 .destr-intro {
   margin: 0 0 12px;
   font-size: 0.9rem;
-  color: #55616d;
+  color: #000000;
   line-height: 1.4;
 }
 
@@ -76,7 +76,7 @@
   margin: 0 0 10px;
   padding: 8px 12px;
   border-radius: 6px;
-  background: #fbeae6;
+  background: #ffffff;
   color: #8f2f19;
   font-size: 0.9rem;
 }
@@ -84,7 +84,7 @@
 .destr-vide {
   padding: 18px;
   text-align: center;
-  color: #55616d;
+  color: #000000;
   border: 1px dashed #c4ced8;
   border-radius: 6px;
 }
@@ -133,7 +133,7 @@
 }
 
 .destr-statut--en_attente {
-  background: #fdf1d9;
+  background: #ffffff;
   color: #7a5a14;
 }
 
@@ -143,7 +143,7 @@
 }
 
 .destr-statut--rejetee {
-  background: #fbe3dd;
+  background: #ffffff;
   color: #8f2f19;
 }
 
@@ -195,7 +195,7 @@
 }
 
 .destr-petit {
-  color: #55616d;
+  color: #000000;
   font-size: 0.8rem;
 }
 .destr-statut--autorisee {
@@ -213,11 +213,11 @@
 
 .destr-cause--perime {
   background: #eceff2;
-  color: #44505c;
+  color: #000000;
 }
 
 .destr-cause--avarie {
-  background: #fbe3dd;
+  background: #ffffff;
   color: #8f2f19;
 }
 

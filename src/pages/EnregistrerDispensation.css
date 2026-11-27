@@ -6,7 +6,7 @@
    de dispensation en dessous (classes inventaire-*), pour une page cohérente. */
 .dispensation-carte { margin-top: 0; }
 .dispensation-form { display: flex; flex-direction: column; gap: 16px; max-width: none; }
-.dispensation-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #374151; }
+.dispensation-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #000000; }
 .dispensation-label select, .dispensation-label input {
   padding: 8px 10px;
   border: 1px solid #d1d5db;
@@ -14,17 +14,17 @@
   font-size: 14px;
   font-weight: 400;
   background: #fff;
-  color: #1c2b28;
+  color: #000000;
 }
 .dispensation-label select:focus, .dispensation-label input:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
-.dispensation-erreur { color: #b3492f; background: #fdecea; border: 1px solid #f2c2b8; padding: 10px 14px; border-radius: 8px; margin: 0; }
-.dispensation-bouton { background: #12302c; color: #f4f2ea; padding: 10px 18px; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 500; cursor: pointer; }
+.dispensation-erreur { color: #b3492f; background: #ffffff; border: 1px solid #f2c2b8; padding: 10px 14px; border-radius: 8px; margin: 0; }
+.dispensation-bouton { background: #000000; color: #ffffff; padding: 10px 18px; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 500; cursor: pointer; }
 .dispensation-bouton:disabled { opacity: 0.6; cursor: default; }
-.dispensation-bouton-secondaire { background: #ffffff; color: #12302c; border: 1px solid #c7d4cf; padding: 9px 16px; border-radius: 8px; cursor: pointer; }
+.dispensation-bouton-secondaire { background: #ffffff; color: #000000; border: 1px solid #c7d4cf; padding: 9px 16px; border-radius: 8px; cursor: pointer; }
 .dispensation-confirmation { text-align: center; padding: 48px 24px; }
 .dispensation-confirmation h1 { font-size: 1.5rem; margin-bottom: 8px; }
 
@@ -65,7 +65,7 @@
 .ordonnance-etablissement strong {
   display: block;
   font-size: 1rem;
-  color: #12302c;
+  color: #000000;
 }
 
 .ordonnance-soustitre {
@@ -73,14 +73,14 @@
   font-size: 0.72rem;
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: #6b7873;
+  color: #000000;
   margin-top: 2px;
 }
 
 .ordonnance-meta {
   text-align: right;
   font-size: 0.8rem;
-  color: #4a5551;
+  color: #000000;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -96,11 +96,11 @@
 
 .ordonnance-label {
   font-weight: 600;
-  color: #12302c;
+  color: #000000;
 }
 
 .ordonnance-valeur {
-  color: #1c2b28;
+  color: #000000;
 }
 
 .ordonnance-table {
@@ -118,12 +118,12 @@
 
 .ordonnance-table th {
   background: #f5f5f0;
-  color: #12302c;
+  color: #000000;
 }
 
 .ordonnance-agent {
   font-size: 0.8rem;
-  color: #6b7873;
+  color: #000000;
   margin: 0 0 14px;
 }
 
@@ -133,7 +133,7 @@
   align-items: center;
   gap: 10px;
   font-size: 0.8rem;
-  color: #4a5551;
+  color: #000000;
 }
 
 .ordonnance-case-signature {
@@ -174,17 +174,17 @@
 .inventaire-carte h2 {
   font-size: 1.05rem;
   margin: 0 0 14px;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-sous-titre-carte {
-  color: #6b7873;
+  color: #000000;
   font-size: 0.88rem;
   margin: 0 0 12px;
 }
 
 .inventaire-erreur {
-  background: #fdecea;
+  background: #ffffff;
   color: #b3492f;
   border: 1px solid #f2c2b8;
   border-radius: 8px;
@@ -193,7 +193,7 @@
 }
 
 .inventaire-vide {
-  color: #8b958f;
+  color: #000000;
   font-size: 0.9rem;
 }
 
@@ -209,7 +209,7 @@
 
 .inventaire-table th {
   text-align: left;
-  color: #6b7873;
+  color: #000000;
   font-weight: 600;
   padding: 8px 10px;
   border-bottom: 2px solid #ebe9dd;
@@ -219,11 +219,11 @@
 .inventaire-table td {
   padding: 8px 10px;
   border-bottom: 1px solid #f0efe8;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .inventaire-table tbody tr:hover {
-  background: #fafaf5;
+  background: #ffffff;
 }
 
 .inventaire-champ-inline {
@@ -232,7 +232,7 @@
   gap: 4px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #000000;
 }
 
 .inventaire-champ-inline input[type="date"] {
@@ -270,7 +270,7 @@
 
 .inventaire-bouton-secondaire {
   background: #ffffff;
-  color: #12302c;
+  color: #000000;
   border: 1px solid #c7d4cf;
   border-radius: 8px;
   padding: 9px 16px;
@@ -281,7 +281,7 @@
 }
 
 .inventaire-bouton-secondaire:hover:not(:disabled) {
-  background: #eef3f0;
+  background: #ffffff;
   border-color: #a9beb6;
 }
 
@@ -299,18 +299,18 @@
 .inventaire-rapport-entete h3 {
   margin: 0 0 6px;
   font-size: 1.05rem;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-rapport-entete p {
   margin: 0 0 4px;
   font-size: 0.9rem;
-  color: #1c2b28;
+  color: #000000;
 }
 
 .inventaire-rapport-entete-genere {
   font-size: 0.8rem !important;
-  color: #8b958f !important;
+  color: #000000 !important;
 }
 
 .inventaire-rapport-detail {
@@ -329,11 +329,11 @@
 }
 
 .inventaire-table-rapport thead tr {
-  background: #12302c;
+  background: #000000;
 }
 
 .inventaire-table-rapport th {
-  color: #f4f2ea;
+  color: #ffffff;
   font-weight: 600;
   border-bottom: none;
   padding: 12px 14px;
@@ -349,16 +349,16 @@
 }
 
 .inventaire-table-rapport tbody tr:hover {
-  background: #eef3f0;
+  background: #ffffff;
 }
 
 .inventaire-ligne-alternee {
-  background: #fafaf5;
+  background: #ffffff;
 }
 
 .inventaire-table-rapport td:nth-child(3) {
   font-weight: 600;
-  color: #12302c;
+  color: #000000;
 }
 
 .inventaire-table-rapport td:nth-child(4) {
@@ -372,5 +372,5 @@
   gap: 16px;
   margin-top: 12px;
   font-size: 0.88rem;
-  color: #6b7873;
+  color: #000000;
 }

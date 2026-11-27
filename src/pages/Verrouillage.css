@@ -20,7 +20,7 @@
 }
 
 .verrouillage-explication {
-  color: #444;
+  color: #000000;
   line-height: 1.5;
   margin-bottom: 20px;
 }
@@ -72,11 +72,16 @@
 }
 
 .verrouillage-badge--verrouille {
-  background: #fde2e2;
+  background: #ffffff;
   color: #b00020;
 }
 
 .verrouillage-badge--libre {
   background: #e2f6e2;
   color: #1b7a1b;
+}
+
+.verrouillage-header h1 {
+  font-size: 1.5rem;
+  margin: 0;
 }
