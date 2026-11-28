@@ -192,20 +192,19 @@ const CSS_CARTE = [
   ".gesmed-carte.noms-moughataas .etiquette-moughataa{display:block;}",
   ".gesmed-carte.noms-moughataas .etiquette-wilaya{display:none;}",
   ".zone-impression .only-print{display:none;}",
-  "html.impression-carte .gesmed-carte{width:1040px !important;height:420px !important;}",
+  "#gesmed-impression{display:none;}",
   "@page{size:A4 landscape;margin:10mm;}",
   "@media print{",
   "*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}",
-  "body *{visibility:hidden !important;}",
-  ".zone-impression,.zone-impression *{visibility:visible !important;}",
-  ".zone-impression{position:absolute;left:0;top:0;width:100%;}",
   ".zone-impression .no-print{display:none !important;}",
   ".zone-impression .only-print{display:block !important;}",
-  ".zone-impression .gesmed-carte{height:420px !important;break-inside:avoid;}",
-  ".zone-impression .leaflet-control-zoom{display:none !important;}",
   ".zone-impression .leaflet-control-layers{display:none !important;}",
-  ".zone-impression table{font-size:10px;}",
-  ".zone-impression tr{break-inside:avoid;}",
+  "body.impression-en-cours > *:not(#gesmed-impression){display:none !important;}",
+  "body.impression-en-cours #gesmed-impression{display:block !important;position:static !important;left:auto !important;top:auto !important;width:1040px !important;}",
+  "#gesmed-impression .leaflet-control-zoom{display:none !important;}",
+  "#gesmed-impression .leaflet-control-layers{display:none !important;}",
+  "#gesmed-impression table{font-size:10px;}",
+  "#gesmed-impression tr{break-inside:avoid;}",
   "}",
 ].join("\n");
 
@@ -354,7 +353,73 @@ function Carte({ points, cleAjuste, selWilaya, selMoughataa, apiRef }) {
     });
   }
 
-  if (apiRef) apiRef.current = { preparerImpression };
+  // Impression : construit une copie de la carte (fond, contours, zone choisie, symboles) dans le calque cible.
+  function imprimerCarte(cible) {
+    const L = typeof window !== "undefined" ? window.L : null;
+    const actuelle = carteRef.current;
+    if (!L || !actuelle || !cible) return null;
+    const carte = L.map(cible, { preferCanvas: true, zoomControl: false, fadeAnimation: false, zoomAnimation: false, markerZoomAnimation: false });
+    carte.createPane("limites");
+    carte.getPane("limites").style.zIndex = 380;
+    carte.getPane("limites").style.pointerEvents = "none";
+    carte.createPane("selection");
+    carte.getPane("selection").style.zIndex = 370;
+    carte.getPane("selection").style.pointerEvents = "none";
+    const fond = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+      maxNativeZoom: 16,
+      maxZoom: 18,
+      bounds: MR_LIMITES,
+      attribution: "Tiles \u00a9 Esri \u2014 Esri, DeLorme, NAVTEQ, USGS, HERE",
+    }).addTo(carte);
+    L.control.scale({ imperial: false, position: "bottomleft" }).addTo(carte);
+    carte.fitBounds(actuelle.getBounds(), { animate: false });
+    if (geoRef.current) {
+      ajouterZones(L, carte, geoRef.current.m, "moughataa");
+      ajouterZones(L, carte, geoRef.current.w, "wilaya");
+      if (selWilaya || selMoughataa) {
+        const parMoughataa = Boolean(selMoughataa);
+        const geo = parMoughataa ? geoRef.current.m : geoRef.current.w;
+        const choisi = geo && Array.isArray(geo.features) ? trouverNomZone(geo.features, parMoughataa ? selMoughataa : selWilaya) : "";
+        if (choisi) {
+          const estCible = (f) => normaliserNom(f.properties ? f.properties.nom : "") === choisi;
+          L.geoJSON(geo, {
+            pane: "selection",
+            interactive: false,
+            filter: (f) => !estCible(f),
+            style: { stroke: false, fillColor: "#d1d5db", fillOpacity: 0.78 },
+          }).addTo(carte);
+          L.geoJSON(geo, {
+            pane: "selection",
+            interactive: false,
+            filter: estCible,
+            style: { color: "#14532d", weight: 3, fillColor: "#7fc79a", fillOpacity: 0.4 },
+          }).addTo(carte);
+        }
+      }
+    }
+    for (const p of points) {
+      const t = p.type;
+      L.marker([p.lat, p.lon], {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: "symbole-fosa",
+          html: svgSymbole(t, p.couleur, t.taille),
+          iconSize: [t.taille, t.taille],
+          iconAnchor: [t.taille / 2, t.taille / 2],
+        }),
+      })
+        .bindTooltip(p.nom, { permanent: true, direction: "right", offset: [t.taille / 2 + 2, 0], className: "etiquette-fosa", opacity: 1 })
+        .addTo(carte);
+    }
+    const z = carte.getZoom();
+    cible.style.setProperty("--k", String(z >= 9 ? 1 : z >= 8 ? 0.85 : z >= 7 ? 0.7 : 0.55));
+    cible.classList.toggle("noms-moughataas", z >= ZOOM_NOMS_MOUGHATAAS);
+    cible.classList.toggle("noms-fosa", z >= ZOOM_NOMS_FOSA);
+    return { carte, fond };
+  }
+
+  if (apiRef) apiRef.current = { preparerImpression, imprimerCarte };
 
   function ajuster() {
     const carte = carteRef.current;
@@ -552,7 +617,7 @@ function Carte({ points, cleAjuste, selWilaya, selMoughataa, apiRef }) {
   // Ctrl+P direct : la carte est preparee au mieux ; elle revient a sa vue apres l'impression.
   useEffect(() => {
     function avant() {
-      if (!carteRef.current) return;
+      if (!carteRef.current || document.body.classList.contains("impression-en-cours")) return;
       document.documentElement.classList.add("impression-carte");
       ajusterPourImpression();
     }
@@ -594,6 +659,8 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
   const [filtreMoughataa, setFiltreMoughataa] = useState("");
   const [filtreType, setFiltreType] = useState("");
   const carteApi = useRef(null);
+  const zoneRef = useRef(null);
+  const imprimerRef = useRef(null);
 
   // Impression : la carte prend la largeur de la page, puis revient a la normale.
   useEffect(() => {
@@ -605,12 +672,68 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
     };
   }, []);
 
+  // Impression : copie propre (en-tete, carte, legende, tableau) dans un calque dedie, imprimee une fois le fond charge.
   function imprimer() {
-    document.documentElement.classList.add("impression-carte");
+    const zone = zoneRef.current;
     const api = carteApi.current;
-    const attente = api && api.preparerImpression ? api.preparerImpression() : new Promise((r) => setTimeout(r, 1500));
-    attente.then(() => window.print());
+    if (!zone || !api || !api.imprimerCarte) {
+      window.print();
+      return;
+    }
+    const ancien = document.getElementById("gesmed-impression");
+    if (ancien) ancien.remove();
+    document.body.classList.remove("impression-en-cours");
+    const calque = document.createElement("div");
+    calque.id = "gesmed-impression";
+    calque.style.cssText = "position:fixed;left:-20000px;top:0;width:1040px;display:block;background:#fff;color:#000;";
+    const copie = zone.cloneNode(true);
+    copie.querySelectorAll(".no-print").forEach((n) => n.remove());
+    copie.querySelectorAll(".only-print").forEach((n) => {
+      n.style.display = "block";
+    });
+    const emplacement = document.createElement("div");
+    emplacement.className = "gesmed-carte";
+    emplacement.style.cssText = "height:440px;width:100%;border:1px solid #9aa5b1;margin:6px 0;";
+    const ancienneCarte = copie.querySelector(".gesmed-carte");
+    if (ancienneCarte) ancienneCarte.replaceWith(emplacement);
+    else copie.insertBefore(emplacement, copie.firstChild);
+    calque.appendChild(copie);
+    document.body.appendChild(calque);
+    const copieCarte = api.imprimerCarte(emplacement);
+    let lance = false;
+    function nettoyer() {
+      window.removeEventListener("afterprint", nettoyer);
+      document.body.classList.remove("impression-en-cours");
+      try {
+        if (copieCarte) copieCarte.carte.remove();
+      } catch (e) {
+        /* carte deja supprimee */
+      }
+      calque.remove();
+    }
+    function lancer() {
+      if (lance) return;
+      lance = true;
+      calque.style.cssText = "";
+      document.body.classList.add("impression-en-cours");
+      window.addEventListener("afterprint", nettoyer);
+      setTimeout(() => window.print(), 300);
+    }
+    if (copieCarte && copieCarte.fond) copieCarte.fond.once("load", () => setTimeout(lancer, 600));
+    setTimeout(lancer, 7000);
   }
+
+  imprimerRef.current = imprimer;
+  useEffect(() => {
+    function touche(e) {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && String(e.key).toLowerCase() === "p" && zoneRef.current) {
+        e.preventDefault();
+        if (imprimerRef.current) imprimerRef.current();
+      }
+    }
+    window.addEventListener("keydown", touche);
+    return () => window.removeEventListener("keydown", touche);
+  }, []);
 
   const serviceIndispo = Boolean(couv) && !couv.data;
 
@@ -739,7 +862,7 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
   ].filter(Boolean);
 
   return (
-    <div className="zone-impression">
+    <div className="zone-impression" ref={zoneRef}>
       {service && (
         <div className="only-print" style={{ borderBottom: "2px solid #12355b", marginBottom: "8px", paddingBottom: "6px" }}>
           <div style={{ fontSize: "1.3rem", fontWeight: 700 }}>{"Carte des services \u2014 " + service.programme.nom + " \u2014 " + service.nom}</div>
@@ -859,13 +982,6 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
               ))}
             </div>
           </div>
-          <p style={{ fontSize: "0.82rem", opacity: 0.75, marginTop: 0 }}>
-            Zoomez pour afficher les limites des moughataas puis les noms des formations sanitaires. {points.length} formation(s) sur la carte
-            {sansGps > 0 ? `, ${sansGps} sans coordonn\u00e9es GPS` : ""}
-            {horsPays > 0 ? `, ${horsPays} avec des coordonn\u00e9es situ\u00e9es hors de la Mauritanie (\u00e0 corriger)` : ""}.
-            {" "}Mise &#xE0; jour automatique toutes les minutes
-            {majLe ? ` (derni\u00e8re mise \u00e0 jour \u00e0 ${majLe.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })})` : ""}.
-          </p>
 
           <h2 style={{ fontSize: "1.05rem", margin: "18px 0 8px" }}>
             {titreTableau}
@@ -894,7 +1010,7 @@ export function Contenu({ donnees, couv, service, services, detail, onService, c
                 <thead>{enTetesService("Moughataa")}</thead>
                 <tbody>
                   {lignesService(
-                    service.parMoughataa.filter((m) => !filtreWilaya || m.drs === filtreWilaya),
+                    service.parMoughataa.filter((m) => (!filtreWilaya || m.drs === filtreWilaya) && (!filtreMoughataa || m.nom === filtreMoughataa)),
                     donnees.portee !== "NATIONAL",
                     (l) => {
                       setFiltreWilaya(l.drs);
